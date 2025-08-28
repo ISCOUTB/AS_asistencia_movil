@@ -1,4 +1,4 @@
-# 
+# /docs/images/arc42-logo.png
 
 **Acerca de arc42**
 
@@ -13,33 +13,32 @@ Revisión de la plantilla: 7.0 ES (basada en asciidoc), Enero 2017
 arquitectura arc42, <https://www.arc42.org>. Creada por Dr. Peter
 Hruschka y Dr. Gernot Starke.
 
-# Introducción y Metas {#section-introduction-and-goals}
+# Introducción y Metas
 
-## Vista de Requerimientos {#_vista_de_requerimientos}
+## Vista de Requerimientos
 
-## Metas de Calidad {#_metas_de_calidad}
+## Metas de Calidad
 
-## Partes interesadas (Stakeholders) {#_partes_interesadas_stakeholders}
+## Partes interesadas (Stakeholders)
 
-+-------------+---------------------------+---------------------------+
-| Rol/Nombre  | Contacto                  | Expectativas              |
-+=============+===========================+===========================+
-| *\<Role-1>* | *\<Contact-1>*            | *\<Expectation-1>*        |
-+-------------+---------------------------+---------------------------+
-| *\<Role-2>* | *\<Contact-2>*            | *\<Expectation-2>*        |
-+-------------+---------------------------+---------------------------+
+| Rol       | Nombre completo                  | Contacto | Expectativas |
+|-----------|----------------------------------|----------|--------------|
+| Profesor Titular | Jairo Enrique Serrano Castañeda  | [jserrano@utb.edu.co](mailto:jserrano@utb.edu.co) | Que la arquitectura de la API se integre eficientemente con la aplicación móvil, asegurando escalabilidad, seguridad y un rendimiento óptimo en dispositivos nativos. |
+| Ingeniero de Desarrollo TIC | Elian Andres Vega Hernandez      | [vegae@utb.edu.co](mailto:vegae@utb.edu.co) | Que la aplicación móvil facilite el acceso a los registros de asistencia de manera confiable y en tiempo real |
 
-# Restricciones de la Arquitectura {#section-architecture-constraints}
 
-# Alcance y Contexto del Sistema {#section-context-and-scope}
 
-## Contexto de Negocio {#_contexto_de_negocio}
+# Restricciones de la Arquitectura 
+
+# Alcance y Contexto del Sistema
+
+## Contexto de Negocio
 
 **\<Diagrama o Tabla>**
 
 **\<optionally: Explanation of external domain interfaces>**
 
-## Contexto Técnico {#_contexto_t_cnico}
+## Contexto Técnico
 
 **\<Diagrama o Tabla>**
 
@@ -47,11 +46,11 @@ Hruschka y Dr. Gernot Starke.
 
 **\<Mapeo de Entrada/Salida a canales>**
 
-# Estrategia de solución {#section-solution-strategy}
+# Estrategia de solución
 
-# Vista de Bloques {#section-building-block-view}
+# Vista de Bloques
 
-## Sistema General de Caja Blanca {#_sistema_general_de_caja_blanca}
+## Sistema General de Caja Blanca
 
 ***\<Diagrama general>***
 
@@ -68,7 +67,7 @@ Interfases importantes
 
 :   *\<Descripción de las interfases importantes>*
 
-### \<Caja Negra 1> {#__caja_negra_1}
+### \<Caja Negra 1>
 
 *\<Propósito/Responsabilidad>*
 
@@ -82,68 +81,68 @@ Interfases importantes
 
 *\<(Opcional) Riesgos/Problemas/Incidentes Abiertos>*
 
-### \<Caja Negra 2> {#__caja_negra_2}
+### \<Caja Negra 2>
 
 *\<plantilla de caja negra>*
 
-### \<Caja Negra N> {#__caja_negra_n}
+### \<Caja Negra N>
 
 *\<Plantilla de caja negra>*
 
-### \<Interfase 1> {#__interfase_1}
+### \<Interfase 1>
 
 ...
 
-### \<Interfase m> {#__interfase_m}
+### \<Interfase m>
 
 ## Nivel 2 {#_nivel_2}
 
-### Caja Blanca *\<bloque de construcción 1>* {#_caja_blanca_emphasis_bloque_de_construcci_n_1_emphasis}
+### Caja Blanca *\<bloque de construcción 1>*
 
 *\<plantilla de caja blanca>*
 
-### Caja Blanca *\<bloque de construcción 2>* {#_caja_blanca_emphasis_bloque_de_construcci_n_2_emphasis}
+### Caja Blanca *\<bloque de construcción 2>*
 
 *\<plantilla de caja blanca>*
 
 ...
 
-### Caja Blanca *\<bloque de construcción m>* {#_caja_blanca_emphasis_bloque_de_construcci_n_m_emphasis}
+### Caja Blanca *\<bloque de construcción m>*
 
 *\<plantilla de caja blanca>*
 
 ## Nivel 3 {#_nivel_3}
 
-### Caja Blanca \<\_bloque de construcción x.1\_\> {#_caja_blanca_bloque_de_construcci_n_x_1}
+### Caja Blanca \<\_bloque de construcción x.1\_\>
 
 *\<plantilla de caja blanca>*
 
-### Caja Blanca \<\_bloque de construcción x.2\_\> {#_caja_blanca_bloque_de_construcci_n_x_2}
+### Caja Blanca \<\_bloque de construcción x.2\_\>
 
 *\<plantilla de caja blanca>*
 
-### Caja Blanca \<\_bloque de construcción y.1\_\> {#_caja_blanca_bloque_de_construcci_n_y_1}
+### Caja Blanca \<\_bloque de construcción y.1\_\>
 
 *\<plantilla de caja blanca>*
 
-# Vista de Ejecución {#section-runtime-view}
+# Vista de Ejecución 
 
-## \<Escenario de ejecución 1> {#__escenario_de_ejecuci_n_1}
+## \<Escenario de ejecución 1>
 
 -   *\<Inserte un diagrama de ejecución o la descripción del escenario>*
 
 -   *\<Inserte la descripción de aspectos notables de las interacciones
     entre los bloques de construcción mostrados en este diagrama.\>*
 
-## \<Escenario de ejecución 2> {#__escenario_de_ejecuci_n_2}
+## \<Escenario de ejecución 2>
 
 ## ... {#_}
 
-## \<Escenario de ejecución n> {#__escenario_de_ejecuci_n_n}
+## \<Escenario de ejecución n>
 
-# Vista de Despliegue {#section-deployment-view}
+# Vista de Despliegue
 
-## Nivel de infraestructura 1 {#_nivel_de_infraestructura_1}
+## Nivel de infraestructura 1
 
 ***\<Diagrama General>***
 
@@ -159,23 +158,23 @@ Características de Calidad/Rendimiento
 
     :   *\<Descripción del mapeo>*
 
-## Nivel de Infraestructura 2 {#_nivel_de_infraestructura_2}
+## Nivel de Infraestructura 2
 
-### *\<Elemento de Infraestructura 1>* {#__emphasis_elemento_de_infraestructura_1_emphasis}
+### *\<Elemento de Infraestructura 1>*
 
 *\<diagrama + explicación>*
 
-### *\<Elemento de Infraestructura 2>* {#__emphasis_elemento_de_infraestructura_2_emphasis}
+### *\<Elemento de Infraestructura 2>*
 
 *\<diagrama + explicación>*
 
 ...
 
-### *\<Elemento de Infraestructura n>* {#__emphasis_elemento_de_infraestructura_n_emphasis}
+### *\<Elemento de Infraestructura n>*
 
 *\<diagrama + explicación>*
 
-# Conceptos Transversales (Cross-cutting) {#section-concepts}
+# Conceptos Transversales (Cross-cutting)
 
 ## *\<Concepto 1>* {#__emphasis_concepto_1_emphasis}
 
@@ -191,22 +190,20 @@ Características de Calidad/Rendimiento
 
 *\<explicación>*
 
-# Decisiones de Diseño {#section-design-decisions}
+# Decisiones de Diseño
 
-# Requerimientos de Calidad {#section-quality-scenarios}
+# Requerimientos de Calidad
 
 ## Árbol de Calidad {#__rbol_de_calidad}
 
 ## Escenarios de calidad {#_escenarios_de_calidad}
 
-# Riesgos y deuda técnica {#section-technical-risks}
+# Riesgos y deuda técnica
 
-# Glosario {#section-glossary}
+# Glosario
 
-+-----------------------+-----------------------------------------------+
-| Término               | Definición                                    |
-+=======================+===============================================+
-| *\<Término-1>*        | *\<definicion-1>*                             |
-+-----------------------+-----------------------------------------------+
-| *\<Término-2>*        | *\<definicion-2>*                             |
-+-----------------------+-----------------------------------------------+
+| Término       | Definición      |
+|---------------|-----------------|
+| **<Término-1>** | *<definición-1>* |
+| **<Término-2>** | *<definición-2>* |
+
