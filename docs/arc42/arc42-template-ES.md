@@ -85,7 +85,7 @@ Hruschka y Dr. Gernot Starke.
   → Usuarios, horarios, registros de asistencia.  
 
 - **Módulo de analítica y reportes**  
-  → Generación de reportes, estadísticas, integración BI.
+  → Generación de reportes, estadísticas
 
 ## Metas de Calidad
 
