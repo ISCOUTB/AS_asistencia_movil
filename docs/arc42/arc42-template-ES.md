@@ -16,14 +16,13 @@ Hruschka y Dr. Gernot Starke.
 # Introducción y Metas
 
 ## Vista de Requerimientos
-
-### 👤 Actores principales
+### Actores principales
 - **Estudiantes / Empleados** → Registran su asistencia.
 - **Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
 - **Administradores** → Configuran horarios, grupos, usuarios y reglas.  
 - **Sistema (API / Backend)** → Valida, procesa y guarda los datos.
 ---
-### ✅ Requerimientos Funcionales
+### Requerimientos Funcionales
 1. **Registro de asistencia**
    - Marcar entrada y salida desde la app.  
    - Validación por red Wi-Fi institucional.  
@@ -46,7 +45,7 @@ Hruschka y Dr. Gernot Starke.
    - API REST para conexión con sistemas académicos.  
    - Panel web admin para gestión centralizada.  
 ---
-### ⚙️ Requerimientos No Funcionales
+### Requerimientos No Funcionales
 1. **Disponibilidad**  
    - App y backend accesibles 24/7, con redundancia en servidores críticos.  
 
@@ -74,7 +73,7 @@ Hruschka y Dr. Gernot Starke.
    - Código modular (Clean Architecture en app, microservicios en backend).  
    - Documentación clara para integraciones.
 ---
-### 🏗️ Componentes de Arquitectura (Alto Nivel)
+### Componentes de Arquitectura (Alto Nivel)
 - **App móvil (Flutter)**
   → UI, autenticación,  escaneo QR, notificaciones.  
 
@@ -88,6 +87,38 @@ Hruschka y Dr. Gernot Starke.
   → Generación de reportes, estadísticas
 
 ## Metas de Calidad
+### 1. Disponibilidad  
+- Garantizar **99.5% de disponibilidad** del sistema (24/7).  
+---
+### 2. Escalabilidad  
+- Soportar al menos **5.000 usuarios concurrentes** en la fase inicial.  
+---
+### 3. Seguridad  
+- Toda la comunicación cifrada bajo **HTTPS + TLS 1.3**.  
+- Uso de **JWT / OAuth2** para autenticación segura.  
+- Cumplimiento de normativas de protección de datos (**GDPR / Habeas Data**).  
+---
+### 4. Rendimiento  
+- Tiempo de respuesta promedio: **< 2 segundos** en operaciones de registro y consulta.  
+- Procesamiento de reportes masivos en menos de **30 segundos**.  
+---
+### 5. Portabilidad  
+- Aplicación disponible en **Android ** y **iOS**.  
+---
+### 6. Usabilidad  
+- Interfaz intuitiva con curva de aprendizaje de máximo **10 minutos** para nuevos usuarios.  
+- Soporte **multilenguaje (mínimo: Español e Inglés)**.  
+- Cumplimiento de normas **WCAG 2.1** para accesibilidad.  
+---
+### 7. Mantenibilidad  
+- Arquitectura modular con separación de capas (**Clean Architecture / Microservicios**).  
+- Documentación técnica disponible y actualizada en repositorio.  
+- Tasa de resolución de incidencias críticas en **< 48 horas**.  
+---
+### 8. Confiabilidad  
+- El sistema debe garantizar que **el 99% de los registros de asistencia** sean procesados sin pérdida de datos.  
+- Mecanismos de respaldo automático de la base de datos cada **24 horas**.  
+---
 
 ## Partes interesadas (Stakeholders)
 
@@ -97,8 +128,72 @@ Hruschka y Dr. Gernot Starke.
 | Ingeniero de Desarrollo TIC | Elian Andres Vega Hernandez      | [vegae@utb.edu.co](mailto:vegae@utb.edu.co) | Que la aplicación móvil facilite el acceso a los registros de asistencia de manera confiable y en tiempo real |
 
 # Restricciones de la Arquitectura 
+## Restricciones Tecnológicas  
+- La app debe desarrollarse en **Flutter** para asegurar compatibilidad en Android e iOS.  
+- El backend debe implementarse en **ORACLE Apex**, priorizando escalabilidad y modularidad.  
+- La base de datos debe ser **Oracle**, con **Redis** como caché para optimizar el rendimiento.  
+- Toda comunicación debe realizarse mediante **HTTPS/TLS**.  
+
+## Restricciones Operativas  
+- El sistema debe estar disponible **24/7**, con un máximo de **3 horas de inactividad mensual**.  
+- Los registros de asistencia deben conservarse por un período mínimo de **2 años**.  
+- Solo se permiten integraciones con **APIs públicas y seguras**.  
+- La aplicación debe funcionar en redes **3G, 4G, 5G y Wi-Fi**.  
+
+## Restricciones Organizacionales  
+- Cumplimiento estricto de normativas de protección de datos (**GDPR / Habeas Data**).  
+- Acceso a funcionalidades restringido por **roles definidos** (estudiante/empleado, docente/supervisor, administrador).  
+- Los reportes solo pueden ser consultados por **docentes, supervisores o administradores**.  
+- La arquitectura de software debe seguir principios de **Clean Architecture** y **microservicios**.  
+
+## Restricciones de Integración  
+- El backend debe exponer un **API REST documentado con Swagger/OpenAPI**.  
+- El consumo de la API debe limitarse a **1000 requests por minuto por usuario autenticado**.  
+- Toda integración externa debe pasar por **módulos autorizados y controlados**.  
+
+## Restricciones de Seguridad  
+- La autenticación debe implementarse con **JWT u OAuth2**.  
+- Los datos sensibles (contraseñas, tokens) deben almacenarse de forma **cifrada o hasheada (bcrypt, AES)**.  
+- Todos los accesos deben estar controlados por **roles y permisos definidos**.   
 
 # Alcance y Contexto del Sistema
+## 🎯 Alcance del Sistema  
+El sistema de **Toma de Asistencia** tiene como objetivo principal **digitalizar y automatizar el control de asistencia** en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.  
+
+### Funcionalidades dentro del alcance  
+- Registro de asistencia mediante **app móvil** (entrada y salida).  
+- Validación de asistencia mediante **GPS, Wi-Fi institucional, QR o NFC**.  
+- **Autenticación segura** con usuario/contraseña o SSO (Google/Microsoft).  
+- Gestión de **horarios, grupos, cursos, jornadas o turnos laborales**.  
+- Consulta y generación de **reportes individuales y grupales** en distintos formatos (Excel/PDF).  
+- **Notificaciones push** para recordatorios, retrasos e inasistencias.  
+- **Panel web administrativo** para gestión centralizada.  
+- Integración con sistemas académicos o de recursos humanos vía **API REST**.  
+
+### Funcionalidades fuera del alcance (MVP inicial)  
+- Reconocimiento facial o biometría avanzada.  
+- Integración con sistemas externos de nómina o pagos.  
+- Inteligencia artificial para predicción de ausentismo.  
+- Funcionalidades offline completas (solo cache limitado).  
+
+---
+
+## 🌍 Contexto del Sistema  
+
+### Actores principales  
+- **Estudiantes / Empleados** → Registran su asistencia desde la app móvil.  
+- **Docentes / Supervisores / Jefes** → Validan, consultan y gestionan asistencia.  
+- **Administradores** → Configuran horarios, grupos y usuarios.  
+- **Sistema (Backend + API)** → Procesa, valida y almacena la información de asistencia.  
+
+### Interacciones con el entorno  
+- **App móvil** (Android/iOS) → Punto de interacción principal para usuarios finales.  
+- **Panel Web** → Para administradores y supervisores que gestionan y consultan datos.  
+- **Base de datos centralizada** (PostgreSQL/MySQL) → Almacena usuarios, horarios y registros.  
+- **Servicios externos**:  
+  - **Firebase**: notificaciones push y autenticación opcional.  
+  - **Google Maps API**: validación de geolocalización.  
+- **Sistemas Académicos / RRHH**: Integración mediante **API REST**
 
 ## Contexto de Negocio
 
