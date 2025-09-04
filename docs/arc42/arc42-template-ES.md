@@ -18,36 +18,32 @@ Hruschka y Dr. Gernot Starke.
 ## Vista de Requerimientos
 
 ### 👤 Actores principales
-- **Estudiantes / Empleados** → Registran su asistencia.  
+- **Estudiantes / Empleados** → Registran su asistencia.
 - **Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
 - **Administradores** → Configuran horarios, grupos, usuarios y reglas.  
-- **Sistema (API / Backend)** → Valida, procesa y guarda los datos. 
+- **Sistema (API / Backend)** → Valida, procesa y guarda los datos.
 ---
 ### ✅ Requerimientos Funcionales
 1. **Registro de asistencia**
    - Marcar entrada y salida desde la app.  
-   - Validación por ubicación (GPS) o red Wi-Fi institucional.  
-   - Escaneo QR/NFC en el aula/empresa.  
+   - Validación por red Wi-Fi institucional.  
+   - Escaneo QR en el aula/empresa.  
 
 2. **Autenticación y autorización**
    - Login seguro con usuario/contraseña o SSO (Google/Microsoft).  
    - Roles: estudiante/empleado, docente/supervisor, administrador.  
 
-3. **Gestión de horarios y sesiones**
-   - Definir clases, jornadas laborales o turnos.  
-   - Asignar usuarios a grupos/materias/áreas.  
-
-4. **Reportes y consultas**
+3. **Reportes y consultas**
    - Historial de asistencia individual.  
    - Reportes por curso, grupo, departamento o periodo.  
    - Exportación a Excel/PDF.  
 
-5. **Notificaciones**
+4. **Notificaciones**
    - Alertas push para recordar marcar asistencia.  
    - Notificaciones de inasistencias o retrasos.  
 
-6. **Integraciones**
-   - API REST para conexión con sistemas académicos o de RRHH.  
+5. **Integraciones**
+   - API REST para conexión con sistemas académicos.  
    - Panel web admin para gestión centralizada.  
 ---
 ### ⚙️ Requerimientos No Funcionales
@@ -76,21 +72,17 @@ Hruschka y Dr. Gernot Starke.
 
 7. **Mantenibilidad**  
    - Código modular (Clean Architecture en app, microservicios en backend).  
-   - Documentación clara para integraciones.  
+   - Documentación clara para integraciones.
 ---
 ### 🏗️ Componentes de Arquitectura (Alto Nivel)
-- **App móvil (Flutter/React Native/Android+iOS nativo)**  
-  → UI, autenticación, geolocalización, escaneo QR/NFC, notificaciones.  
+- **App móvil (Flutter)**
+  → UI, autenticación,  escaneo QR, notificaciones.  
 
-- **API Gateway / Backend (FastAPI, Node.js, Spring Boot, etc.)**  
-  → Autenticación, lógica de negocio, validación de asistencia, conexión con DB.  
+- **API Gateway / Backend (ORACLE Apex)**  
+  → Autenticación, lógica de negocio, validación de asistencia, conexión con DB.
 
-- **Base de datos (PostgreSQL/MySQL + Redis para caché)**  
+- **Base de datos (Oracle Database)**  
   → Usuarios, horarios, registros de asistencia.  
-
-- **Servicios de terceros**  
-  → Firebase (notificaciones push, autenticación opcional).  
-  → Google Maps API (geolocalización).  
 
 - **Módulo de analítica y reportes**  
   → Generación de reportes, estadísticas, integración BI.
@@ -103,8 +95,6 @@ Hruschka y Dr. Gernot Starke.
 |-----------|----------------------------------|----------|--------------|
 | Profesor Titular | Jairo Enrique Serrano Castañeda  | [jserrano@utb.edu.co](mailto:jserrano@utb.edu.co) | Que la arquitectura de la API se integre eficientemente con la aplicación móvil, asegurando escalabilidad, seguridad y un rendimiento óptimo en dispositivos nativos. |
 | Ingeniero de Desarrollo TIC | Elian Andres Vega Hernandez      | [vegae@utb.edu.co](mailto:vegae@utb.edu.co) | Que la aplicación móvil facilite el acceso a los registros de asistencia de manera confiable y en tiempo real |
-
-
 
 # Restricciones de la Arquitectura 
 
