@@ -17,6 +17,84 @@ Hruschka y Dr. Gernot Starke.
 
 ## Vista de Requerimientos
 
+### 👤 Actores principales
+- **Estudiantes / Empleados** → Registran su asistencia.  
+- **Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
+- **Administradores** → Configuran horarios, grupos, usuarios y reglas.  
+- **Sistema (API / Backend)** → Valida, procesa y guarda los datos. 
+---
+### ✅ Requerimientos Funcionales
+1. **Registro de asistencia**
+   - Marcar entrada y salida desde la app.  
+   - Validación por ubicación (GPS) o red Wi-Fi institucional.  
+   - Escaneo QR/NFC en el aula/empresa.  
+
+2. **Autenticación y autorización**
+   - Login seguro con usuario/contraseña o SSO (Google/Microsoft).  
+   - Roles: estudiante/empleado, docente/supervisor, administrador.  
+
+3. **Gestión de horarios y sesiones**
+   - Definir clases, jornadas laborales o turnos.  
+   - Asignar usuarios a grupos/materias/áreas.  
+
+4. **Reportes y consultas**
+   - Historial de asistencia individual.  
+   - Reportes por curso, grupo, departamento o periodo.  
+   - Exportación a Excel/PDF.  
+
+5. **Notificaciones**
+   - Alertas push para recordar marcar asistencia.  
+   - Notificaciones de inasistencias o retrasos.  
+
+6. **Integraciones**
+   - API REST para conexión con sistemas académicos o de RRHH.  
+   - Panel web admin para gestión centralizada.  
+---
+### ⚙️ Requerimientos No Funcionales
+1. **Disponibilidad**  
+   - App y backend accesibles 24/7, con redundancia en servidores críticos.  
+
+2. **Escalabilidad**  
+   - Soporte para miles de usuarios concurrentes (universidades/empresas grandes).  
+
+3. **Seguridad**  
+   - Comunicación cifrada (HTTPS + TLS).  
+   - Tokens JWT / OAuth2 para sesiones seguras.  
+   - Protección de datos personales (GDPR / Habeas Data).  
+
+4. **Rendimiento**  
+   - Tiempo de respuesta < 2 segundos en operaciones comunes.  
+   - Manejo eficiente de reportes masivos.  
+
+5. **Portabilidad**  
+   - App disponible en **Android** y **iOS**.  
+   - Versión web opcional, compatible con navegadores modernos.  
+
+6. **Usabilidad**  
+   - Interfaz intuitiva, multilenguaje.  
+   - Accesible según normas WCAG.  
+
+7. **Mantenibilidad**  
+   - Código modular (Clean Architecture en app, microservicios en backend).  
+   - Documentación clara para integraciones.  
+---
+### 🏗️ Componentes de Arquitectura (Alto Nivel)
+- **App móvil (Flutter/React Native/Android+iOS nativo)**  
+  → UI, autenticación, geolocalización, escaneo QR/NFC, notificaciones.  
+
+- **API Gateway / Backend (FastAPI, Node.js, Spring Boot, etc.)**  
+  → Autenticación, lógica de negocio, validación de asistencia, conexión con DB.  
+
+- **Base de datos (PostgreSQL/MySQL + Redis para caché)**  
+  → Usuarios, horarios, registros de asistencia.  
+
+- **Servicios de terceros**  
+  → Firebase (notificaciones push, autenticación opcional).  
+  → Google Maps API (geolocalización).  
+
+- **Módulo de analítica y reportes**  
+  → Generación de reportes, estadísticas, integración BI.
+
 ## Metas de Calidad
 
 ## Partes interesadas (Stakeholders)
