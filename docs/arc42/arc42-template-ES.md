@@ -343,143 +343,71 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 
 ## Sistema General de Caja Blanca
 
-***\<Diagrama general>***
+Motivación:
 
-Motivación
+Bloques de construcción contenidos:
 
-:   *\<Explicación en texto>*
-
-Bloques de construcción contenidos
-
-:   *\<Desripción de los bloques de construcción contenidos (Cajas
-    negras)>*
-
-Interfases importantes
-
-:   *\<Descripción de las interfases importantes>*
+Interfases importantes:
 
 ### \<Caja Negra 1>
 
-*\<Propósito/Responsabilidad>*
-
-*\<Interfase(s)>*
-
-*\<(Opcional) Características de Calidad/Performance>*
-
-*\<(Opcional) Ubicación Archivo/Directorio>*
-
-*\<(Opcional) Requerimientos Satisfechos>*
-
-*\<(Opcional) Riesgos/Problemas/Incidentes Abiertos>*
-
 ### \<Caja Negra 2>
-
-*\<plantilla de caja negra>*
 
 ### \<Caja Negra N>
 
-*\<Plantilla de caja negra>*
-
 ### \<Interfase 1>
-
-...
-
-### \<Interfase m>
 
 ## Nivel 2 {#_nivel_2}
 
 ### Caja Blanca *\<bloque de construcción 1>*
 
-*\<plantilla de caja blanca>*
-
 ### Caja Blanca *\<bloque de construcción 2>*
-
-*\<plantilla de caja blanca>*
 
 ...
 
 ### Caja Blanca *\<bloque de construcción m>*
 
-*\<plantilla de caja blanca>*
 
 ## Nivel 3 {#_nivel_3}
 
 ### Caja Blanca \<\_bloque de construcción x.1\_\>
 
-*\<plantilla de caja blanca>*
-
 ### Caja Blanca \<\_bloque de construcción x.2\_\>
 
-*\<plantilla de caja blanca>*
 
 ### Caja Blanca \<\_bloque de construcción y.1\_\>
 
-*\<plantilla de caja blanca>*
 
 # Vista de Ejecución 
 
 ## \<Escenario de ejecución 1>
 
--   *\<Inserte un diagrama de ejecución o la descripción del escenario>*
-
--   *\<Inserte la descripción de aspectos notables de las interacciones
-    entre los bloques de construcción mostrados en este diagrama.\>*
-
 ## \<Escenario de ejecución 2>
 
-## ... {#_}
-
-## \<Escenario de ejecución n>
 
 # Vista de Despliegue
 
 ## Nivel de infraestructura 1
 
-***\<Diagrama General>***
+Motivación:
 
-Motivación
+Características de Calidad/Rendimiento:
 
-:   *\<Explicación en forma textual>*
-
-Características de Calidad/Rendimiento
-
-:   *\<Explicación en forma textual>*
-
-    Mapeo de los Bloques de Construcción a Infraestructura
-
-    :   *\<Descripción del mapeo>*
+Mapeo de los Bloques de Construcción a Infraestructura
 
 ## Nivel de Infraestructura 2
 
 ### *\<Elemento de Infraestructura 1>*
 
-*\<diagrama + explicación>*
 
 ### *\<Elemento de Infraestructura 2>*
-
-*\<diagrama + explicación>*
-
-...
-
-### *\<Elemento de Infraestructura n>*
-
-*\<diagrama + explicación>*
 
 # Conceptos Transversales (Cross-cutting)
 
 ## *\<Concepto 1>* {#__emphasis_concepto_1_emphasis}
 
-*\<explicación>*
-
 ## *\<Concepto 2>* {#__emphasis_concepto_2_emphasis}
 
-*\<explicación>*
-
-...
-
-## *\<Concepto n>* {#__emphasis_concepto_n_emphasis}
-
-*\<explicación>*
 
 # Decisiones de Diseño
 
@@ -495,6 +423,6 @@ Características de Calidad/Rendimiento
 
 | Término       | Definición      |
 |---------------|-----------------|
-| **<Término-1>** | *<definición-1>* |
-| **<Término-2>** | *<definición-2>* |
+| |  |
+| | |
 
