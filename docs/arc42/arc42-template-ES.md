@@ -14,68 +14,54 @@ Revisión de la plantilla: 7.0 ES (basada en asciidoc), Enero 2017
 arquitectura arc42, <https://www.arc42.org>. Creada por Dr. Peter
 Hruschka y Dr. Gernot Starke.
 
-# Introducción y Metas
+# 1. Introducción y Metas
+Este apartado describe los requisitos relevantes y las fuerzas impulsoras que los arquitectos de software y el equipo de desarrollo deben considerar. Incluye los **objetivos de negocio**, las **funcionalidades esenciales y requisitos funcionales del sistema**, los **objetivos de calidad de la arquitectura** y los **stakeholders con sus expectativas**. Estos serán los objetivos establecidos para este sistema:
 
-## Vista de Requerimientos
+| Priority | Descripción                                                                                                      |
+|----------|------------------------------------------------------------------------------------------------------------------|
+| 1        | Validar la funcionalidad básica de registro de asistencias desde una aplicación móvil con simplicidad y seguridad. |
+| 2        | Resolver los problemas de procesos manuales que generan errores, retrasos y falta de información centralizada.    |
+| 3        | Prevenir la suplantación o marcas falsas mediante validación de ubicación (GPS) o escaneo QR.                     |
+| 4        | Permitir autenticación básica de usuarios, gestión mínima de usuarios y horarios.                                |
+| 5        | Habilitar consultas de asistencia y generación de reportes simples en el backend.                                |
+| 6        | Incluir notificaciones básicas de recordatorio y alertas por ausencias o retrasos.                               |
+| 7        | Servir como base para recopilar retroalimentación de usuarios antes de escalar hacia una solución más robusta.   |
 
-### Actores principales
+
+## 1.2 Vista de Requerimientos
+
+### 1.2.1 Actores principales
 - **Estudiantes / Empleados** → Registran su asistencia.
 - **Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
 - **Administradores** → Configuran horarios, grupos, usuarios y reglas.  
 - **Sistema (API / Backend)** → Valida, procesa y guarda los datos.
 
-### Requerimientos Funcionales
-1. **Registro de asistencia**
-   - Marcar entrada y salida desde la app.  
-   - Validación por red Wi-Fi institucional.  
-   - Escaneo QR en el aula/empresa.  
+### 1.2.2 Requerimientos Funcionales
 
-2. **Autenticación y autorización**
-   - Login seguro con usuario/contraseña o SSO (Google/Microsoft).  
-   - Roles: estudiante/empleado, docente/supervisor, administrador.  
+| Id   | Requirement                 | Explanation                                                                 |
+|------|-----------------------------|-----------------------------------------------------------------------------|
+| RF1  | Registro de asistencia      | Permitir a los usuarios marcar entrada y salida desde la aplicación móvil. Validación por red Wi-Fi institucional o escaneo QR en el aula/empresa. |
+| RF2  | Autenticación y autorización| Acceso seguro mediante usuario/contraseña o SSO (Google/Microsoft). Manejo de roles: estudiante/empleado, docente/supervisor, administrador. |
+| RF3  | Reportes y consultas        | Generar historial de asistencia individual y reportes por curso, grupo, departamento o periodo. Posibilidad de exportación a Excel/PDF. |
+| RF4  | Notificaciones              | Enviar alertas push para recordar marcar asistencia y notificaciones de inasistencias o retrasos. |
+| RF5  | Integraciones               | Proveer API REST para conexión con sistemas académicos y panel web de administración centralizada. |
 
-3. **Reportes y consultas**
-   - Historial de asistencia individual.  
-   - Reportes por curso, grupo, departamento o periodo.  
-   - Exportación a Excel/PDF.  
+---
 
-4. **Notificaciones**
-   - Alertas push para recordar marcar asistencia.  
-   - Notificaciones de inasistencias o retrasos.  
+### 1.2.3 Requerimientos No Funcionales
 
-5. **Integraciones**
-   - API REST para conexión con sistemas académicos.  
-   - Panel web admin para gestión centralizada.  
+| Id   | Requirement       | Explanation                                                                 |
+|------|------------------|-----------------------------------------------------------------------------|
+| RNF1 | Disponibilidad   | El sistema debe estar disponible 24/7. Backend con redundancia en servidores críticos. |
+| RNF2 | Escalabilidad    | Soporte para miles de usuarios concurrentes (ejemplo: universidades grandes). |
+| RNF3 | Seguridad        | Comunicación cifrada (HTTPS + TLS). Tokens JWT / OAuth2. Cumplimiento de GDPR/Habeas Data. |
+| RNF4 | Rendimiento      | Tiempo de respuesta < 2 segundos en operaciones comunes. Manejo eficiente de reportes masivos. |
+| RNF5 | Portabilidad     | App disponible en Android e iOS. Versión web compatible con navegadores modernos. |
+| RNF6 | Usabilidad       | Interfaz intuitiva, multilenguaje y accesible según normas WCAG. |
+| RNF7 | Mantenibilidad   | Código modular (Clean Architecture, microservicios). Documentación clara para integraciones. |
 
-### Requerimientos No Funcionales
-1. **Disponibilidad**  
-   - App y backend accesibles 24/7, con redundancia en servidores críticos.  
 
-2. **Escalabilidad**  
-   - Soporte para miles de usuarios concurrentes (universidades/empresas grandes).  
-
-3. **Seguridad**  
-   - Comunicación cifrada (HTTPS + TLS).  
-   - Tokens JWT / OAuth2 para sesiones seguras.  
-   - Protección de datos personales (GDPR / Habeas Data).  
-
-4. **Rendimiento**  
-   - Tiempo de respuesta < 2 segundos en operaciones comunes.  
-   - Manejo eficiente de reportes masivos.  
-
-5. **Portabilidad**  
-   - App disponible en **Android** y **iOS**.  
-   - Versión web opcional, compatible con navegadores modernos.  
-
-6. **Usabilidad**  
-   - Interfaz intuitiva, multilenguaje.  
-   - Accesible según normas WCAG.  
-
-7. **Mantenibilidad**  
-   - Código modular (Clean Architecture en app, microservicios en backend).  
-   - Documentación clara para integraciones.
-
-### Componentes de Arquitectura (Alto Nivel)
+### 1.2.4 Componentes de Arquitectura (Alto Nivel)
 - **App móvil (Flutter)**
   → UI, autenticación,  escaneo QR, notificaciones.  
 
@@ -88,41 +74,20 @@ Hruschka y Dr. Gernot Starke.
 - **Módulo de analítica y reportes**  
   → Generación de reportes, estadísticas
 
-## Metas de Calidad
+## 1.3 Metas de Calidad
 
-### 1. Disponibilidad  
-- Garantizar **99.5% de disponibilidad** del sistema (24/7).  
+| ID    | Meta de Calidad | Descripción                                                                                          | Prioridad |
+|-------|-----------------|------------------------------------------------------------------------------------------------------|-----------|
+| 1.3.1 | Disponibilidad  | Garantizar **99.5% de disponibilidad** del sistema (24/7).                                           | Alta      |
+| 1.3.2 | Escalabilidad   | Soportar al menos **5.000 usuarios concurrentes** en la fase inicial.                                | Alta      |
+| 1.3.3 | Seguridad       | Comunicación cifrada con **HTTPS + TLS 1.3**. Autenticación con **JWT / OAuth2**. Cumplimiento de **GDPR / Habeas Data**. | Alta      |
+| 1.3.4 | Rendimiento     | Tiempo de respuesta promedio **< 2 segundos** en registros y consultas. Reportes masivos en **< 30 segundos**. | Alta      |
+| 1.3.5 | Portabilidad    | Aplicación disponible en **Android** y **iOS**.                                                      | Media     |
+| 1.3.6 | Usabilidad      | Interfaz intuitiva, curva de aprendizaje **< 10 min**. Soporte **multilenguaje (ES/EN)**. Cumplimiento de **WCAG 2.1**. | Alta      |
+| 1.3.7 | Mantenibilidad  | Arquitectura modular (**Clean Architecture / Microservicios**). Documentación técnica actualizada. | Media     |
+| 1.3.8 | Confiabilidad   | Garantizar que el **99% de registros de asistencia** se procesen sin pérdida de datos. Respaldo automático de la base de datos cada **24h**. | Alta      |
 
-### 2. Escalabilidad  
-- Soportar al menos **5.000 usuarios concurrentes** en la fase inicial.  
-
-### 3. Seguridad  
-- Toda la comunicación cifrada bajo **HTTPS + TLS 1.3**.  
-- Uso de **JWT / OAuth2** para autenticación segura.  
-- Cumplimiento de normativas de protección de datos (**GDPR / Habeas Data**).  
-
-### 4. Rendimiento  
-- Tiempo de respuesta promedio: **< 2 segundos** en operaciones de registro y consulta.  
-- Procesamiento de reportes masivos en menos de **30 segundos**.  
-
-### 5. Portabilidad  
-- Aplicación disponible en **Android** y **iOS**.  
-
-### 6. Usabilidad  
-- Interfaz intuitiva con curva de aprendizaje de máximo **10 minutos** para nuevos usuarios.  
-- Soporte **multilenguaje (mínimo: Español e Inglés)**.  
-- Cumplimiento de normas **WCAG 2.1** para accesibilidad.  
-
-### 7. Mantenibilidad  
-- Arquitectura modular con separación de capas (**Clean Architecture / Microservicios**).  
-- Documentación técnica disponible y actualizada en repositorio.  
-- Tasa de resolución de incidencias críticas en **< 48 horas**.  
-
-### 8. Confiabilidad  
-- El sistema debe garantizar que **el 99% de los registros de asistencia** sean procesados sin pérdida de datos.  
-- Mecanismos de respaldo automático de la base de datos cada **24 horas**.  
-
-## Partes interesadas (Stakeholders)
+## 1.4 Partes interesadas (Stakeholders)
 
 | Rol       | Nombre completo                  | Contacto | Expectativas |
 |-----------|----------------------------------|----------|--------------|
@@ -131,43 +96,43 @@ Hruschka y Dr. Gernot Starke.
 
 ---
 
-# Restricciones de la Arquitectura 
-## Restricciones Tecnológicas  
+# 2. Restricciones de la Arquitectura 
+## 2.1 Restricciones Tecnológicas  
 - La app debe desarrollarse en **Flutter** para asegurar compatibilidad en Android e iOS.  
 - El backend debe implementarse en **ORACLE Apex**, priorizando escalabilidad y modularidad.  
 - La base de datos debe ser **Oracle**, con **Redis** como caché para optimizar el rendimiento.  
 - Toda comunicación debe realizarse mediante **HTTPS/TLS**.  
 
-## Restricciones Operativas  
+## 2.2 Restricciones Operativas  
 - El sistema debe estar disponible **24/7**, con un máximo de **3 horas de inactividad mensual**.  
 - Los registros de asistencia deben conservarse por un período mínimo de **2 años**.  
 - Solo se permiten integraciones con **APIs públicas y seguras**.  
 - La aplicación debe funcionar en redes **3G, 4G, 5G y Wi-Fi**.  
 
-## Restricciones Organizacionales  
+## 2.3 Restricciones Organizacionales  
 - Cumplimiento estricto de normativas de protección de datos (**GDPR / Habeas Data**).  
 - Acceso a funcionalidades restringido por **roles definidos** (estudiante/empleado, docente/supervisor, administrador).  
 - Los reportes solo pueden ser consultados por **docentes, supervisores o administradores**.  
 - La arquitectura de software debe seguir principios de **Clean Architecture** y **microservicios**.  
 
-## Restricciones de Integración  
+## 2.4 Restricciones de Integración  
 - El backend debe exponer un **API REST documentado con Swagger/OpenAPI**.  
 - El consumo de la API debe limitarse a **1000 requests por minuto por usuario autenticado**.  
 - Toda integración externa debe pasar por **módulos autorizados y controlados**.  
 
-## Restricciones de Seguridad  
+## 2.5 Restricciones de Seguridad  
 - La autenticación debe implementarse con **JWT u OAuth2**.  
 - Los datos sensibles (contraseñas, tokens) deben almacenarse de forma **cifrada o hasheada (bcrypt, AES)**.  
 - Todos los accesos deben estar controlados por **roles y permisos definidos**.   
 
 ---
 
-# Alcance y Contexto del Sistema
+# 3. Alcance y Contexto del Sistema
 
-## Alcance del Sistema  
-El sistema de **Toma de Asistencia** tiene como objetivo principal **digitalizar y automatizar el control de asistencia** en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.  
+## 3.1 Alcance del Sistema  
+El sistema de **Control de Asistencia** tiene como objetivo principal **digitalizar y automatizar el control de asistencia** en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.  
 
-### Funcionalidades dentro del alcance  
+### 3.1.1 Funcionalidades dentro del alcance  
 - Registro de asistencia mediante **app móvil** (entrada y salida).  
 - Validación de asistencia mediante **QR**.  
 - **Autenticación segura** con usuario/contraseña o SSO (Google/Microsoft).  
@@ -176,25 +141,25 @@ El sistema de **Toma de Asistencia** tiene como objetivo principal **digitalizar
 - **Notificaciones push** para recordatorios, retrasos e inasistencias.  
 - **Panel web administrativo** para gestión centralizada. 
 
-### Funcionalidades fuera del alcance (MVP inicial)  
+### 3.1.2 Funcionalidades fuera del alcance (MVP inicial)  
 - Reconocimiento facial o biometría avanzada
 - Inteligencia artificial para predicción de ausentismo.  
 - Funcionalidades offline completas (solo cache limitado).  
 
-## Contexto del Sistema  
+## 3.2 Contexto del Sistema  
 
-### Actores principales  
+### 3.2.1 Actores principales  
 - **Estudiantes / Empleados** → Registran su asistencia desde la app móvil.  
 - **Docentes / Supervisores / Jefes** → Validan, consultan y gestionan asistencia.  
 - **Administradores** → Configuran horarios, grupos y usuarios.  
 - **Sistema (Backend + API)** → Procesa, valida y almacena la información de asistencia.  
 
-### Interacciones con el entorno  
+### 3.2.2 Interacciones con el entorno  
 - **App móvil** (Android/iOS) → Punto de interacción principal para usuarios finales.  
 - **Panel Web** → Para administradores y supervisores que gestionan y consultan datos.  
 - **Base de datos centralizada** (Oracle) → Almacena usuarios, horarios y registros.
 
-## Contexto de Negocio
+## 3.3 Contexto de Negocio
 
 El sistema de **Toma de Asistencia** busca digitalizar y automatizar el proceso de registro y control de asistencia en instituciones educativas y organizaciones.  
 El modelo de negocio contempla tres tipos de actores principales:  
@@ -215,7 +180,7 @@ flowchart TD
     C -->|📊 Reportes / Datos| F[📂 Sistemas Académicos / RRHH]
 ```
 
-## Contexto Técnico
+## 3.4 Contexto Técnico
 
 El sistema se compone de los siguientes elementos:  
 
@@ -225,7 +190,7 @@ El sistema se compone de los siguientes elementos:
 - **Base de Datos SQL (Oracle)**: almacenamiento principal de usuarios, horarios y registros de asistencia.  
 - **Redis**: soporte para cache y consultas rápidas.
 
-### Mapeo de Entrada/Salida a Canales  
+### 3.4.1 Mapeo de Entrada/Salida a Canales  
 
 #### Entradas  
 - Desde **App Móvil**: registro de asistencia (QR), login seguro.  
@@ -250,18 +215,18 @@ flowchart TD
   N -->|🌍 Geolocalización| Q[(Google Maps API)]
 ```
 
-# Estrategia de solución
+# 4. Estrategia de solución
 
-## Objetivo
+## 4.1 Objetivos
 Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencias desde App Móvil para garantizar:
 - Disponibilidad
 - Seguridad
 - Escalabilidad
 - Rendimiento
 
-## Lineamientos Estratégicos
+## 4.2 Lineamientos Estratégicos
 
-### 1. Arquitectura Basada en Servicios
+### 4.2.1. Arquitectura Basada en Servicios
 - Modularización del sistema:
   - Captura de Asistencia (App móvil)
   - Gestión de Usuarios y Roles
@@ -272,14 +237,14 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 
 ---
 
-### 2. Interfaz de Usuario (App Móvil)
+### 4.2.2 Interfaz de Usuario (App Móvil)
 - Aplicación híbrida (Flutter).
 - Funcionalidad offline con sincronización en línea.
 - Autenticación segura mediante JWT u OAuth 2.0.
 
 ---
 
-### 3. Comunicación y Backend
+### 4.2.3 Comunicación y Backend
 - API RESTful para validación y procesamiento de datos.
 - Backend ligero (Oracle Apex).
 - Control de accesos basado en roles (RBAC).
@@ -287,38 +252,38 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 
 ---
 
-### 4. Gestión de Datos
+### 4.2.4 Gestión de Datos
 - Base de datos relacional (Oracle).
 - Cacheo con Redis para mejorar rendimiento.
 - Almacenamiento histórico de asistencia con trazabilidad.
 
 ---
 
-### 5. Seguridad
+### 4.2.5 Seguridad
 - Encriptación en tránsito (HTTPS + TLS).
 - Autenticación con tokens JWT.
 - Cumplimiento con normativas de protección de datos.
 
 ---
 
-### 6. Integración con Sistemas Externos
+### 4.2.6 Integración con Sistemas Externos
 - Reportes automáticos en PDF / Excel.
 
 ---
 
-### 7. Infraestructura
+### 4.2.7 Infraestructura
 - Despliegue con contenedores Docker.
 - Despliegue en la nube (AWS, Azure, GCP) o en servidores locales.
 - Balanceadores de carga para asegurar disponibilidad.
 
 ---
 
-### 8. Monitoreo y Observabilidad
+### 4.2.8 Monitoreo y Observabilidad
 - Métricas con Prometheus + Grafana.
 
 ---
 
-## Decisiones Arquitectónicas
+## 4.3 Decisiones Arquitectónicas
 - Arquitectura modular con servicios desacoplados.
 - Uso de tecnologías ligeras y escalables (Oracle Apex, Flutter).
 - Base de datos relacional con soporte a integridad y relaciones complejas.
@@ -326,14 +291,44 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 
 ---
 
-## Trade-offs
+## 4.4 Trade-offs
 - **Microservicios vs Monolito:** Se inicia con servicios modulares (menor complejidad) con visión futura hacia microservicios completos.
 - **Infraestructura en la nube vs on-premise:** Dependerá del presupuesto y políticas de la institución.
 - **Funcionalidad offline:** Aumenta complejidad técnica pero garantiza continuidad del servicio.
 
 ---
 
-## Riesgos Potenciales
+## 4.5 Riesgos Potenciales
 - Gestión de seguridad y privacidad de datos sensibles.
 - Complejidad en el mantenimiento de sincronización offline/online.
 - Escalabilidad limitada si no se implementa orquestación adecuada en fases iniciales.
+
+# 5. Vista de Bloques
+
+## 5.1 Sistema General de Caja Blanca
+
+# 6. Vista de Ejecución
+
+# 7. Vista de Despliegue
+
+# 8. Conceptos Transversales (Cross-cutting)
+
+# 9. Decisiones de Diseño
+
+# 10. Requerimientos de Calidad
+
+## 10.1 Árbol de Calidad
+
+## 10.2 Escenarios de calidad
+
+# 11. Riesgos y deuda técnica
+
+# 12. Glosario
+
++-----------------------+-----------------------------------------------+
+| Término               | Definición                                    |
++=======================+===============================================+
+|        |                              |
++-----------------------+-----------------------------------------------+
+|        |                          |
++-----------------------+-----------------------------------------------+
