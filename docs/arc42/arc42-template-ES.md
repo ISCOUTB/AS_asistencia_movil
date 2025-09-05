@@ -1,4 +1,4 @@
-!(/docs/images/arc42-logo.png)
+   !(/docs/images/arc42-logo.png)
 
 **Acerca de arc42**
 
@@ -105,7 +105,7 @@ Hruschka y Dr. Gernot Starke.
 - Procesamiento de reportes masivos en menos de **30 segundos**.  
 
 ### 5. Portabilidad  
-- Aplicación disponible en **Android ** y **iOS**.  
+- Aplicación disponible en **Android** y **iOS**.  
 
 ### 6. Usabilidad  
 - Interfaz intuitiva con curva de aprendizaje de máximo **10 minutos** para nuevos usuarios.  
@@ -212,6 +212,7 @@ flowchart TD
 
     B -->|Procesa y valida| C[🖥️ Backend / API]
     C -->|📊 Reportes / Datos| F[📂 Sistemas Académicos / RRHH]
+```
 
 ## Contexto Técnico
 
@@ -223,7 +224,7 @@ El sistema se compone de los siguientes elementos:
 - **Base de Datos SQL (Oracle)**: almacenamiento principal de usuarios, horarios y registros de asistencia.  
 - **Redis**: soporte para cache y consultas rápidas.
 
-### 📥📤 Mapeo de Entrada/Salida a Canales  
+### Mapeo de Entrada/Salida a Canales  
 
 #### Entradas  
 - Desde **App Móvil**: registro de asistencia (QR), login seguro.  
@@ -238,6 +239,15 @@ El sistema se compone de los siguientes elementos:
 #### Salidas  
 - Hacia **App Móvil**: confirmación de asistencia registrada, historial individual y notificaciones push.  
 - Hacia **Panel Web**: reportes en PDF/Excel, estadísticas y gestión de datos.  
+
+```mermaid
+flowchart TD
+  M[📱 App Móvil] -->|API REST| N[🌐 Backend / API Gateway]
+  W[💻 Panel Web Admin] -->|Gestión de usuarios/horarios| N
+  N -->|📂 CRUD Asistencia| O[(🗄️ Base de Datos)]
+  N -->|🔔 Notificaciones| P[(Firebase/Push Service)]
+  N -->|🌍 Geolocalización| Q[(Google Maps API)]
+```
 
 # Estrategia de solución
 
