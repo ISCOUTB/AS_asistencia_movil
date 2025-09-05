@@ -16,12 +16,13 @@ Hruschka y Dr. Gernot Starke.
 # Introducción y Metas
 
 ## Vista de Requerimientos
+
 ### Actores principales
 - **Estudiantes / Empleados** → Registran su asistencia.
 - **Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
 - **Administradores** → Configuran horarios, grupos, usuarios y reglas.  
 - **Sistema (API / Backend)** → Valida, procesa y guarda los datos.
----
+
 ### Requerimientos Funcionales
 1. **Registro de asistencia**
    - Marcar entrada y salida desde la app.  
@@ -44,7 +45,7 @@ Hruschka y Dr. Gernot Starke.
 5. **Integraciones**
    - API REST para conexión con sistemas académicos.  
    - Panel web admin para gestión centralizada.  
----
+
 ### Requerimientos No Funcionales
 1. **Disponibilidad**  
    - App y backend accesibles 24/7, con redundancia en servidores críticos.  
@@ -72,7 +73,7 @@ Hruschka y Dr. Gernot Starke.
 7. **Mantenibilidad**  
    - Código modular (Clean Architecture en app, microservicios en backend).  
    - Documentación clara para integraciones.
----
+
 ### Componentes de Arquitectura (Alto Nivel)
 - **App móvil (Flutter)**
   → UI, autenticación,  escaneo QR, notificaciones.  
@@ -87,38 +88,38 @@ Hruschka y Dr. Gernot Starke.
   → Generación de reportes, estadísticas
 
 ## Metas de Calidad
+
 ### 1. Disponibilidad  
 - Garantizar **99.5% de disponibilidad** del sistema (24/7).  
----
+
 ### 2. Escalabilidad  
 - Soportar al menos **5.000 usuarios concurrentes** en la fase inicial.  
----
+
 ### 3. Seguridad  
 - Toda la comunicación cifrada bajo **HTTPS + TLS 1.3**.  
 - Uso de **JWT / OAuth2** para autenticación segura.  
 - Cumplimiento de normativas de protección de datos (**GDPR / Habeas Data**).  
----
+
 ### 4. Rendimiento  
 - Tiempo de respuesta promedio: **< 2 segundos** en operaciones de registro y consulta.  
 - Procesamiento de reportes masivos en menos de **30 segundos**.  
----
+
 ### 5. Portabilidad  
 - Aplicación disponible en **Android ** y **iOS**.  
----
+
 ### 6. Usabilidad  
 - Interfaz intuitiva con curva de aprendizaje de máximo **10 minutos** para nuevos usuarios.  
 - Soporte **multilenguaje (mínimo: Español e Inglés)**.  
 - Cumplimiento de normas **WCAG 2.1** para accesibilidad.  
----
+
 ### 7. Mantenibilidad  
 - Arquitectura modular con separación de capas (**Clean Architecture / Microservicios**).  
 - Documentación técnica disponible y actualizada en repositorio.  
 - Tasa de resolución de incidencias críticas en **< 48 horas**.  
----
+
 ### 8. Confiabilidad  
 - El sistema debe garantizar que **el 99% de los registros de asistencia** sean procesados sin pérdida de datos.  
 - Mecanismos de respaldo automático de la base de datos cada **24 horas**.  
----
 
 ## Partes interesadas (Stakeholders)
 
@@ -126,6 +127,8 @@ Hruschka y Dr. Gernot Starke.
 |-----------|----------------------------------|----------|--------------|
 | Profesor Titular | Jairo Enrique Serrano Castañeda  | [jserrano@utb.edu.co](mailto:jserrano@utb.edu.co) | Que la arquitectura de la API se integre eficientemente con la aplicación móvil, asegurando escalabilidad, seguridad y un rendimiento óptimo en dispositivos nativos. |
 | Ingeniero de Desarrollo TIC | Elian Andres Vega Hernandez      | [vegae@utb.edu.co](mailto:vegae@utb.edu.co) | Que la aplicación móvil facilite el acceso a los registros de asistencia de manera confiable y en tiempo real |
+
+---
 
 # Restricciones de la Arquitectura 
 ## Restricciones Tecnológicas  
@@ -156,7 +159,10 @@ Hruschka y Dr. Gernot Starke.
 - Los datos sensibles (contraseñas, tokens) deben almacenarse de forma **cifrada o hasheada (bcrypt, AES)**.  
 - Todos los accesos deben estar controlados por **roles y permisos definidos**.   
 
+---
+
 # Alcance y Contexto del Sistema
+
 ## Alcance del Sistema  
 El sistema de **Toma de Asistencia** tiene como objetivo principal **digitalizar y automatizar el control de asistencia** en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.  
 
@@ -173,8 +179,6 @@ El sistema de **Toma de Asistencia** tiene como objetivo principal **digitalizar
 - Reconocimiento facial o biometría avanzada
 - Inteligencia artificial para predicción de ausentismo.  
 - Funcionalidades offline completas (solo cache limitado).  
-
----
 
 ## Contexto del Sistema  
 
@@ -198,8 +202,9 @@ El modelo de negocio contempla tres tipos de actores principales:
 - **Docentes / Supervisores**: consultan y validan la asistencia en tiempo real desde la app móvil o un panel web.  
 - **Administradores**: gestionan usuarios, horarios, grupos y reglas de asistencia a través de un panel web.  
 
-Además, el sistema debe integrarse con **sistemas académicos y de recursos humanos**, permitiendo exportar registros y sincronizar información con otras plataformas.  
+Además, el sistema debe integrarse con **sistemas académicos y de recursos humanos**, permitiendo exportar registros y sincronizar información con otras plataformas.
 
+```mermaid
 flowchart TD
     A[👤 Estudiantes / Empleados] -->|Registrar asistencia| B[📱 App Móvil]
     D[👨‍🏫 Docentes / Supervisores] -->|Validar / Consultar| B
