@@ -1,4 +1,4 @@
-# /docs/images/arc42-logo.png
+!(/docs/images/arc42-logo.png)
 
 **Acerca de arc42**
 
@@ -157,28 +157,26 @@ Hruschka y Dr. Gernot Starke.
 - Todos los accesos deben estar controlados por **roles y permisos definidos**.   
 
 # Alcance y Contexto del Sistema
-## 🎯 Alcance del Sistema  
+## Alcance del Sistema  
 El sistema de **Toma de Asistencia** tiene como objetivo principal **digitalizar y automatizar el control de asistencia** en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.  
 
 ### Funcionalidades dentro del alcance  
 - Registro de asistencia mediante **app móvil** (entrada y salida).  
-- Validación de asistencia mediante **GPS, Wi-Fi institucional, QR o NFC**.  
+- Validación de asistencia mediante **QR**.  
 - **Autenticación segura** con usuario/contraseña o SSO (Google/Microsoft).  
-- Gestión de **horarios, grupos, cursos, jornadas o turnos laborales**.  
+- Gestión de **horarios, grupos, cursos, jornadas**.  
 - Consulta y generación de **reportes individuales y grupales** en distintos formatos (Excel/PDF).  
 - **Notificaciones push** para recordatorios, retrasos e inasistencias.  
-- **Panel web administrativo** para gestión centralizada.  
-- Integración con sistemas académicos o de recursos humanos vía **API REST**.  
+- **Panel web administrativo** para gestión centralizada. 
 
 ### Funcionalidades fuera del alcance (MVP inicial)  
-- Reconocimiento facial o biometría avanzada.  
-- Integración con sistemas externos de nómina o pagos.  
+- Reconocimiento facial o biometría avanzada
 - Inteligencia artificial para predicción de ausentismo.  
 - Funcionalidades offline completas (solo cache limitado).  
 
 ---
 
-## 🌍 Contexto del Sistema  
+## Contexto del Sistema  
 
 ### Actores principales  
 - **Estudiantes / Empleados** → Registran su asistencia desde la app móvil.  
@@ -189,25 +187,52 @@ El sistema de **Toma de Asistencia** tiene como objetivo principal **digitalizar
 ### Interacciones con el entorno  
 - **App móvil** (Android/iOS) → Punto de interacción principal para usuarios finales.  
 - **Panel Web** → Para administradores y supervisores que gestionan y consultan datos.  
-- **Base de datos centralizada** (PostgreSQL/MySQL) → Almacena usuarios, horarios y registros.  
-- **Servicios externos**:  
-  - **Firebase**: notificaciones push y autenticación opcional.  
-  - **Google Maps API**: validación de geolocalización.  
-- **Sistemas Académicos / RRHH**: Integración mediante **API REST**
+- **Base de datos centralizada** (Oracle) → Almacena usuarios, horarios y registros.
 
 ## Contexto de Negocio
 
-**\<Diagrama o Tabla>**
+El sistema de **Toma de Asistencia** busca digitalizar y automatizar el proceso de registro y control de asistencia en instituciones educativas y organizaciones.  
+El modelo de negocio contempla tres tipos de actores principales:  
 
-**\<optionally: Explanation of external domain interfaces>**
+- **Estudiantes / Empleados**: registran su asistencia mediante la aplicación móvil, usando mecanismos como GPS, QR, NFC o Wi-Fi institucional.  
+- **Docentes / Supervisores**: consultan y validan la asistencia en tiempo real desde la app móvil o un panel web.  
+- **Administradores**: gestionan usuarios, horarios, grupos y reglas de asistencia a través de un panel web.  
+
+Además, el sistema debe integrarse con **sistemas académicos y de recursos humanos**, permitiendo exportar registros y sincronizar información con otras plataformas.  
+
+flowchart TD
+    A[👤 Estudiantes / Empleados] -->|Registrar asistencia| B[📱 App Móvil]
+    D[👨‍🏫 Docentes / Supervisores] -->|Validar / Consultar| B
+    E[⚙️ Administradores] -->|Configurar horarios / usuarios| B
+
+    B -->|Procesa y valida| C[🖥️ Backend / API]
+    C -->|📊 Reportes / Datos| F[📂 Sistemas Académicos / RRHH]
 
 ## Contexto Técnico
 
-**\<Diagrama o Tabla>**
+El sistema se compone de los siguientes elementos:  
 
-**\<Opcional: Explicación de las interfases técnicas>**
+- **App Móvil (Android/iOS)**: punto de interacción principal para estudiantes y empleados, que permite el registro de asistencia y la consulta de historial.  
+- **Panel Web**: herramienta administrativa para la gestión de usuarios, horarios y generación de reportes.  
+- **Backend / API Gateway**: núcleo de la lógica de negocio, encargado de procesar registros, validar condiciones y exponer APIs REST seguras.  
+- **Base de Datos SQL (Oracle)**: almacenamiento principal de usuarios, horarios y registros de asistencia.  
+- **Redis**: soporte para cache y consultas rápidas.
 
-**\<Mapeo de Entrada/Salida a canales>**
+### 📥📤 Mapeo de Entrada/Salida a Canales  
+
+#### Entradas  
+- Desde **App Móvil**: registro de asistencia (QR), login seguro.  
+- Desde **Panel Web**: gestión de usuarios, horarios, grupos y reportes.  
+
+#### Procesamiento  
+- Validación de identidad y autenticación.  
+- Aplicación de reglas de negocio (asistencia válida, tardanza, ausencia).  
+- Almacenamiento en base de datos.  
+- Uso de cache con Redis para optimizar consultas.  
+
+#### Salidas  
+- Hacia **App Móvil**: confirmación de asistencia registrada, historial individual y notificaciones push.  
+- Hacia **Panel Web**: reportes en PDF/Excel, estadísticas y gestión de datos.  
 
 # Estrategia de solución
 
