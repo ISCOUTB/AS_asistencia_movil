@@ -422,7 +422,7 @@ Mapeo de los Bloques de Construcción a Infraestructura
 # Glosario
 
 | Término       | Definición      |
-|---------------|-----------------|
+|---------------|-----------------| 
 | |  |
 | | |
 
