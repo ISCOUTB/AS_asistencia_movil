@@ -252,6 +252,93 @@ flowchart TD
 
 # Estrategia de solución
 
+## Objetivo
+Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencias desde App Móvil para garantizar:
+- Disponibilidad
+- Seguridad
+- Escalabilidad
+- Rendimiento
+
+## Lineamientos Estratégicos
+
+### 1. Arquitectura Basada en Servicios
+- Modularización del sistema:
+  - Captura de Asistencia (App móvil)
+  - Gestión de Usuarios y Roles
+  - Gestión de Horarios y Sesiones
+  - API Backend de Validación y Procesamiento
+  - Reportes y Analítica
+- Beneficios: escalabilidad, mantenibilidad y separación de responsabilidades.
+
+---
+
+### 2. Interfaz de Usuario (App Móvil)
+- Aplicación híbrida (Flutter).
+- Funcionalidad offline con sincronización en línea.
+- Autenticación segura mediante JWT u OAuth 2.0.
+
+---
+
+### 3. Comunicación y Backend
+- API RESTful para validación y procesamiento de datos.
+- Backend ligero (Oracle Apex).
+- Control de accesos basado en roles (RBAC).
+- Validaciones de integridad en tiempo real.
+
+---
+
+### 4. Gestión de Datos
+- Base de datos relacional (Oracle).
+- Cacheo con Redis para mejorar rendimiento.
+- Almacenamiento histórico de asistencia con trazabilidad.
+
+---
+
+### 5. Seguridad
+- Encriptación en tránsito (HTTPS + TLS).
+- Autenticación con tokens JWT.
+- Cumplimiento con normativas de protección de datos.
+
+---
+
+### 6. Integración con Sistemas Externos
+- Reportes automáticos en PDF / Excel.
+
+---
+
+### 7. Infraestructura
+- Despliegue con contenedores Docker.
+- Despliegue en la nube (AWS, Azure, GCP) o en servidores locales.
+- Balanceadores de carga para asegurar disponibilidad.
+
+---
+
+### 8. Monitoreo y Observabilidad
+- Métricas con Prometheus + Grafana.
+
+---
+
+## Decisiones Arquitectónicas
+- Arquitectura modular con servicios desacoplados.
+- Uso de tecnologías ligeras y escalables (Oracle Apex, Flutter).
+- Base de datos relacional con soporte a integridad y relaciones complejas.
+- Seguridad como prioridad en autenticación, cifrado y auditoría.
+
+---
+
+## Trade-offs
+- **Microservicios vs Monolito:** Se inicia con servicios modulares (menor complejidad) con visión futura hacia microservicios completos.
+- **Infraestructura en la nube vs on-premise:** Dependerá del presupuesto y políticas de la institución.
+- **Funcionalidad offline:** Aumenta complejidad técnica pero garantiza continuidad del servicio.
+
+---
+
+## Riesgos Potenciales
+- Gestión de seguridad y privacidad de datos sensibles.
+- Complejidad en el mantenimiento de sincronización offline/online.
+- Escalabilidad limitada si no se implementa orquestación adecuada en fases iniciales.
+
+---
 # Vista de Bloques
 
 ## Sistema General de Caja Blanca
