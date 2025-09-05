@@ -316,10 +316,39 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 # 9. Decisiones de Diseño
 
 # 10. Requerimientos de Calidad
+## 10.1 Quality Goals
 
-## 10.1 Árbol de Calidad
+| Meta de Calidad   | Descripción                                                                 | Prioridad |
+|-------------------|-----------------------------------------------------------------------------|-----------|
+| Seguridad         | Garantizar que los datos de asistencia estén protegidos mediante cifrado y autenticación segura. | Alta |
+| Rendimiento       | El sistema debe responder rápidamente a los registros y consultas (<2s promedio). | Alta |
+| Usabilidad        | La aplicación móvil debe ser intuitiva y sencilla para estudiantes y docentes. | Alta |
+| Mantenibilidad    | El sistema debe ser fácil de extender (ej. agregar biometría o nuevos reportes). | Media |
+| Disponibilidad    | El sistema debe estar disponible al menos el 99% del tiempo lectivo.        | Alta |
+| Portabilidad      | El sistema debe funcionar en dispositivos Android, iOS y navegadores modernos. | Media |
 
-## 10.2 Escenarios de calidad
+## 10.2 Escenarios de Calidad
+
+| ID     | Descripción                                                                                          |
+|--------|------------------------------------------------------------------------------------------------------|
+| 10.2.1 | El sistema deberá garantizar **99.5% de disponibilidad** midiendo el uptime mensual del servicio.     |
+| 10.2.2 | La plataforma debe escalar horizontalmente para soportar **5.000 usuarios concurrentes** sin degradar el rendimiento. |
+| 10.2.3 | Toda comunicación entre cliente y servidor deberá estar cifrada bajo **HTTPS + TLS 1.3**.             |
+| 10.2.4 | El backend deberá validar autenticación mediante **JWT / OAuth2** en cada solicitud de usuario.       |
+| 10.2.5 | El sistema deberá cumplir con regulaciones de protección de datos (**GDPR / Habeas Data**).           |
+| 10.2.6 | El tiempo promedio de respuesta para operaciones de registro y consulta será **< 2 segundos**.        |
+| 10.2.7 | La generación de reportes masivos deberá completarse en menos de **30 segundos**.                     |
+| 10.2.8 | La aplicación móvil deberá estar disponible en **Android** y **iOS** desde el MVP.                    |
+| 10.2.9 | La interfaz deberá permitir que un nuevo usuario aprenda a usarla en máximo **10 minutos**.           |
+| 10.2.10| El sistema deberá ofrecer **soporte multilenguaje (mínimo ES/EN)** desde la interfaz principal.       |
+| 10.2.11| La aplicación deberá cumplir con los lineamientos de accesibilidad **WCAG 2.1**.                      |
+| 10.2.12| El sistema deberá estar diseñado en **arquitectura modular (Clean / Microservicios)** para facilitar mantenibilidad. |
+| 10.2.13| La documentación técnica deberá mantenerse actualizada en el repositorio oficial.                     |
+| 10.2.14| El equipo deberá resolver incidencias críticas en un tiempo menor a **48 horas**.                     |
+| 10.2.15| El sistema deberá garantizar que el **99% de los registros de asistencia** se procesen sin pérdida de datos. |
+| 10.2.16| Se deberán realizar **respaldos automáticos de la base de datos cada 24h** sin interrumpir la operación. |
+
+## 10.3 Árbol de Calidad
 
 # 11. Riesgos y deuda técnica
 
