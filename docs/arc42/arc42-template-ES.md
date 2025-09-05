@@ -1,4 +1,5 @@
-   !(/docs/images/arc42-logo.png)
+![Logo arc42](/docs/images/arc42-logo.png)
+
 
 **Acerca de arc42**
 
