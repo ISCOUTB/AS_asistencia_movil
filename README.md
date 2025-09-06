@@ -1,5 +1,6 @@
 # 📌 AS_asistencia_movil: Toma de asistencia desde APP móvil
-## 1. Descripción General
+## 1. Descripción General:
+
 Este proyecto consiste en el desarrollo de un **sistema de registro de asistencia** diseñado para instituciones educativas.  
 Se busca validar la funcionalidad básica de registrar asistencias desde una aplicación móvil, priorizando la **simplicidad y seguridad** en el proceso.  
 El sistema contará con un **backend** encargado de almacenar los registros y generar reportes básicos, que permitan a las instituciones obtener una visión inicial del control de asistencia.
@@ -15,7 +16,7 @@ La solución propuesta es un **MVP de aplicación móvil** conectada a un backen
 
 Este MVP servirá como **base de validación** para recopilar retroalimentación de los primeros usuarios y, en el futuro, escalar hacia una versión más completa y robusta.
 ---
-## 4. Características Principales del MVP
+## 3. Características Principales del MVP
 
 ### 🔑 Autenticación básica
 - Inicio de sesión con usuario y contraseña.  
@@ -37,5 +38,5 @@ Este MVP servirá como **base de validación** para recopilar retroalimentación
 - Recordatorio **push** para marcar asistencia.  
 - Alerta en caso de **ausencia o retraso**.  
 ---
-## 🚀 Objetivo del MVP
+## 4. 🚀 Objetivo del MVP
 El objetivo principal de este MVP es **validar la solución** con instituciones educativas, permitiendo medir la aceptación del sistema, obtener retroalimentación y definir los próximos pasos de desarrollo hacia una plataforma más robusta y escalable.
