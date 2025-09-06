@@ -1,14 +1,12 @@
-# 📌 AS_asistencia_movil: Toma de asistencia desde APP móvil
+# AS_asistencia_movil: Toma de asistencia desde APP móvil
 ## 1. Descripción General:
 
-Este proyecto consiste en el desarrollo de un **sistema de registro de asistencia** diseñado para instituciones educativas.  
-Se busca validar la funcionalidad básica de registrar asistencias desde una aplicación móvil, priorizando la **simplicidad y seguridad** en el proceso.  
-El sistema contará con un **backend** encargado de almacenar los registros y generar reportes básicos, que permitan a las instituciones obtener una visión inicial del control de asistencia.
+Este proyecto consiste en el desarrollo de un **sistema de registro de asistencia** diseñado para instituciones educativas. Se busca validar la funcionalidad básica de registrar asistencias desde una aplicación móvil, priorizando la **simplicidad y seguridad** en el proceso. El sistema contará con un **backend** encargado de almacenar los registros y generar reportes básicos, que permitan a las instituciones obtener una visión inicial del control de asistencia.
 ---
 ## 2. Solución Propuesta
 La solución propuesta es un **MVP de aplicación móvil** conectada a un backend que permita:
 
-- ✅ **Registrar asistencia** mediante validación de ubicación (GPS) o escaneo de código QR.  
+- ✅ **Registrar asistencia** mediante validación de escaneo de código QR.  
 - ✅ **Autenticación básica de usuarios** (inicio de sesión con credenciales).  
 - ✅ **Gestión mínima de usuarios y horarios** (grupos/cursos o turnos).  
 - ✅ **Consultas y reportes simples** para estudiantes/empleados y administradores.  
