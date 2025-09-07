@@ -21,7 +21,7 @@ Este apartado describe los requisitos relevantes y las fuerzas impulsoras que lo
 |----------|------------------------------------------------------------------------------------------------------------------|
 | 1        | Validar la funcionalidad básica de registro de asistencias desde una aplicación móvil con simplicidad y seguridad. |
 | 2        | Resolver los problemas de procesos manuales que generan errores, retrasos y falta de información centralizada.    |
-| 3        | Prevenir la suplantación o marcas falsas mediante validación de ubicación (GPS) o escaneo QR.                     |
+| 3        | Prevenir la suplantación o marcas falsas mediante validación de escaneo QR.                     |
 | 4        | Permitir autenticación básica de usuarios, gestión mínima de usuarios y horarios.                                |
 | 5        | Habilitar consultas de asistencia y generación de reportes simples en el backend.                                |
 | 6        | Incluir notificaciones básicas de recordatorio y alertas por ausencias o retrasos.                               |
@@ -40,8 +40,8 @@ Este apartado describe los requisitos relevantes y las fuerzas impulsoras que lo
 
 | Id   | Requirement                 | Explanation                                                                 |
 |------|-----------------------------|-----------------------------------------------------------------------------|
-| RF1  | Registro de asistencia      | Permitir a los usuarios marcar entrada y salida desde la aplicación móvil. Validación por red Wi-Fi institucional o escaneo QR en el aula/empresa. |
-| RF2  | Autenticación y autorización| Acceso seguro mediante usuario/contraseña o SSO (Google/Microsoft). Manejo de roles: estudiante/empleado, docente/supervisor, administrador. |
+| RF1  | Registro de asistencia      | Permitir a los usuarios marcar entrada y salida desde la aplicación móvil. Validación por escaneo QR en el aula/empresa. |
+| RF2  | Autenticación y autorización| Acceso seguro mediante usuario/contraseña o SSO (Microsoft). Manejo de roles: estudiante/empleado, docente/supervisor, administrador. |
 | RF3  | Reportes y consultas        | Generar historial de asistencia individual y reportes por curso, grupo, departamento o periodo. Posibilidad de exportación a Excel/PDF. |
 | RF4  | Notificaciones              | Enviar alertas push para recordar marcar asistencia y notificaciones de inasistencias o retrasos. |
 | RF5  | Integraciones               | Proveer API REST para conexión con sistemas académicos y panel web de administración centralizada. |
@@ -96,65 +96,76 @@ Este apartado describe los requisitos relevantes y las fuerzas impulsoras que lo
 
 ---
 
-# 2. Restricciones de la Arquitectura 
+# 2. Restricciones de la Arquitectura
+
 ## 2.1 Restricciones Tecnológicas  
+
 - La app debe desarrollarse en **Flutter** para asegurar compatibilidad en Android e iOS.  
 - El backend debe implementarse en **ORACLE Apex**, priorizando escalabilidad y modularidad.  
 - La base de datos debe ser **Oracle**, con **Redis** como caché para optimizar el rendimiento.  
 - Toda comunicación debe realizarse mediante **HTTPS/TLS**.  
 
-## 2.2 Restricciones Operativas  
+## 2.2 Restricciones Operativas
+
 - El sistema debe estar disponible **24/7**, con un máximo de **3 horas de inactividad mensual**.  
 - Los registros de asistencia deben conservarse por un período mínimo de **2 años**.  
 - Solo se permiten integraciones con **APIs públicas y seguras**.  
-- La aplicación debe funcionar en redes **3G, 4G, 5G y Wi-Fi**.  
+- La aplicación debe funcionar en redes **Wi-Fi**.  
 
-## 2.3 Restricciones Organizacionales  
+## 2.3 Restricciones Organizacionales
+
 - Cumplimiento estricto de normativas de protección de datos (**GDPR / Habeas Data**).  
 - Acceso a funcionalidades restringido por **roles definidos** (estudiante/empleado, docente/supervisor, administrador).  
 - Los reportes solo pueden ser consultados por **docentes, supervisores o administradores**.  
 - La arquitectura de software debe seguir principios de **Clean Architecture** y **microservicios**.  
 
-## 2.4 Restricciones de Integración  
+## 2.4 Restricciones de Integración
+
 - El backend debe exponer un **API REST documentado con Swagger/OpenAPI**.  
 - El consumo de la API debe limitarse a **1000 requests por minuto por usuario autenticado**.  
 - Toda integración externa debe pasar por **módulos autorizados y controlados**.  
 
-## 2.5 Restricciones de Seguridad  
+## 2.5 Restricciones de Seguridad
+
 - La autenticación debe implementarse con **JWT u OAuth2**.  
 - Los datos sensibles (contraseñas, tokens) deben almacenarse de forma **cifrada o hasheada (bcrypt, AES)**.  
-- Todos los accesos deben estar controlados por **roles y permisos definidos**.   
+- Todos los accesos deben estar controlados por **roles y permisos definidos**.
 
 ---
 
 # 3. Alcance y Contexto del Sistema
 
-## 3.1 Alcance del Sistema  
+## 3.1 Alcance del Sistema
+
 El sistema de **Control de Asistencia** tiene como objetivo principal **digitalizar y automatizar el control de asistencia** en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.  
 
-### 3.1.1 Funcionalidades dentro del alcance  
+### 3.1.1 Funcionalidades dentro del alcance
+
 - Registro de asistencia mediante **app móvil** (entrada y salida).  
 - Validación de asistencia mediante **QR**.  
 - **Autenticación segura** con usuario/contraseña o SSO (Google/Microsoft).  
 - Gestión de **horarios, grupos, cursos, jornadas**.  
 - Consulta y generación de **reportes individuales y grupales** en distintos formatos (Excel/PDF).  
 - **Notificaciones push** para recordatorios, retrasos e inasistencias.  
-- **Panel web administrativo** para gestión centralizada. 
+- **Panel web administrativo** para gestión centralizada.
 
-### 3.1.2 Funcionalidades fuera del alcance (MVP inicial)  
+### 3.1.2 Funcionalidades fuera del alcance (MVP inicial)
+
 - Reconocimiento facial o biometría avanzada
 - Inteligencia artificial para predicción de ausentismo.  
 - Funcionalidades offline completas (solo cache limitado).  
 
 ## 3.2 Contexto del Sistema  
 
-### 3.2.1 Actores principales  
+### 3.2.1 Actores principales
+
 - **Estudiantes / Empleados** → Registran su asistencia desde la app móvil.  
 - **Docentes / Supervisores / Jefes** → Validan, consultan y gestionan asistencia.  
 - **Administradores** → Configuran horarios, grupos y usuarios.  
 - **Sistema (Backend + API)** → Procesa, valida y almacena la información de asistencia.  
 
-### 3.2.2 Interacciones con el entorno  
+### 3.2.2 Interacciones con el entorno
+
 - **App móvil** (Android/iOS) → Punto de interacción principal para usuarios finales.  
 - **Panel Web** → Para administradores y supervisores que gestionan y consultan datos.  
 - **Base de datos centralizada** (Oracle) → Almacena usuarios, horarios y registros.
@@ -192,17 +203,20 @@ El sistema se compone de los siguientes elementos:
 
 ### 3.4.1 Mapeo de Entrada/Salida a Canales  
 
-#### Entradas  
+#### Entradas
+
 - Desde **App Móvil**: registro de asistencia (QR), login seguro.  
 - Desde **Panel Web**: gestión de usuarios, horarios, grupos y reportes.  
 
-#### Procesamiento  
+#### Procesamiento
+
 - Validación de identidad y autenticación.  
 - Aplicación de reglas de negocio (asistencia válida, tardanza, ausencia).  
 - Almacenamiento en base de datos.  
 - Uso de cache con Redis para optimizar consultas.  
 
-#### Salidas  
+#### Salidas
+
 - Hacia **App Móvil**: confirmación de asistencia registrada, historial individual y notificaciones push.  
 - Hacia **Panel Web**: reportes en PDF/Excel, estadísticas y gestión de datos.  
 
@@ -218,7 +232,9 @@ flowchart TD
 # 4. Estrategia de solución
 
 ## 4.1 Objetivos
+
 Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencias desde App Móvil para garantizar:
+
 - Disponibilidad
 - Seguridad
 - Escalabilidad
@@ -227,6 +243,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ## 4.2 Lineamientos Estratégicos
 
 ### 4.2.1. Arquitectura Basada en Servicios
+
 - Modularización del sistema:
   - Captura de Asistencia (App móvil)
   - Gestión de Usuarios y Roles
@@ -238,6 +255,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ### 4.2.2 Interfaz de Usuario (App Móvil)
+
 - Aplicación híbrida (Flutter).
 - Funcionalidad offline con sincronización en línea.
 - Autenticación segura mediante JWT u OAuth 2.0.
@@ -245,6 +263,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ### 4.2.3 Comunicación y Backend
+
 - API RESTful para validación y procesamiento de datos.
 - Backend ligero (Oracle Apex).
 - Control de accesos basado en roles (RBAC).
@@ -253,6 +272,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ### 4.2.4 Gestión de Datos
+
 - Base de datos relacional (Oracle).
 - Cacheo con Redis para mejorar rendimiento.
 - Almacenamiento histórico de asistencia con trazabilidad.
@@ -260,6 +280,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ### 4.2.5 Seguridad
+
 - Encriptación en tránsito (HTTPS + TLS).
 - Autenticación con tokens JWT.
 - Cumplimiento con normativas de protección de datos.
@@ -267,11 +288,13 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ### 4.2.6 Integración con Sistemas Externos
+
 - Reportes automáticos en PDF / Excel.
 
 ---
 
 ### 4.2.7 Infraestructura
+
 - Despliegue con contenedores Docker.
 - Despliegue en la nube (AWS, Azure, GCP) o en servidores locales.
 - Balanceadores de carga para asegurar disponibilidad.
@@ -279,11 +302,13 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ### 4.2.8 Monitoreo y Observabilidad
+
 - Métricas con Prometheus + Grafana.
 
 ---
 
 ## 4.3 Decisiones Arquitectónicas
+
 - Arquitectura modular con servicios desacoplados.
 - Uso de tecnologías ligeras y escalables (Oracle Apex, Flutter).
 - Base de datos relacional con soporte a integridad y relaciones complejas.
@@ -292,6 +317,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ## 4.4 Trade-offs
+
 - **Microservicios vs Monolito:** Se inicia con servicios modulares (menor complejidad) con visión futura hacia microservicios completos.
 - **Infraestructura en la nube vs on-premise:** Dependerá del presupuesto y políticas de la institución.
 - **Funcionalidad offline:** Aumenta complejidad técnica pero garantiza continuidad del servicio.
@@ -299,6 +325,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 ---
 
 ## 4.5 Riesgos Potenciales
+
 - Gestión de seguridad y privacidad de datos sensibles.
 - Complejidad en el mantenimiento de sincronización offline/online.
 - Escalabilidad limitada si no se implementa orquestación adecuada en fases iniciales.
@@ -316,6 +343,7 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 # 9. Decisiones de Diseño
 
 # 10. Requerimientos de Calidad
+
 ## 10.1 Quality Goals
 
 | Meta de Calidad   | Descripción                                                                 | Prioridad |
