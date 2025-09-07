@@ -58,6 +58,7 @@ Los ambientes de desarrollo y despliegue se encontrarán contenerizados en un `D
 
 ## 🗂️ Estructura del Proyecto
 
+```
 AS_ASISTENCIA_MOVIL
 │── .github/
 │ └── workflows/
@@ -96,6 +97,7 @@ AS_ASISTENCIA_MOVIL
 │── LICENSE
 │── README.md
 └── sonar-project.properties
+```
 
 ---
 
