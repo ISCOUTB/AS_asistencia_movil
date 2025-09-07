@@ -15,6 +15,7 @@ arquitectura arc42, <https://www.arc42.org>. Creada por Dr. Peter
 Hruschka y Dr. Gernot Starke.
 
 # 1. Introducción y Metas
+
 Este apartado describe los requisitos relevantes y las fuerzas impulsoras que los arquitectos de software y el equipo de desarrollo deben considerar. Incluye los **objetivos de negocio**, las **funcionalidades esenciales y requisitos funcionales del sistema**, los **objetivos de calidad de la arquitectura** y los **stakeholders con sus expectativas**. Estos serán los objetivos establecidos para este sistema:
 
 | Priority | Descripción                                                                                                      |
@@ -27,10 +28,10 @@ Este apartado describe los requisitos relevantes y las fuerzas impulsoras que lo
 | 6        | Incluir notificaciones básicas de recordatorio y alertas por ausencias o retrasos.                               |
 | 7        | Servir como base para recopilar retroalimentación de usuarios antes de escalar hacia una solución más robusta.   |
 
-
 ## 1.2 Vista de Requerimientos
 
 ### 1.2.1 Actores principales
+
 - **Estudiantes / Empleados** → Registran su asistencia.
 - **Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
 - **Administradores** → Configuran horarios, grupos, usuarios y reglas.  
@@ -60,8 +61,8 @@ Este apartado describe los requisitos relevantes y las fuerzas impulsoras que lo
 | RNF6 | Usabilidad       | Interfaz intuitiva, multilenguaje y accesible según normas WCAG. |
 | RNF7 | Mantenibilidad   | Código modular (Clean Architecture, microservicios). Documentación clara para integraciones. |
 
-
 ### 1.2.4 Componentes de Arquitectura (Alto Nivel)
+
 - **App móvil (Flutter)**
   → UI, autenticación,  escaneo QR, notificaciones.  
 
