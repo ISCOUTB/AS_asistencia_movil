@@ -1,5 +1,18 @@
 # AS_asistencia_movil: Toma de asistencia desde APP móvil
 
+## 📑 Tabla de Contenidos
+1. [Resumen](#resumen)  
+2. [Características Principales del MVP](#-características-principales-del-mvp)  
+   - [Autenticación básica](#-autenticación-básica)  
+   - [Registro de asistencia](#-registro-de-asistencia)  
+   - [Gestión de usuarios y horarios](#-gestión-de-usuarios-y-horarios)  
+   - [Consultas y reportes iniciales](#-consultas-y-reportes-iniciales)  
+   - [Notificaciones básicas](#-notificaciones-básicas)  
+3. [Soporte Docker](#-soporte-docker)  
+4. [Status del Proyecto](#-status-del-proyecto)  
+5. [Estructura del Proyecto](#-estructura-del-proyecto)  
+6. [Equipo de Desarrollo](#-equipo-de-desarrollo)  
+
 ## Resumen
 
 El sistema de Control de Asistencia tiene como objetivo principal digitalizar y automatizar el control de asistencia en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.
@@ -103,8 +116,8 @@ AS_ASISTENCIA_MOVIL
 
 ## 👥 Equipo de Desarrollo
 
--**William David Lozano Julio**
--**Jorge Mario Benavides Angulo**
--**Andrés Felipe Rubiano Marrugo**
+- **William David Lozano Julio - T00078475** 
+- **Jorge Mario Benavides Angulo - T00077509**
+- **Andrés Felipe Rubiano Marrugo - T00077084**
 
 ---
