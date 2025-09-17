@@ -84,10 +84,30 @@ async def delete_servicio(id: int):
     url = f"{BASE_URL}{id}"
     try:
         resp = await session.delete(url, headers=HEADERS)
-        if resp.status_code == 204:
+        if resp.status_code in (200, 204):
             return {"message": f"Servicio con ID {id} eliminado correctamente"}
-        elif resp.status_code == 404:
+        elif resp.status_code in (400, 404):
             return {"error": f"Servicio con ID {id} no encontrado"}
+        else:
+            return {"status": resp.status_code, "detalle": resp.text}
+    except httpx.TimeoutException:
+        return {"error": "Timeout: ORDS no respondió"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.put("/actualizarservicio/{id}")
+async def update_servicio(id: int, servicio: Servicio):
+    await ensure_cookies()
+    url = f"{BASE_URL}{id}"  # la URL específica del recurso
+    try:
+        resp = await session.put(
+            url,
+            headers={**HEADERS, "Content-Type": "application/json"},
+            json=servicio.dict()
+        )
+        if resp.status_code in (200, 204):
+            # Algunos ORDS devuelven 204 sin contenido al actualizar
+            return {"message": f"Servicio con ID {id} actualizado correctamente"}
         else:
             return {"status": resp.status_code, "detalle": resp.text}
     except httpx.TimeoutException:
