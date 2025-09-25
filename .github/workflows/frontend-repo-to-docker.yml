@@ -4,7 +4,7 @@ name: Build and Push Flutter Web Frontend to Docker Hub
 on:
   push:
     branches:
-      - main
+      [ "master" ]
 
 jobs:
   build-and-push:
@@ -30,7 +30,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v3
         with:
           context: ./src/front
           file: ./src/front/Dockerfile
