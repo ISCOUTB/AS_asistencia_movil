@@ -1,0 +1,51 @@
+# Dockerfile para entorno Flutter + Android SDK (build web / apk)
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Dependencias básicas y Java (JDK)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git curl unzip xz-utils zip libglu1-mesa wget ca-certificates procps \
+    openjdk-17-jdk-headless build-essential \
+  && rm -rf /var/lib/apt/lists/*
+
+# Variables Android SDK
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools"
+
+# Instalar Android command line tools
+RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools \
+ && cd /tmp \
+ && wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip \
+ && unzip cmdline-tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools \
+ && rm cmdline-tools.zip \
+ && mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest
+
+# Instalar platform-tools y plataformas/build-tools necesarias (ajusta la API si deseas)
+RUN yes | sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses || true \
+ && sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+# Instalar Flutter (stable)
+ENV FLUTTER_ROOT=/opt/flutter
+RUN git clone https://github.com/flutter/flutter.git -b stable ${FLUTTER_ROOT}
+ENV PATH="${PATH}:${FLUTTER_ROOT}/bin:${FLUTTER_ROOT}/bin/cache/dart-sdk/bin"
+
+# Precache (descarga artefactos de Flutter necesarios)
+RUN flutter doctor -v || true \
+ && flutter precache --android
+
+# Crear directorio de trabajo
+WORKDIR /app
+
+# Copiar pubspec antes para cachear dependencias en la imagen (más rápido en rebuilds)
+COPY pubspec.yaml pubspec.lock /app/
+RUN if [ -f pubspec.yaml ]; then flutter pub get; fi
+
+# Copiar resto del proyecto
+COPY . /app
+
+# Aceptar licencias Android (no interactivo)
+RUN yes | flutter doctor --android-licenses || true
+
+# Comando por defecto (arranca shell para que puedas ejecutar comandos interactivos)
+CMD ["/bin/bash"]
