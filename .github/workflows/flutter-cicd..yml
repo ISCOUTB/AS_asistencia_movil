@@ -1,3 +1,4 @@
+@ -1,35 +0,0 @@
 name: Flutter CI/CD
 
 on:
@@ -12,7 +13,7 @@ jobs:
 
     steps:
       - name: Chequear el código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
@@ -29,7 +30,7 @@ jobs:
         run: flutter build apk --release
 
       - name: Guardar artefacto APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
