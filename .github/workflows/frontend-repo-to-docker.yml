@@ -1,4 +1,3 @@
-
 name: Build and Push Flutter Web Frontend to Docker Hub
 
 on:
@@ -31,9 +30,8 @@ jobs:
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
-        
         with:
           context: ./src/frontend
           file: ./src/frontend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/williamlzn/as_asistencia:latest
+          tags: williamlzn/as_asistencia:latest
