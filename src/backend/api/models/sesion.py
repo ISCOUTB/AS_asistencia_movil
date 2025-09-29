@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
 
-# 📥 Modelo de entrada (crear o actualizar una sesión)
+# Modelo de entrada (crear o actualizar una sesión)
 class SesionIn(BaseModel):
     id_servicio: int
     id_periodo: int
@@ -25,7 +25,7 @@ class SesionIn(BaseModel):
     gestiona_asis: Optional[str] = None
     facilitador_externo: Optional[str] = None
 
-# 📤 Modelo de salida (lo que devuelves al cliente)
+# Modelo de salida (lo que devuelves al cliente)
 class SesionOut(SesionIn):
     id: int  # La clave primaria generada por la base de datos
 
