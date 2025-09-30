@@ -348,12 +348,12 @@ Estos bloques se comunican de forma jerárquica: la interfaz de usuario orquesta
 
 ```mermaid
 flowchart TB
-    UI[Aplicación móvil (UI/UX)]
-    Auth[Autenticación]
-    Asistencia[Registro de asistencia]
-    Sync[Sincronización]
-    DB[Almacenamiento (Oracle APEX)]
-    Utils[Utilitarios]
+    UI["Aplicación móvil (UI/UX)"]
+    Auth["Autenticación"]
+    Asistencia["Registro de asistencia"]
+    Sync["Sincronización"]
+    DB["Almacenamiento (Oracle APEX)"]
+    Utils["Utilitarios"]
 
     %% Relaciones principales
     UI --> Auth
@@ -574,8 +574,6 @@ sequenceDiagram
 ```
 
 ---
-
-# 7. Vista de Despliegue
 
 # 7. Vista de Despliegue
 
