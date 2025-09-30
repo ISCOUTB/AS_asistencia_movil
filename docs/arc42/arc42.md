@@ -227,7 +227,6 @@ flowchart TD
   W[💻 Panel Web Admin] -->|Gestión de usuarios/horarios| N
   N -->|📂 CRUD Asistencia| O[(🗄️ Base de Datos)]
   N -->|🔔 Notificaciones| P[(Firebase/Push Service)]
-  N -->|🌍 Geolocalización| Q[(Google Maps API)]
 ```
 
 # 4. Estrategia de solución
@@ -333,11 +332,308 @@ Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencia
 
 # 5. Vista de Bloques
 
-## 5.1 Sistema General de Caja Blanca
+## 5.1 Visión general
+
+El sistema se compone de seis bloques principales:  
+
+1. **Aplicación móvil (UI/UX)**  
+
+2. **Módulo de autenticación y gestión de sesión**  
+3. **Módulo de registro de asistencia**  
+4. **Módulo de sincronización y comunicación con backend**  
+5. **Módulo de almacenamiento local**  
+6. **Servicios de utilidades (validaciones, logging)**  
+
+Estos bloques se comunican de forma jerárquica: la interfaz de usuario orquesta interacciones que fluyen hacia autenticación, registro y sincronización, mientras almacenamiento y utilitarios son usados transversalmente.
+
+```mermaid
+flowchart TB
+    UI[Aplicación móvil (UI/UX)]
+    Auth[Autenticación]
+    Asistencia[Registro de asistencia]
+    Sync[Sincronización]
+    DB[Almacenamiento (Oracle APEX)]
+    Utils[Utilitarios]
+
+    %% Relaciones principales
+    UI --> Auth
+    UI --> Asistencia
+
+    Auth --> DB
+    Asistencia --> Auth
+    Asistencia --> DB
+    Asistencia --> Sync
+
+    Sync --> DB
+
+    Utils --> UI
+    Utils --> Auth
+    Utils --> Asistencia
+    Utils --> Sync
+    Utils --> DB
+```
+
+---
+
+## 5.2 Jerarquía de bloques
+
+- **Nivel 1 (Subsistemas):**  
+  - UI  
+  - Autenticación  
+  - Asistencia  
+  - Sincronización  
+  - Almacenamiento  
+  - Utilitarios  
+
+- **Nivel 2 (Componentes internos):**  
+  - Autenticación → login manager, token handler.  
+  - Asistencia → validador de horarios, gestor local de eventos, sincronizador de asistencias.  
+  - Sincronización → cliente HTTP, manejador de colas, adaptador de datos.  
+  - Almacenamiento → base de datos SQLite local, repositorios DAO.  
+
+---
+
+## 5.3 Tabla de bloques principales
+
+| Bloque              | Responsabilidades                                         | Interfaces                                | Dependencias                        |
+|---------------------|-----------------------------------------------------------|-------------------------------------------|-------------------------------------|
+| **UI móvil**        | Interacción con el usuario, captura de datos              | Pantallas y formularios                    | Autenticación, Asistencia            |
+| **Autenticación**   | Validar credenciales, emitir tokens, controlar sesión     | `login()`, `logout()`, `refresh()`         | UI, Almacenamiento local             |
+| **Registro de asistencia** | Captura de entradas/salidas, validación de ubicación | `registrarAsistencia()`, `historial()`     | Autenticación, Geolocalización, Almacenamiento |
+| **Sincronización**  | Comunicación con backend, reintentos, resolución de conflictos | `sync()`, `push()`, `pull()`           | Registro de asistencia, Red          |
+| **Almacenamiento local** | Persistencia offline (SQLite)                         | `save()`, `read()`, `delete()`             | Todos los módulos                    |
+| **Utilitarios**     | Geolocalización, validación de datos, logging             | `getLocation()`, `logEvent()`              | Todos los módulos                    |
+
+---
+
+## 5.4 Diagramas
+
+```mermaid
+flowchart TB
+    subgraph UI["Aplicación móvil (UI/UX)"]
+        UI1[Pantallas de usuario]
+    end
+
+    subgraph Auth["Autenticación"]
+        A1[Login Manager]
+        A2[Token Handler]
+    end
+
+    subgraph Asistencia["Registro de asistencia"]
+        R1[Asistencia Validator]
+        R2[Asistencia Local Store]
+        R3[Asistencia Sync Manager]
+    end
+
+    subgraph Sync["Sincronización"]
+        S1[Cliente HTTP]
+        S2[Manejador de colas]
+        S3[Adaptador de datos]
+    end
+
+    subgraph DB["Almacenamiento (Oracle APEX)"]
+        D1[DAO]
+        D2[Repositorios]
+    end
+
+    subgraph Utils["Utilitarios"]
+        U2[Validaciones]
+        U3[Logging]
+    end
+
+    %% Relaciones
+    UI1 --> A1
+    UI1 --> R1
+
+    A1 --> A2
+    A1 --> D1
+
+    R1 --> R2
+    R1 --> R3
+    R3 --> S1
+
+    S1 --> S2
+    S1 --> S3
+
+    R2 --> D1
+
+    U2 --> R1
+    U3 --> UI1
+    U3 --> A1
+    U3 --> R1
+    U3 --> S1
+    U3 --> D1
+```
+
+---
+
+## 5.5 Consideraciones de modularidad
+
+- Los bloques están diseñados para minimizar dependencias circulares.  
+- El almacenamiento local y utilitarios son reutilizables por múltiples módulos.  
+- La separación entre registro de asistencia y sincronización permite un uso offline robusto.  
+
+---
+
+## 5.6 Relación con otras vistas
+
+- En la **vista runtime**, los bloques se coordinan para casos de uso como *“registro de asistencia con validación en línea”*.  
+- En la **vista de despliegue**, la app móvil (bloques UI, lógica y almacenamiento) corre en el dispositivo, mientras la sincronización se conecta al backend desplegado en la nube.  
 
 # 6. Vista de Ejecución
 
+La vista runtime describe cómo los distintos componentes del sistema colaboran en escenarios de ejecución concretos. A continuación se presentan los principales casos de uso.
+
+---
+
+## 6.1 Escenario: Inicio de sesión
+
+**Objetivo:** Validar credenciales y establecer sesión segura.
+
+**Secuencia:**
+
+1. El usuario ingresa credenciales en la **Aplicación móvil (UI/UX)**.
+2. El módulo de **Autenticación** envía las credenciales al **Almacenamiento (Oracle APEX)**.
+3. Oracle APEX valida el usuario y devuelve un token.
+4. El **Token Handler** guarda el token para futuras peticiones.
+5. Se notifica a la UI que el inicio de sesión fue exitoso.
+
+---
+
+## 6.2 Escenario: Registro de asistencia sin conexión
+
+**Objetivo:** Permitir al usuario registrar asistencia aun sin conexión a internet.
+
+**Secuencia:**
+
+1. El usuario marca asistencia desde la **Aplicación móvil (UI/UX)**.
+2. El **Validador de asistencia** revisa la información.
+3. Si no hay conexión, los datos se guardan en el **Almacenamiento local temporal** dentro del dispositivo.
+4. El **Sync Manager** marca la asistencia como pendiente.
+5. Se notifica a la UI que la asistencia fue registrada localmente.
+
+---
+
+## 6.3 Escenario: Sincronización de asistencias
+
+**Objetivo:** Subir registros locales pendientes a Oracle APEX.
+
+**Secuencia:**
+
+1. El **Sync Manager** detecta conexión disponible.
+2. El **Cliente HTTP** empaqueta los registros pendientes.
+3. El **Manejador de colas** organiza los envíos.
+4. Oracle APEX recibe los registros y responde confirmando almacenamiento.
+5. El **Sync Manager** actualiza el estado local y notifica a la UI.
+
+---
+
+## 6.4 Escenario: Consulta de historial de asistencias
+
+**Objetivo:** Mostrar al usuario las asistencias registradas.
+
+**Secuencia:**
+
+1. El usuario solicita el historial en la **Aplicación móvil (UI/UX)**.
+2. La UI llama al módulo de **Registro de asistencia**.
+3. El módulo consulta primero en la caché local.
+4. Si no existe la información completa, el **Cliente HTTP** consulta en **Oracle APEX**.
+5. El **Adaptador de datos** transforma la respuesta en un formato amigable.
+6. La UI despliega la información al usuario.
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant UI as Aplicación móvil
+    participant Auth as Autenticación
+    participant Sync as Sincronización
+    participant DB as Oracle APEX
+
+    %% Escenario: Inicio de sesión
+    U ->> UI: Ingresa credenciales
+    UI ->> Auth: Enviar credenciales
+    Auth ->> DB: Validar usuario
+    DB -->> Auth: Token válido
+    Auth -->> UI: Sesión iniciada
+
+    %% Escenario: Registro offline
+    U ->> UI: Marca asistencia
+    UI ->> Sync: Guardar localmente
+    Note right of Sync: Marca como pendiente
+
+    %% Escenario: Sincronización
+    Sync ->> DB: Enviar registros pendientes
+    DB -->> Sync: Confirmación
+    Sync -->> UI: Actualización exitosa
+
+    %% Escenario: Consulta de historial
+    U ->> UI: Solicita historial
+    UI ->> DB: Consultar historial
+    DB -->> UI: Datos de asistencias
+    UI -->> U: Mostrar historial
+```
+
+---
+
 # 7. Vista de Despliegue
+
+# 7. Vista de Despliegue
+
+La vista de despliegue describe la infraestructura técnica donde se ejecuta el sistema, así como la asignación de los componentes principales a dicha infraestructura.
+
+---
+
+## 7.1 Nodos principales
+
+- **Dispositivo móvil (Android/iOS):**  
+  Ejecuta la aplicación móvil que incluye la interfaz de usuario, validaciones básicas, almacenamiento temporal de asistencias y el cliente de sincronización.
+
+- **Servidor Oracle APEX (Cloud / On-Premise):**  
+  Plataforma de base de datos y backend que gestiona usuarios, asistencias, autenticación y reportes.
+
+- **Servidor de Autenticación (opcional):**  
+  Puede estar integrado en Oracle APEX o desplegado como un servicio separado para validar credenciales y emitir tokens.
+
+- **Servicios de Sincronización / API REST:**  
+  Interfaz expuesta en Oracle APEX (o como microservicio externo) para recibir los datos de asistencia y proveer consultas de historial.
+
+---
+
+## 7.2 Relaciones
+
+- La **Aplicación móvil** se conecta mediante internet (HTTPS) al **servidor Oracle APEX**.  
+- El **Servidor APEX** puede apoyarse en:
+  - **Módulo de Autenticación** (si está separado).
+  - **Servicios de sincronización** para recibir registros desde los móviles.  
+- El **Dispositivo móvil** almacena datos localmente cuando no hay conexión, y sincroniza con Oracle APEX cuando la conexión se restablece.
+
+---
+
+## 7.3 Consideraciones técnicas
+
+- **Protocolos de comunicación:** HTTPS con JSON.  
+- **Seguridad:** Uso de tokens de autenticación (JWT u OAUTH2).  
+- **Disponibilidad:** El servidor Oracle APEX debe estar altamente disponible para garantizar la sincronización de múltiples dispositivos.  
+- **Escalabilidad:** Posibilidad de balanceo de carga sobre el servidor APEX o servicios asociados si la demanda crece.  
+
+```mermaid
+flowchart TB
+    subgraph Mobile["📱 Dispositivo móvil (Android/iOS)"]
+        UI["Aplicación móvil (UI/UX + Registro + Sync)"]
+    end
+
+    subgraph Cloud["☁️ Oracle APEX Server"]
+        DB["Gestión de asistencia y usuarios"]
+        API["Servicios REST / Sincronización"]
+        AUTH["Módulo de Autenticación"]
+    end
+
+    %% Relaciones
+    UI -->|HTTPS/JSON| API
+    UI -->|Login| AUTH
+    API --> DB
+    AUTH --> DB
+```
 
 # 8. Conceptos Transversales (Cross-cutting)
 
