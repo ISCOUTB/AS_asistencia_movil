@@ -34,4 +34,4 @@ jobs:
           context: ./src/frontend
           file: ./src/frontend/Dockerfile
           push: true
-          tags: williamlzn/as_asistencia:latest
+          tags: gitzerohub/as_asistenciamovil:latest
