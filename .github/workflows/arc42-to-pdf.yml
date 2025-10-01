@@ -13,11 +13,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Instalar Marp con soporte Mermaid
-        run: |
-          npm install -g @marp-team/marp-cli @marp-team/marp-core @marp-team/marpit @marp-team/marp-mermaid
+      - name: Instalar Marp
+        run: npm install -g @marp-team/marp-cli
 
-      - name: Generar PDF
+      - name: Generar PDF con Marp
         run: |
           marp docs/arc42/arc42.md \
             --pdf \
