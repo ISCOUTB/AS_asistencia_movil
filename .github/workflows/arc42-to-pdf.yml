@@ -3,7 +3,7 @@ name: Build arc42 PDF
 on:
   push:
     branches:
-      - master
+      [ "master" ]
     paths:
       - docs/arc42/**
 
