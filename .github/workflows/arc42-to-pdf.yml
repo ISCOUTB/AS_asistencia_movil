@@ -8,26 +8,22 @@ on:
 jobs:
   build-pdf:
     runs-on: ubuntu-latest
-    container: pandoc/latex:latest   # Contenedor oficial con Pandoc + LaTeX
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Instalar dependencias (mermaid-cli + pandoc-mermaid)
+      - name: Instalar md-to-pdf
         run: |
-          apt-get update && apt-get install -y nodejs npm python3-pip
-          npm install -g @mermaid-js/mermaid-cli
-          pip install pandoc-mermaid
+          npm install -g md-to-pdf
 
       - name: Generar PDF
         run: |
-          pandoc docs/arc42/arc42.md \
-            --filter pandoc-mermaid \
-            -o docs/arc42/arc42.pdf
+          md-to-pdf docs/arc42/arc42.md --basedir docs/arc42
 
       - name: Subir artefacto
         uses: actions/upload-artifact@v4
         with:
           name: arc42-pdf
           path: docs/arc42/arc42.pdf
+
