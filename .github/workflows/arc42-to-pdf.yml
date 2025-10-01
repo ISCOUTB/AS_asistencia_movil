@@ -10,43 +10,24 @@ on:
 jobs:
   build-pdf:
     runs-on: ubuntu-latest
+    container: pandoc/latex:latest   # Contenedor oficial con Pandoc + LaTeX
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Instalar pandoc con acción oficial
-      - name: Setup Pandoc
-        uses: r-lib/actions/setup-pandoc@v2
+      - name: Instalar dependencias (mermaid-cli + pandoc-mermaid)
+        run: |
+          apt-get update && apt-get install -y nodejs npm python3-pip
+          npm install -g @mermaid-js/mermaid-cli
+          pip install pandoc-mermaid
 
-      # Setup Node (para mermaid-cli)
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Instalar Mermaid CLI
-        run: npm install -g @mermaid-js/mermaid-cli
-
-      # Setup Python (para pandoc-mermaid)
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Instalar filtro pandoc-mermaid
-        run: pip install pandoc-mermaid
-
-      # Generar PDF
-      - name: Generar PDF con Pandoc
+      - name: Generar PDF
         run: |
           pandoc docs/arc42/arc42.md \
             --filter pandoc-mermaid \
             -o docs/arc42/arc42.pdf
 
-      # Guardar PDF como artefacto
       - name: Subir artefacto
         uses: actions/upload-artifact@v4
         with:
