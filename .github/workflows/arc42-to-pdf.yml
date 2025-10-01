@@ -4,14 +4,19 @@ on:
   push:
     branches:
       [ "master" ]
+permissions:
+  contents: write
 
 jobs:
   build-pdf:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Instalar Marp
         run: npm install -g @marp-team/marp-cli
@@ -23,12 +28,6 @@ jobs:
             --allow-local-files \
             --output docs/arc42/arc42.pdf
 
-      - name: Subir artefacto
-        uses: actions/upload-artifact@v4
-        with:
-          name: arc42-pdf
-          path: docs/arc42/arc42.pdf
-          
       - name: Commit & Push PDF
         run: |
             git config --global user.name "github-actions[bot]"
