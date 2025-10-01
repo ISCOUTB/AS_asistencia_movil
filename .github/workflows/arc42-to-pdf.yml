@@ -23,10 +23,11 @@ jobs:
 
       - name: Generar PDF con Marp
         run: |
-          marp docs/arc42/arc42.md \
+            marp docs/arc42/arc42.md \
             --pdf \
             --allow-local-files \
-            --output docs/arc42/arc42.pdf
+            --output docs/arc42/arc42.pdf \
+            --theme docs/arc42/style.css
 
       - name: Commit & Push PDF
         run: |

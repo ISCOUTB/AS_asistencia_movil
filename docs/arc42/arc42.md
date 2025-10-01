@@ -1,10 +1,3 @@
----
-marp: true
-paginate: true
-theme: default
-size: a4
----
-
 ![Logo arc42](./images/arc42-logo.png)
 
 
