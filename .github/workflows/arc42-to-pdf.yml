@@ -13,15 +13,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Instalar md-to-pdf
+      - name: Instalar Marp con soporte Mermaid
         run: |
-          npm install -g md-to-pdf
+          npm install -g @marp-team/marp-cli @marp-team/marp-core @marp-team/marpit @marp-team/marp-mermaid
 
       - name: Generar PDF
         run: |
-          md-to-pdf docs/arc42/arc42.md \
-            --basedir docs/arc42 \
-            --launch-options="--no-sandbox"
+          marp docs/arc42/arc42.md \
+            --pdf \
+            --allow-local-files \
+            --output docs/arc42/arc42.pdf
 
       - name: Subir artefacto
         uses: actions/upload-artifact@v4
