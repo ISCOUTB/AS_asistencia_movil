@@ -19,11 +19,12 @@ jobs:
 
       - name: Generar PDF
         run: |
-          md-to-pdf docs/arc42/arc42.md --basedir docs/arc42
+          md-to-pdf docs/arc42/arc42.md \
+            --basedir docs/arc42 \
+            --launch-options="--no-sandbox"
 
       - name: Subir artefacto
         uses: actions/upload-artifact@v4
         with:
           name: arc42-pdf
           path: docs/arc42/arc42.pdf
-
