@@ -1,10 +1,12 @@
-import os, httpx, json
+import os
+import httpx
 from dotenv import load_dotenv
 from fastapi import APIRouter
 from fastapi.encoders import jsonable_encoder
 
-from api.models.asistencia_sesion import AsistenciaSesionIn
+from api.models.servicio import ServicioIn
 
+# Cargar variables de entorno
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
 
 # Cliente global para mantener cookies entre peticiones
@@ -13,13 +15,13 @@ session = httpx.AsyncClient(
     follow_redirects=True,
 )
 
-BASE_URL = os.getenv("URL_ASISTENCIA_SESIONES")
+BASE_URL = os.getenv("URL_SERVICIOS")
 HEADERS = {
     "Accept": "application/json",
     "User-Agent": "FastAPI-Client",
 }
 
-app = APIRouter(prefix="/asistencias", tags=["asistencias"])
+app = APIRouter(prefix="/servicios", tags=["servicios"])
 
 
 async def ensure_cookies():
@@ -32,8 +34,8 @@ async def ensure_cookies():
 
 
 @app.get("/")
-async def get_todas_asistencias():
-    """Obtener todas las asistencias"""
+async def get_servicios():
+    """Obtener todos los servicios"""
     await ensure_cookies()
     try:
         resp = await session.get(BASE_URL, headers=HEADERS)
@@ -51,8 +53,8 @@ async def get_todas_asistencias():
 
 
 @app.get("/{id}")
-async def get_asistencia(id: int):
-    """Obtener una asistencia específica por ID"""
+async def get_servicio(id: int):
+    """Obtener un servicio específico por ID"""
     await ensure_cookies()
     url = f"{BASE_URL}{id}"
     try:
@@ -60,7 +62,7 @@ async def get_asistencia(id: int):
         if resp.status_code in (200, 204):
             return resp.json()
         if resp.status_code in (400, 404):
-            return {"error": f"Asistencia con ID {id} no encontrada"}
+            return {"error": f"Servicio con ID {id} no encontrado"}
         return {"status": resp.status_code, "detalle": resp.text}
     except httpx.TimeoutException:
         return {"error": "Timeout: ORDS no respondió"}
@@ -68,13 +70,13 @@ async def get_asistencia(id: int):
         return {"error": str(exc)}
 
 
-@app.get("/persona/{id_persona}")
-async def get_asistencias_por_persona(id_persona: int):
-    """Obtener todas las asistencias de una persona (histórico)"""
+@app.get("/departamento/{id_departamento}")
+async def get_servicios_por_departamento(id_departamento: int):
+    """Obtener todos los servicios de un departamento"""
     await ensure_cookies()
     try:
-        query = {"id_persona": str(id_persona)}
-        url = f"{BASE_URL}?q={json.dumps(query)}"
+        # Filtrar por departamento usando query parameters
+        url = f"{BASE_URL}?q={{\"id_departamento\":{id_departamento}}}"
         resp = await session.get(url, headers=HEADERS)
         resp.raise_for_status()
         return resp.json()
@@ -88,59 +90,21 @@ async def get_asistencias_por_persona(id_persona: int):
     except Exception as exc:
         return {"error": str(exc)}
 
-
-@app.get("/sesion/{id_sesion}")
-async def get_asistencias_por_sesion(id_sesion: int):
-    """Obtener todas las asistencias de una sesión específica"""
-    await ensure_cookies()
-    try:
-        query = {"id_sesiones": str(id_sesion)}
-        url = f"{BASE_URL}?q={json.dumps(query)}"
-        resp = await session.get(url, headers=HEADERS)
-        resp.raise_for_status()
-        return resp.json()
-    except httpx.TimeoutException:
-        return {"error": "Timeout: ORDS no respondió"}
-    except httpx.HTTPStatusError as exc:
-        return {
-            "error": f"HTTP {exc.response.status_code}",
-            "detalle": exc.response.text,
-        }
-    except Exception as exc:
-        return {"error": str(exc)}
 
 @app.post("/")
-async def create_asistencia(asistencia_sesion: AsistenciaSesionIn):
-    """Crear una nueva asistencia (registro de asistencia a una sesión)"""
+async def create_servicio(servicio: ServicioIn):
+    """Crear un nuevo servicio"""
     url = f"{BASE_URL}"
     await ensure_cookies()
     try:
         resp = await session.post(
             url,
             headers={**HEADERS, "Content-Type": "application/json"},
-            json=jsonable_encoder(asistencia_sesion),
+            json=jsonable_encoder(servicio),
         )
         resp.raise_for_status()
         if resp.status_code in (200, 201, 204):
-            return {"message": "Asistencia registrada correctamente"}
-        return {"status": resp.status_code, "detalle": resp.text}
-    except httpx.TimeoutException:
-        return {"error": "Timeout: ORDS no respondió"}
-    except Exception as exc:
-        return {"error": str(exc)}
-
-
-@app.delete("/{id}")
-async def delete_asistencia(id: int):
-    """Eliminar una asistencia por ID"""
-    await ensure_cookies()
-    url = f"{BASE_URL}{id}"
-    try:
-        resp = await session.delete(url, headers=HEADERS)
-        if resp.status_code in (200, 204):
-            return {"message": f"Asistencia con ID {id} eliminada correctamente"}
-        if resp.status_code in (400, 404):
-            return {"error": f"Asistencia con ID {id} no encontrada"}
+            return {"message": "Servicio creado correctamente"}
         return {"status": resp.status_code, "detalle": resp.text}
     except httpx.TimeoutException:
         return {"error": "Timeout: ORDS no respondió"}
@@ -149,18 +113,36 @@ async def delete_asistencia(id: int):
 
 
 @app.put("/{id}")
-async def update_asistencia(id: int, asistencia_sesion: AsistenciaSesionIn):
-    """Actualizar una asistencia existente"""
+async def update_servicio(id: int, servicio: ServicioIn):
+    """Actualizar un servicio existente"""
     await ensure_cookies()
     url = f"{BASE_URL}{id}"
     try:
         resp = await session.put(
             url,
             headers={**HEADERS, "Content-Type": "application/json"},
-            json=asistencia_sesion.dict(),
+            json=servicio.dict(),
         )
         if resp.status_code in (200, 204):
-            return {"message": f"Asistencia con ID {id} actualizada correctamente"}
+            return {"message": f"Servicio con ID {id} actualizado correctamente"}
+        return {"status": resp.status_code, "detalle": resp.text}
+    except httpx.TimeoutException:
+        return {"error": "Timeout: ORDS no respondió"}
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
+@app.delete("/{id}")
+async def delete_servicio(id: int):
+    """Eliminar un servicio"""
+    await ensure_cookies()
+    url = f"{BASE_URL}{id}"
+    try:
+        resp = await session.delete(url, headers=HEADERS)
+        if resp.status_code in (200, 204):
+            return {"message": f"Servicio con ID {id} eliminado correctamente"}
+        if resp.status_code in (400, 404):
+            return {"error": f"Servicio con ID {id} no encontrado"}
         return {"status": resp.status_code, "detalle": resp.text}
     except httpx.TimeoutException:
         return {"error": "Timeout: ORDS no respondió"}

@@ -17,7 +17,7 @@ class SesionIn(BaseModel):
     id_semana: Optional[int] = None
     hora_inicio: Optional[datetime] = None
     hora_fin: Optional[datetime] = None
-    id_faciltiador: Optional[str] = None
+    id_facilitador: Optional[str] = None
     n_maximo_asistentes: Optional[int] = None
     inscritos_actuales: Optional[int] = None
     antes_sesion: Optional[int] = None
