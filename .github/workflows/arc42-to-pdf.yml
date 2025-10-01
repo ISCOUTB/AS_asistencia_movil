@@ -1,0 +1,35 @@
+name: Build arc42 PDF
+
+on:
+  push:
+    branches:
+      - master   # o la rama que uses
+    paths:
+      - docs/arc42/**
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc nodejs npm
+          npm install -g @mermaid-js/mermaid-cli
+          pip install pandoc-mermaid
+
+      - name: Generar PDF
+        run: |
+          pandoc docs/arc42/arc42.md \
+            --filter pandoc-mermaid \
+            -o docs/arc42/arc42.pdf
+
+      - name: Guardar artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc42-pdf
+          path: docs/arc42/arc42.pdf
