@@ -635,7 +635,231 @@ flowchart TB
 
 # 8. Conceptos Transversales (Cross-cutting)
 
+## 8.1 Seguridad
+
+### Objetivo
+Asegurar la integridad, confidencialidad y disponibilidad de la información manejada por el sistema.
+
+### Estrategias
+- **Autenticación:** basada en tokens (JWT) emitidos por Oracle APEX.
+- **Autorización:** control de acceso por rol (administrador, empleado, visitante).
+- **Transporte seguro:** todas las comunicaciones se realizan mediante **HTTPS (TLS 1.2 o superior)**.
+- **Cifrado en reposo:** Oracle APEX usa mecanismos nativos de cifrado de datos sensibles.
+- **Gestión de sesiones:** los tokens expiran automáticamente para prevenir uso indebido.
+
+---
+
+## 8.2 Gestión de datos
+
+### Principios
+- **Fuente única de verdad:** Oracle APEX actúa como el repositorio maestro de la información.
+- **Almacenamiento temporal:** la app móvil guarda registros pendientes de sincronizar en almacenamiento local.
+- **Sincronización confiable:** el componente de sincronización garantiza consistencia entre registros locales y remotos.
+- **Control de versiones de datos:** cada registro posee marca de tiempo y estado (pendiente, sincronizado, error).
+
+---
+
+## 8.3 Manejo de errores y logging
+
+### En la aplicación móvil
+- Registro de eventos críticos (errores, sincronizaciones fallidas).
+- Mensajes claros para el usuario final sin lenguaje técnico.
+- Envío opcional de logs al backend en la próxima conexión.
+
+### En el servidor (Oracle APEX)
+- Auditoría automática de operaciones.
+- Registro de intentos de autenticación fallidos.
+- Seguimiento de solicitudes REST y respuestas.
+
+---
+
+## 8.4 Usabilidad
+
+### Principios de diseño
+- **Diseño adaptable:** interfaz optimizada para diferentes tamaños de pantalla.
+- **Feedback inmediato:** confirmación visual al registrar o sincronizar asistencia.
+- **Accesibilidad:** contraste adecuado y mensajes simples.
+- **Prevención de errores:** validación previa de entradas antes de enviarlas.
+
+---
+
+## 8.5 Escalabilidad y rendimiento
+
+### Estrategias
+- Oracle APEX puede desplegarse en entornos escalables en la nube.
+- Balanceo de carga horizontal si aumenta la demanda.
+- Caching de datos frecuentemente consultados (por ejemplo, historial reciente).
+- Operaciones asíncronas en la app móvil para evitar bloqueos del usuario.
+
+---
+
+## 8.6 Mantenibilidad
+
+### Prácticas aplicadas
+- **Arquitectura modular:** facilita agregar o reemplazar componentes.
+- **Versionamiento:** control de versiones mediante GitHub.
+- **CI/CD:** flujos de integración y despliegue continuo para la app y el backend.
+- **Documentación:** uso del modelo arc42 para estandarizar el conocimiento técnico.
+
+---
+
+## 8.7 Portabilidad e interoperabilidad
+
+- **Comunicación estándar:** API REST sobre HTTPS con formato JSON.
+- **Compatibilidad multiplataforma:** app desarrollada para Android e iOS.
+- **Independencia de proveedor:** uso de Oracle APEX pero con posibilidad de migrar a otro backend compatible con REST.
+
 # 9. Decisiones de Diseño
+
+## ADR-001: Elección de Oracle APEX como backend
+
+**Fecha:** 2025-09-01  
+**Estado:** Aprobada ✅  
+
+### Contexto
+El sistema requiere un backend que permita gestionar usuarios, asistencias y autenticación, con facilidad de despliegue y mantenimiento.
+
+### Decisión
+Usar **Oracle APEX** como plataforma backend y base de datos principal.
+
+### Justificación
+- Permite desarrollo rápido con bajo costo de mantenimiento.  
+- Integración nativa con base de datos Oracle.  
+- Incluye herramientas integradas de autenticación, API REST y reportes.  
+- Hosting disponible en la nube de Oracle o infraestructura institucional.  
+
+### Alternativas consideradas
+- **Node.js + PostgreSQL:** mayor flexibilidad, pero requería mayor experiencia técnica y configuración.  
+- **Firebase:** fácil de usar, pero con limitaciones de portabilidad y dependencia del proveedor.  
+
+### Consecuencias
+- Reducción de complejidad en la capa backend.  
+- Dependencia directa del ecosistema Oracle.  
+
+---
+
+## ADR-002: Arquitectura modular en bloques funcionales
+
+**Fecha:** 2025-09-03  
+**Estado:** Aprobada ✅  
+
+### Contexto
+Se busca mantener el código organizado, fácil de mantener y con responsabilidad clara por módulo.
+
+### Decisión
+Adoptar una **arquitectura modular** basada en bloques:  
+UI/UX, Autenticación, Registro de Asistencia, Sincronización, Almacenamiento, y Utilitarios.
+
+### Justificación
+- Favorece mantenibilidad y escalabilidad.  
+- Permite equipos de trabajo paralelos por módulo.  
+- Facilita pruebas unitarias y despliegues independientes.
+
+### Alternativas consideradas
+- **Arquitectura monolítica:** más simple al inicio, pero difícil de escalar.  
+- **Microservicios completos:** excesiva complejidad para el tamaño actual del proyecto.  
+
+### Consecuencias
+- Código más claro y desacoplado.  
+- Aumento leve del esfuerzo de integración.  
+
+---
+
+## ADR-003: Manejo offline y sincronización diferida
+
+**Fecha:** 2025-09-05  
+**Estado:** Aprobada ✅  
+
+### Contexto
+Los usuarios pueden registrar asistencia en lugares con conectividad limitada o nula.
+
+### Decisión
+Permitir el **registro offline** con almacenamiento local y sincronización automática al recuperar la conexión.
+
+### Justificación
+- Garantiza operatividad en campo.  
+- Mejora la experiencia del usuario.  
+- Evita pérdida de información.
+
+### Alternativas consideradas
+- **Requiere conexión permanente:** más simple, pero inviable en escenarios reales.  
+
+### Consecuencias
+- Necesidad de un componente de sincronización robusto.  
+- Complejidad adicional en el manejo de estados (pendiente, sincronizado, error).  
+
+---
+
+## ADR-004: Comunicación vía API REST (HTTPS + JSON)
+
+**Fecha:** 2025-09-10  
+**Estado:** Aprobada ✅  
+
+### Contexto
+Se necesita un canal de comunicación entre la aplicación móvil y Oracle APEX.
+
+### Decisión
+Usar **API REST** sobre **HTTPS**, con intercambio de datos en formato **JSON**.
+
+### Justificación
+- Estándar ampliamente adoptado y compatible con Flutter, Android y APEX.  
+- Facilidad de depuración y pruebas con herramientas comunes (Postman, cURL).  
+- Seguridad garantizada por TLS.
+
+### Alternativas consideradas
+- **SOAP:** más robusto pero innecesariamente complejo.  
+- **gRPC:** eficiente, pero requiere librerías adicionales y configuración avanzada.  
+
+### Consecuencias
+- Mayor interoperabilidad.  
+- Sencillez en la integración móvil–backend.
+  
+---
+
+## ADR-005: Autenticación basada en tokens
+
+**Fecha:** 2025-09-12  
+**Estado:** Aprobada ✅  
+
+### Contexto
+Es necesario un método seguro y escalable para autenticar usuarios desde la aplicación móvil.
+
+### Decisión
+Implementar autenticación basada en **tokens (JWT)** gestionados por Oracle APEX.
+
+### Justificación
+- Evita manejo de sesiones persistentes.  
+- Compatible con servicios REST.  
+- Escalable a múltiples clientes.
+- 
+### Consecuencias
+- Se requiere un proceso claro de emisión, expiración y renovación de tokens.  
+- Simplifica las llamadas autenticadas al backend.  
+
+---
+
+## ADR-005: Autenticación basada en Microsoft 365
+
+**Fecha:** 2025-10-01  
+**Estado:** Aprobada ✅  
+
+### Contexto
+Es necesario un método seguro y escalable para autenticar usuarios desde la aplicación móvil.
+
+### Decisión
+Implementar autenticación basada en **Microsoft 365** gestionados por un dominio otorgado por la universidad.
+
+### Justificación
+- Evita manejo de sesiones persistentes.  
+- Escalable a múltiples clientes.  
+
+### Alternativas consideradas
+- **Sesiones tradicionales:** difíciles de manejar en dispositivos móviles.  
+
+### Consecuencias
+- Se requiere un proceso claro de emisión, expiración y renovación de token.  
+- Simplifica las llamadas autenticadas al backend.  
+
 
 # 10. Requerimientos de Calidad
 
@@ -671,8 +895,71 @@ flowchart TB
 | 10.2.15| El sistema deberá garantizar que el **99% de los registros de asistencia** se procesen sin pérdida de datos. |
 | 10.2.16| Se deberán realizar **respaldos automáticos de la base de datos cada 24h** sin interrumpir la operación. |
 
-## 10.3 Árbol de Calidad
-
 # 11. Riesgos y deuda técnica
 
+## 11.1 Riesgos principales
+
+| ID | Tipo | Descripción | Impacto | Probabilidad | Mitigación |
+|----|------|--------------|----------|----------------|-------------|
+| R1 | Técnico | Dependencia del ecosistema Oracle APEX | Alto | Medio | Diseñar el backend con interfaces REST desacopladas, permitiendo migrar en el futuro a otra base de datos. |
+| R2 | Conectividad | Usuarios operan sin conexión constante | Alto | Alto | Implementar almacenamiento local y sincronización automática. |
+| R3 | Rendimiento | Sobrecarga en Oracle APEX con múltiples usuarios concurrentes | Alto | Medio | Monitoreo y escalado horizontal del servidor APEX. |
+| R4 | Seguridad | Exposición de credenciales o tokens JWT | Alto | Bajo | Cifrado HTTPS, expiración de tokens y validación de origen. |
+| R5 | Mantenimiento | Falta de experiencia del equipo con APEX | Medio | Medio | Capacitación técnica y documentación interna continua. |
+| R6 | UX/Usabilidad | Complejidad en la interfaz móvil para usuarios nuevos | Medio | Alto | Pruebas de usabilidad y diseño centrado en el usuario. |
+| R7 | Integración | Fallos en la sincronización de datos entre móvil y backend | Alto | Medio | Manejo de colas y reintentos automáticos. |
+| R8 | Operativo | Pérdida temporal de disponibilidad del servidor APEX | Alto | Bajo | Configurar backups automáticos y redundancia en la nube. |
+
+---
+
+## 11.2 Trade-offs (compromisos arquitectónicos)
+
+| Decisión | Beneficio | Costo o riesgo asociado |
+|-----------|------------|--------------------------|
+| Uso de **Oracle APEX** | Simplifica desarrollo y despliegue | Dependencia del proveedor y menor control sobre la infraestructura |
+| **Arquitectura modular** | Mantenibilidad y escalabilidad | Mayor complejidad inicial y necesidad de coordinación entre módulos |
+| **Registro offline con sincronización diferida** | Mejora la experiencia del usuario en campo | Aumenta la lógica de control y los posibles conflictos de sincronización |
+| **Comunicación REST/JSON** | Simplicidad e interoperabilidad | Menor eficiencia comparado con binarios (p. ej., gRPC) |
+| **Autenticación JWT** | Escalable y moderna | Requiere gestión de expiración y renovación de tokens |
+| **UI híbrida (Flutter)** | Multiplataforma y rápida de desarrollar | Posibles limitaciones de rendimiento frente a apps nativas |
+| **Uso de HTTPS obligatorio** | Seguridad y cumplimiento normativo | Sobrecarga mínima en la latencia de red |
+
+---
+
+## 11.3 Evaluación de impacto residual
+
+Tras aplicar las estrategias de mitigación, los riesgos más relevantes que permanecen son:
+
+- **R2 (Conectividad intermitente):** inherente al entorno operativo de los usuarios.  
+- **R3 (Escalabilidad de APEX):** dependerá de la infraestructura disponible.  
+- **R7 (Sincronización):** requiere pruebas exhaustivas antes del despliegue final.
+
+El equipo debe priorizar el monitoreo de estos tres riesgos durante la fase de pruebas y operación inicial.
+
 # 12. Glosario
+| Término / Acrónimo | Definición |
+|--------------------|------------|
+| **Asistencia** | Registro que indica la presencia o ausencia de un empleado en su jornada laboral o actividad asignada. Incluye hora de entrada, salida y estado. |
+| **Empleado** | Usuario final de la aplicación móvil encargado de registrar su asistencia. |
+| **Supervisor / Administrador** | Usuario con permisos especiales para revisar reportes, validar asistencias y gestionar incidencias. |
+| **Registro de Asistencia** | Entrada generada cuando un empleado marca su llegada o salida desde la app móvil. |
+| **Aplicación Móvil** | Interfaz utilizada por los empleados para registrar asistencia y consultar su historial. Desarrollada con Flutter. |
+| **Portal Administrativo (Oracle APEX)** | Plataforma web donde se gestionan los usuarios, horarios, servicios y reportes. |
+| **Sincronización** | Proceso automático que actualiza los registros locales del dispositivo con la base de datos central en Oracle APEX cuando hay conexión. |
+| **Modo Offline** | Funcionalidad que permite continuar registrando asistencias sin conexión a internet, almacenando temporalmente los datos. |
+| **Sesión** | Periodo en el que un usuario se encuentra autenticado dentro del sistema. Permite realizar acciones seguras sin necesidad de volver a iniciar sesión. |
+| **Validación de Identidad** | Proceso que garantiza que el usuario que registra asistencia corresponde al empleado autenticado. |
+| **Control de Horario** | Definición de franjas horarias válidas para los registros de asistencia según políticas internas. |
+| **Evento de Asistencia** | Acción específica dentro del sistema (entrada, salida, permiso o ausencia). |
+| **Incidencia** | Irregularidad detectada, como registros fuera de horario o fallos en sincronización. |
+| **Servicio** | Unidad funcional o módulo del sistema que agrupa procesos o tareas específicas, como gestión de usuarios, reportes o control de asistencia. |
+| **Base de Datos Central (Oracle APEX)** | Repositorio donde se almacena toda la información del sistema (usuarios, servicios, asistencias e incidencias). |
+| **API REST** | Interfaz de comunicación entre la aplicación móvil y Oracle APEX, que permite el intercambio de datos en formato JSON. |
+| **Token de Sesión** | Identificador seguro que mantiene activa la autenticación del usuario durante su sesión. |
+| **Reporte de Asistencia** | Vista o documento que consolida la información de los registros de asistencia por empleado o por fecha. |
+| **Notificación Push** | Mensaje enviado al dispositivo móvil para recordar registros pendientes o comunicar novedades. |
+| **Usuario Activo** | Empleado con credenciales válidas y estado habilitado en el sistema. |
+| **Integridad de Datos** | Garantía de que la información almacenada y sincronizada no ha sido alterada ni duplicada. |
+| **Auditoría de Asistencia** | Proceso de revisión de los registros históricos para validar su consistencia y detectar errores o fraudes. |
+
+---
