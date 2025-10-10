@@ -1,0 +1,12 @@
+.venv/
+.env/
+venv/
+.venv/
+data.db
+storage.json
+__pycache__
+.coverage
+coverage.xml
+.idea
+.env
+.pyc
