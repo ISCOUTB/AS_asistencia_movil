@@ -1,30 +1,30 @@
-    import os
-    import httpx
-    from dotenv import load_dotenv
-    from fastapi import APIRouter
-    from fastapi.encoders import jsonable_encoder
+import os
+import httpx
+from dotenv import load_dotenv
+from fastapi import APIRouter
+from fastapi.encoders import jsonable_encoder
 
-    from api.models.facilitador import FacilitadorIn
+from api.models.facilitador import FacilitadorIn
 
-    # Cargar variables de entorno
-    load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
+# Cargar variables de entorno
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
 
-    # Cliente global para mantener cookies entre peticiones
-    session = httpx.AsyncClient(
+# Cliente global para mantener cookies entre peticiones
+session = httpx.AsyncClient(
         timeout=20.0,
         follow_redirects=True,
     )
 
-    BASE_URL = os.getenv("URL_FACILITADORES")
-    HEADERS = {
+BASE_URL = os.getenv("URL_FACILITADORES")
+HEADERS = {
         "Accept": "application/json",
         "User-Agent": "FastAPI-Client",
     }
 
-    app = APIRouter(prefix="/facilitadores", tags=["facilitadores"])
+app = APIRouter(prefix="/facilitadores", tags=["facilitadores"])
 
 
-    async def ensure_cookies():
+async def ensure_cookies():
         """
         Hace una petición inicial si aún no se han guardado cookies en la sesión.
         """
@@ -33,8 +33,8 @@
             resp.raise_for_status()
 
 
-    @app.get("/")
-    async def get_facilitadores():
+@app.get("/")
+async def get_facilitadores():
         """Obtener todos los facilitadores"""
         await ensure_cookies()
         try:
@@ -52,8 +52,8 @@
             return {"error": str(exc)}
 
 
-    @app.get("/{id}")
-    async def get_facilitador(id: int):
+@app.get("/{id}")
+async def get_facilitador(id: int):
         """Obtener un facilitador específico por ID"""
         await ensure_cookies()
         url = f"{BASE_URL}{id}"
@@ -70,8 +70,8 @@
             return {"error": str(exc)}
 
 
-    @app.post("/")
-    async def create_facilitador(facilitador: FacilitadorIn):
+@app.post("/")
+async def create_facilitador(facilitador: FacilitadorIn):
         """Crear un nuevo facilitador"""
         url = f"{BASE_URL}"
         await ensure_cookies()
@@ -91,8 +91,8 @@
             return {"error": str(exc)}
 
 
-    @app.put("/{id}")
-    async def update_facilitador(id: int, facilitador: FacilitadorIn):
+@app.put("/{id}")
+async def update_facilitador(id: int, facilitador: FacilitadorIn):
         """Actualizar un facilitador existente"""
         await ensure_cookies()
         url = f"{BASE_URL}{id}"
@@ -111,8 +111,8 @@
             return {"error": str(exc)}
 
 
-    @app.delete("/{id}")
-    async def delete_facilitador(id: int):
+@app.delete("/{id}")
+async def delete_facilitador(id: int):
         """Eliminar un facilitador"""
         await ensure_cookies()
         url = f"{BASE_URL}{id}"

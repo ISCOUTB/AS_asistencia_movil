@@ -1,97 +1,101 @@
-from fastapi import Depends, HTTPException, status, Request, Security
-from fastapi.security import OAuth2PasswordBearer, SecurityScopes
-from jose import jwt, JWTError
-from backend.api.core.config import settings
-from typing import Dict, List
-import logging
+import os
+from fastapi import APIRouter, Request,HTTPException
+from dotenv import load_dotenv
+from fastapi.responses import RedirectResponse, JSONResponse
+from msal import ConfidentialClientApplication
+from api.core.auth_utils import validar_token_ms
 
-logger = logging.getLogger(__name__)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
+app = APIRouter(prefix="/auth/microsoft", tags=["Microsoft Auth"])
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/login/token",  # must match your actual token generation endpoint
-    scopes={
-        "system": "Full system access",
-        "administrador": "Permission to manage users",
-        "facilitador": "Responsable permission",
-        "participante": "Participant permission",
-    }
-)
+# Variables de entorno (de la app en Azure)
+CLIENT_ID = os.getenv("MICROSOFT_CLIENT_ID")
+CLIENT_SECRET = os.getenv("MICROSOFT_CLIENT_SECRET")
+TENANT_ID = os.getenv("MICROSOFT_TENANT_ID")
+REDIRECT_URI = os.getenv("MICROSOFT_REDIRECT_URI")
+AUTHORITY = os.getenv("MICROSOFT_AUTHORITY")
+MICROSOFT_SCOPES = os.getenv("MICROSOFT_SCOPES", "")
+SCOPE = [s.strip() for s in MICROSOFT_SCOPES.split(",") if s.strip()]
 
+# Redirección usuario al login de Microsoft
+@app.get("/login")
+def login():
+    """Redirige al usuario al login de Microsoft"""
+    app = ConfidentialClientApplication(
+        CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
+    )
+    auth_url = app.get_authorization_request_url(SCOPE, redirect_uri=REDIRECT_URI)
+    return RedirectResponse(auth_url)
 
-def encode_token(payload: dict) -> str:
-    """
-    Encodes a JWT token using the given payload.
+# Callback de Microsoft después del login
+@app.get("/auth/redirect")
+def auth_redirect(request: Request):
+    code = request.query_params.get("code")
 
-    Args:
-        payload (dict): Data to encode in the token.
+    if not code:
+        return JSONResponse({"error": "No code received"}, status_code=400)
 
-    Returns:
-        str: Encoded JWT token.
-    """
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    app_msal = ConfidentialClientApplication(
+        CLIENT_ID, authority=AUTHORITY, client_credential=CLIENT_SECRET
+    )
 
+    result = app_msal.acquire_token_by_authorization_code(
+        code, scopes=SCOPE, redirect_uri=REDIRECT_URI
+    )
 
-def get_current_user(
-    security_scopes: SecurityScopes,
-    request: Request,
-    token: str = Depends(oauth2_scheme)
-) -> Dict[str, str]:
-    """
-    Extracts and verifies the current authenticated user from a JWT token.
+    # Verificar si el flujo fue exitoso
+    if "access_token" in result and "id_token_claims" in result:
+        return JSONResponse({
+            "message": "Autenticación exitosa con Microsoft 365",
+            "access_token": result["access_token"],
+            "id_token": result.get("id_token"),
+            "user_info": result["id_token_claims"]
+        })
+    else:
+        # Si algo sale mal, devolvemos el error detallado
+        return JSONResponse(result, status_code=400)
+    
+@app.post("/auth/verify")
+async def verificar_token(request: Request):
+    data = await request.json()
+    id_token = data.get("id_token")
 
-    Args:
-        security_scopes (SecurityScopes): Required scopes for the route.
-        request (Request): The current request.
-        token (str): The Bearer token from the header or cookie.
-
-    Returns:
-        dict: A dictionary containing the user_id and associated scopes.
-
-    Raises:
-        HTTPException: If authentication fails or token is invalid.
-    """
-    token_cookie = request.cookies.get("access_token")
-    if token_cookie:
-        token = token_cookie.replace("Bearer ", "")
-
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
+    if not id_token:
+        raise HTTPException(status_code=400, detail="Falta id_token")
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
-        scope: str = payload.get("scope")
-        if user_id is None or scope is None:
-            raise HTTPException(status_code=401, detail="Token inválido o falta el campo 'sub'")
-        return {"sub": user_id, "scope": scope}
-    except JWTError as e:
-        logger.error(f"Error decoding token: {e}")
-        raise HTTPException(status_code=401, detail="Token inválido")
-
-
-def verify_role(allowed_roles: List[str]):
+        claims = validar_token_ms(id_token)
+        return JSONResponse({
+            "status": "ok",
+            "user": {
+                "name": claims.get("name"),
+                "email": claims.get("preferred_username"),
+                "oid": claims.get("oid")
+            },
+            "claims": claims
+        })
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Token inválido: {str(e)}")
+@app.post("/callback")
+async def microsoft_callback(request: Request):
     """
-    Dependency to verify if the current user has the required role(s).
-
-    Args:
-        allowed_roles (List[str]): List of roles allowed to access the route.
-
-    Returns:
-        Callable: A dependency function that returns the current user if authorized.
-
-    Raises:
-        HTTPException: If the user does not have the required role.
+    Endpoint que recibe el id_token devuelto por Microsoft
+    y valida su autenticidad.
     """
+    try:
+        data = await request.json()
+        id_token = data.get("id_token")
 
-    def _verify(current_user: dict = Depends(get_current_user)):
-        if not any(scope in allowed_roles for scope in current_user["scopes"]):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to access this route",
-            )
-        return current_user
+        if not id_token:
+            raise HTTPException(status_code=400, detail="Falta el id_token en la solicitud.")
 
-    return _verify
+        claims = validar_token_ms(id_token)
+
+        return {
+            "success": True,
+            "message": "Token válido.",
+            "claims": claims  # Devuelve los datos decodificados del usuario
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Token inválido: {str(e)}")
