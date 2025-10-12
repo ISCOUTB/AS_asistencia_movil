@@ -8,5 +8,5 @@ __pycache__
 .coverage
 coverage.xml
 .idea
-src/backend/.env
+src/backend/api/.env
 .pyc
