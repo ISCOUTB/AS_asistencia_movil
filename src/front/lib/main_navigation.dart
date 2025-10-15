@@ -37,7 +37,7 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: AppColors.universityBlue,
+        selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         elevation: 10,
         items: const [
