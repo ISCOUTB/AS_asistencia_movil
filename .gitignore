@@ -10,3 +10,4 @@ coverage.xml
 .idea
 src/backend/api/.env
 .pyc
+src/frontend/android/debug.keystore

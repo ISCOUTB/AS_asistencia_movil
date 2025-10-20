@@ -1,11 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
     <application
-        android:label="asistencia_movil"
+        android:label="Asistencia Movil UTB"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
+        <!-- Actividad principal de Flutter -->
         <activity
-            android:name="com.example.asistencia_movil.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -14,39 +16,42 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
+            <!-- Tema usado mientras Flutter se inicializa -->
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
-                android:resource="@style/NormalTheme"
-            />
+                android:resource="@style/NormalTheme" />
 
-            <!-- Activity launcher principal -->
+            <!-- Lanzador principal -->
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Callback URI para autenticación con Microsoft -->
+            <!-- Callback de autenticación Microsoft 365 -->
             <intent-filter android:label="flutter_web_auth">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Debe coincidir con tu .env -->
                 <data
                     android:scheme="com.asistenciamovilutb.auth"
-                    android:host="callback"/>
+                    android:host="callback" />
             </intent-filter>
         </activity>
 
-        <!-- No eliminar: usado por Flutter -->
+        <!-- Requerido por Flutter -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 
-    <!-- Permite consultar apps que procesan texto -->
+    <!-- Permisos opcionales -->
     <queries>
         <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <data android:mimeType="text/plain" />
         </intent>
     </queries>
+
 </manifest>
