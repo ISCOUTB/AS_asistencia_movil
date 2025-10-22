@@ -1,0 +1,42 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Flutter/Dart
+src/frontend/.dart_tool/
+src/frontend/.flutter-plugins
+src/frontend/.flutter-plugins-dependencies
+src/frontend/.packages
+src/frontend/build/
+src/frontend/.pub-cache/
+src/frontend/.pub/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+*.env.local
+
+# Pero mantener archivos de ejemplo
+!.env.example
