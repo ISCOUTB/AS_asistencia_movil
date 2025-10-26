@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  shared_preferences: ^2.1.0
+  qr_flutter: ^4.0.0
+  fl_chart: ^0.69.0
 
   cupertino_icons: ^1.0.8
   http: ^1.2.0
@@ -30,3 +33,4 @@ flutter:
   assets:
     - assets/uni-logo.png
     - assets/foto-estudiante.jpg
+    - .env

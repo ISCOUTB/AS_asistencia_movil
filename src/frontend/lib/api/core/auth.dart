@@ -6,13 +6,27 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 
 /// Servicio para manejar la autenticación con Microsoft 365 (Azure AD v2.0)
 class MicrosoftAuthService {
-  final String clientId = dotenv.env['MICROSOFT_CLIENT_ID'] ?? '';
-  final String tenantId = dotenv.env['MICROSOFT_TENANT_ID'] ?? '';
-  final String clientSecret = dotenv.env['MICROSOFT_CLIENT_SECRET'] ?? '';
-  final String redirectUri = dotenv.env['MICROSOFT_REDIRECT_URI'] ?? '';
-  final String scopes = dotenv.env['MICROSOFT_SCOPES'] ?? 'openid profile email';
+  late final String clientId;
+  late final String tenantId;
+  late final String clientSecret;
+  late final String redirectUri;
+  late final String scopes;
+  late final String authority;
 
-  String get authority => "https://login.microsoftonline.com/$tenantId";
+  MicrosoftAuthService() {
+    clientId = dotenv.env['MICROSOFT_CLIENT_ID'] ?? '';
+    tenantId = dotenv.env['MICROSOFT_TENANT_ID'] ?? '';
+    clientSecret = dotenv.env['MICROSOFT_CLIENT_SECRET'] ?? '';
+    redirectUri = dotenv.env['MICROSOFT_REDIRECT_URI'] ?? '';
+    scopes = dotenv.env['MICROSOFT_SCOPES']?.replaceAll('"', '') ?? 'openid profile email';
+    authority = dotenv.env['MICROSOFT_AUTHORITY'] ?? "https://login.microsoftonline.com/$tenantId";
+    
+    // Debug logging
+    print('Auth Config - ClientID: ${clientId.isNotEmpty ? "✓" : "✗"}');
+    print('Auth Config - TenantID: ${tenantId.isNotEmpty ? "✓" : "✗"}');
+    print('Auth Config - Authority: $authority');
+  }
+
   String get tokenUrl => "$authority/oauth2/v2.0/token";
   String get jwksUri => "$authority/discovery/v2.0/keys";
 
@@ -22,6 +36,8 @@ class MicrosoftAuthService {
       final url =
           "$authority/oauth2/v2.0/authorize?client_id=$clientId&response_type=code"
           "&redirect_uri=$redirectUri&response_mode=query&scope=$scopes";
+      
+      print('Auth URL: $url');
 
       // Abre el navegador para el inicio de sesión
       final result = await FlutterWebAuth2.authenticate(
@@ -49,7 +65,7 @@ class MicrosoftAuthService {
 
       final data = jsonDecode(response.body);
       if (data['id_token'] == null) {
-        throw Exception("Error al obtener el id_token: ${data.toString()}");
+        throw Exception("Error al obtener el id_token: "+data.toString());
       }
 
       // Decodifica el token JWT
