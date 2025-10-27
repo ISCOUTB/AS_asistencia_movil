@@ -136,8 +136,8 @@ class _LoginPageState extends State<LoginPage> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.primary.withOpacity(0.1),
-              colorScheme.secondary.withOpacity(0.05),
+              colorScheme.primary.withValues(alpha: 0.1),
+              colorScheme.secondary.withValues(alpha: 0.05),
             ],
           ),
         ),
@@ -156,7 +156,7 @@ class _LoginPageState extends State<LoginPage> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: Offset(0, 10),
                         ),
@@ -188,11 +188,11 @@ class _LoginPageState extends State<LoginPage> {
                   // Card de información
                   Card(
                     elevation: 0,
-                    color: colorScheme.secondaryContainer.withOpacity(0.5),
+                    color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: colorScheme.outline.withOpacity(0.2),
+                        color: colorScheme.outline.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -292,7 +292,7 @@ class _LoginPageState extends State<LoginPage> {
                   Text(
                     'Versión 1.0.0',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                         ),
                   ),
                 ],
