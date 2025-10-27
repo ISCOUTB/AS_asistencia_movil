@@ -1,9 +1,10 @@
-import 'package:asistencia_movil/main_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'sesiones.dart';
 import 'asistencias.dart';
 import 'dashboard.dart';
 import 'inicio_app.dart';
+import 'api/routes/servicio_service.dart';
+import 'main_scaffold.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -258,88 +259,40 @@ class ServiciosPageContent extends StatefulWidget {
 }
 
 class _ServiciosPageContentState extends State<ServiciosPageContent> {
-  final List<Map<String, dynamic>> dadoresDeServicios = [
-    {
-      "nombre": "Centro de Cuidado Integral",
-      "correo": "cuidado@utb.edu.co",
-      "servicios": [
-        {
-          "nombre": "Asesoría Psicológica",
-          "fecha": "05/06/2025",
-          "correoResponsable": "kgaravito@utb.edu.co",
-          "admiteExternos": "Solo personas con cuenta UTB",
-          "acumulaAsistencia": "Sí",
-        },
-        {
-          "nombre": "Taller de Bienestar",
-          "fecha": "15/07/2025",
-          "correoResponsable": "lpulello@utb.edu.co",
-          "admiteExternos": "Personas con y sin cuenta UTB",
-          "acumulaAsistencia": "Sí",
-        },
-      ],
-    },
-    {
-      "nombre": "Centro de Excelencia Docente",
-      "correo": "docente@utb.edu.co",
-      "servicios": [
-        {
-          "nombre": "Capacitación en TIC",
-          "fecha": "10/06/2025",
-          "correoResponsable": "rariza@utb.edu.co",
-          "admiteExternos": "No",
-          "acumulaAsistencia": "No",
-        },
-        {
-          "nombre": "Taller de Pedagogía",
-          "fecha": "05/06/2025",
-          "correoResponsable": "hteran@utb.edu.co",
-          "admiteExternos": "No",
-          "acumulaAsistencia": "No",
-        },
-      ],
-    },
-    {
-      "nombre": "Centro de Apoyo Académico",
-      "correo": "academico@utb.edu.co",
-      "servicios": [
-        {
-          "nombre": "Tutorías en Matemáticas",
-          "fecha": "12/06/2025",
-          "correoResponsable": "mgomez@utb.edu.co",
-          "admiteExternos": "Sí",
-          "acumulaAsistencia": "Sí",
-        },
-        {
-          "nombre": "Tutorías en Física",
-          "fecha": "15/06/2025",
-          "correoResponsable": "yatencia@utb.edu.co",
-          "admiteExternos": "No",
-          "acumulaAsistencia": "No",
-        },
-      ],
-    },
-    {
-      "nombre": "Centro de Innovación",
-      "correo": "innovacion@utb.edu.co",
-      "servicios": [
-        {
-          "nombre": "Hackathon",
-          "fecha": "20/06/2025",
-          "correoResponsable": "vega@utb.edu.co",
-          "admiteExternos": "Sí",
-          "acumulaAsistencia": "Sí",
-        },
-        {
-          "nombre": "Taller de Creatividad",
-          "fecha": "25/06/2025",
-          "correoResponsable": "vega@utb.edu.co",
-          "admiteExternos": "No",
-          "acumulaAsistencia": "No",
-        },
-      ],
-    },
-  ];
+  late ServicioService servicioService;
+  List<dynamic> servicios = [];
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    // Usar URL directa del backend Oracle ORDS
+    const baseUrl = 'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/servicios/';
+    servicioService = ServicioService(baseUrl);
+    _cargarServicios();
+  }
+
+  Future<void> _cargarServicios() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final data = await servicioService.getServicios();
+      setState(() {
+        servicios = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error al cargar servicios: $e';
+        isLoading = false;
+      });
+      print('Error cargando servicios: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -402,10 +355,10 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
 
           const SizedBox(height: 16),
 
-          // Lista de dadores de servicios con menú desplegable
+          // Lista de servicios desde el backend
           Expanded(
             child: Container(
-              margin: const EdgeInsets.only(bottom: 20), // Menos espacio para la barra persistente
+              margin: const EdgeInsets.only(bottom: 20),
               decoration: const BoxDecoration(
                 color: AppColors.backgroundLight,
                 borderRadius: BorderRadius.only(
@@ -413,42 +366,107 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
                   topRight: Radius.circular(24),
                 ),
               ),
-              child: ListView.builder(
-                itemCount: dadoresDeServicios.length,
-                itemBuilder: (context, index) {
-                  final dador = dadoresDeServicios[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: ExpansionTile(
-                      title: Text(
-                        dador["nombre"],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      subtitle: Text("Correo: ${dador["correo"]}"),
-                      children: [
-                        ...dador["servicios"].map<Widget>((servicio) {
-                          return ListTile(
-                            title: Text(servicio["nombre"]),
-                            leading: const Icon(
-                              Icons.info_outline,
-                              color: AppColors.universityBlue,
+              child: isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  size: 60, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                                child: Text(
+                                  errorMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _cargarServicios,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.universityBlue,
+                                ),
+                                child: const Text('Reintentar'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : servicios.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No hay servicios disponibles',
+                                style: TextStyle(fontSize: 16, color: Colors.grey),
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _cargarServicios,
+                              child: ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: servicios.length,
+                                itemBuilder: (context, index) {
+                                  final servicio = servicios[index];
+                                  return Card(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    elevation: 3,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(16),
+                                      onTap: () => _mostrarDetalleServicio(context, servicio),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 50,
+                                              height: 50,
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [
+                                                    AppColors.universityPurple,
+                                                    AppColors.universityBlue,
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: const Icon(
+                                                Icons.bookmark,
+                                                color: Colors.white,
+                                                size: 28,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Text(
+                                                servicio['nombre_servicio'] ?? 'Sin nombre',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.grey[400],
+                                              size: 28,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                            onTap: () {
-                              _mostrarDetalleServicio(context, servicio);
-                            },
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                  );
-                },
-              ),
             ),
           ),
         ],
@@ -460,40 +478,274 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
           ),
-          title: Text(
-            servicio["nombre"],
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.universityBlue,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Fecha de creación: ${servicio["fecha"]}"),
-              Text("Correo del responsable: ${servicio["correoResponsable"]}"),
-              Text("Admite externos: ${servicio["admiteExternos"]}"),
-              Text("Acumula asistencia: ${servicio["acumulaAsistencia"]}"),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.universityBlue,
+          child: SingleChildScrollView(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    Color(0xFFF8F9FA),
+                  ],
+                ),
               ),
-              child: const Text("Cerrar"),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header con gradiente
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.universityPurple,
+                          AppColors.universityBlue,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        topRight: Radius.circular(20),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.bookmark,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            servicio['nombre_servicio'] ?? 'Sin nombre',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Contenido
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Descripción - solo mostrar si existe
+                        if (servicio['descripcion'] != null && servicio['descripcion'].toString().isNotEmpty)
+                          _buildInfoSection(
+                            icon: Icons.description,
+                            title: 'Descripción',
+                            content: servicio['descripcion'].toString(),
+                            color: AppColors.universityBlue,
+                          ),
+                        if (servicio['descripcion'] != null && servicio['descripcion'].toString().isNotEmpty)
+                          const SizedBox(height: 16),
+
+                        // Materia - solo mostrar si existe
+                        if (servicio['materia'] != null && servicio['materia'].toString().isNotEmpty)
+                          _buildInfoSection(
+                            icon: Icons.book,
+                            title: 'Materia',
+                            content: servicio['materia'].toString(),
+                            color: AppColors.universityPurple,
+                          ),
+                        if (servicio['materia'] != null && servicio['materia'].toString().isNotEmpty)
+                          const SizedBox(height: 16),
+
+                        // Periodo - solo mostrar si existe
+                        if (servicio['periodo'] != null && servicio['periodo'].toString().isNotEmpty)
+                          _buildInfoSection(
+                            icon: Icons.calendar_today,
+                            title: 'Periodo',
+                            content: servicio['periodo'].toString(),
+                            color: AppColors.universityLightBlue,
+                          ),
+                        if (servicio['periodo'] != null && servicio['periodo'].toString().isNotEmpty)
+                          const SizedBox(height: 16),
+
+                        // Información adicional
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    servicio['permite_externos'] == 'S'
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    color: servicio['permite_externos'] == 'S'
+                                        ? Colors.green
+                                        : Colors.red,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Permite externos: ',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(servicio['permite_externos'] == 'S' ? 'Sí' : 'No'),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    servicio['acumula_asistencia'] == 'S'
+                                        ? Icons.check_circle
+                                        : Icons.cancel,
+                                    color: servicio['acumula_asistencia'] == 'S'
+                                        ? Colors.green
+                                        : Colors.red,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Acumula asistencia: ',
+                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(servicio['acumula_asistencia'] == 'S' ? 'Sí' : 'No'),
+                                ],
+                              ),
+                              if (servicio['fecha_creacion'] != null) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time,
+                                      color: Colors.grey,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Fecha de creación: ',
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        servicio['fecha_creacion'].toString(),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Botones de acción
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'Cerrar',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildInfoSection({
+    required IconData icon,
+    required String title,
+    required String content,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  content,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

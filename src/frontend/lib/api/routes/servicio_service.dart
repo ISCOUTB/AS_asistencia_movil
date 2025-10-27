@@ -8,40 +8,22 @@ class ServicioService {
     'User-Agent': 'Flutter-Client',
   };
 
-  // Simula las cookies de sesión
-  Map<String, String> cookies = {};
-
   ServicioService(this.baseUrl);
-
-  // Asegura que haya cookies antes de hacer peticiones
-  Future<void> _ensureCookies() async {
-    if (cookies.isEmpty) {
-      final response = await http.get(Uri.parse(baseUrl), headers: headers);
-      if (response.statusCode == 200) {
-        _updateCookies(response);
-      } else {
-        throw Exception('No se pudieron obtener cookies');
-      }
-    }
-  }
-
-  // Actualiza cookies
-  void _updateCookies(http.Response response) {
-    final rawCookies = response.headers['set-cookie'];
-    if (rawCookies != null) {
-      final cookie = rawCookies.split(';')[0];
-      cookies['cookie'] = cookie;
-      headers['cookie'] = cookie;
-    }
-  }
 
   // GET /servicios/
   Future<List<dynamic>> getServicios() async {
-    await _ensureCookies();
     final response = await http.get(Uri.parse(baseUrl), headers: headers);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      // Oracle ORDS devuelve {items: [...]} o directamente una lista
+      if (data is Map && data.containsKey('items')) {
+        return data['items'] as List<dynamic>;
+      } else if (data is List) {
+        return data;
+      } else {
+        throw Exception('Formato de respuesta inesperado');
+      }
     } else {
       throw Exception('Error al obtener servicios: ${response.statusCode}');
     }
@@ -49,11 +31,17 @@ class ServicioService {
 
   // GET /servicios/{id}
   Future<Map<String, dynamic>> getServicio(int id) async {
-    await _ensureCookies();
     final response = await http.get(Uri.parse('$baseUrl$id'), headers: headers);
 
     if (response.statusCode == 200 || response.statusCode == 204) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      if (data is Map && data.containsKey('items') && (data['items'] as List).isNotEmpty) {
+        return (data['items'] as List)[0];
+      } else if (data is Map) {
+        return data as Map<String, dynamic>;
+      } else {
+        throw Exception('Formato de respuesta inesperado');
+      }
     } else if (response.statusCode == 404) {
       throw Exception('Servicio con ID $id no encontrado');
     } else {
@@ -63,13 +51,19 @@ class ServicioService {
 
   // GET /servicios/departamento/{id_departamento}
   Future<List<dynamic>> getServiciosPorDepartamento(int idDepartamento) async {
-    await _ensureCookies();
     final query = jsonEncode({'id_departamento': idDepartamento});
     final url = Uri.parse('$baseUrl?q=$query');
 
     final response = await http.get(url, headers: headers);
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      if (data is Map && data.containsKey('items')) {
+        return data['items'] as List<dynamic>;
+      } else if (data is List) {
+        return data;
+      } else {
+        throw Exception('Formato de respuesta inesperado');
+      }
     } else {
       throw Exception('Error al obtener servicios por departamento: ${response.statusCode}');
     }
@@ -77,7 +71,6 @@ class ServicioService {
 
   // POST /servicios/
   Future<void> createServicio(Map<String, dynamic> servicio) async {
-    await _ensureCookies();
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {...headers, 'Content-Type': 'application/json'},
@@ -91,7 +84,6 @@ class ServicioService {
 
   // PUT /servicios/{id}
   Future<void> updateServicio(int id, Map<String, dynamic> servicio) async {
-    await _ensureCookies();
     final response = await http.put(
       Uri.parse('$baseUrl$id'),
       headers: {...headers, 'Content-Type': 'application/json'},
@@ -105,7 +97,6 @@ class ServicioService {
 
   // DELETE /servicios/{id}
   Future<void> deleteServicio(int id) async {
-    await _ensureCookies();
     final response = await http.delete(Uri.parse('$baseUrl$id'), headers: headers);
 
     if (![200, 204].contains(response.statusCode)) {
