@@ -259,17 +259,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                       "William David Lozano Julio",
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 20,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     SizedBox(height: 4),
                                     Text(
                                       "Estudiante de Ingeniería de Sistemas",
                                       style: TextStyle(
                                         color: Colors.white70,
-                                        fontSize: 16,
+                                        fontSize: 14,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
@@ -278,30 +280,35 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           )
                         : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               _buildProfilePicture(),
                               const SizedBox(width: 16),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text(
-                                    "William David Lozano Julio",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text(
+                                      "William David Lozano Julio",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    "Estudiante de Ingeniería de Sistemas",
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 16,
+                                    SizedBox(height: 4),
+                                    Text(
+                                      "Estudiante de Ingeniería de Sistemas",
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -406,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Construir foto de perfil con borde estilizado y más visible
 Widget _buildProfilePicture() {
   return Container(
-    padding: const EdgeInsets.all(6), // Espaciado entre el avatar y el borde
+    padding: const EdgeInsets.all(4), // Reducido para pantallas pequeñas
     decoration: BoxDecoration(
       shape: BoxShape.circle,
       gradient: const LinearGradient(
@@ -427,7 +434,7 @@ Widget _buildProfilePicture() {
       ],
     ),
     child: const CircleAvatar(
-      radius: 50, // Aumentamos el tamaño del avatar
+      radius: 40, // Reducido de 50 a 40 para que quepa mejor
       backgroundImage: AssetImage("assets/foto-estudiante.jpg"),
     ),
   );
@@ -655,8 +662,32 @@ class _StudentViewState extends State<StudentView> {
                 ),
                 child: const Icon(Icons.check, color: Colors.white),
               ),
-              title: Text(a['title']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Row(children: [Expanded(child: Text(a['subtitle']!)), const SizedBox(width: 8), Chip(label: Text(a['time']!), backgroundColor: widget.primaryColor.withOpacity(0.12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)))]),
+              title: Text(
+                a['title']!, 
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      a['subtitle']!,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Chip(
+                    label: Text(a['time']!),
+                    backgroundColor: widget.primaryColor.withOpacity(0.12),
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                    visualDensity: VisualDensity.compact,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ],
+              ),
               trailing: Icon(Icons.chevron_right, color: widget.primaryColor),
             ),
           ),

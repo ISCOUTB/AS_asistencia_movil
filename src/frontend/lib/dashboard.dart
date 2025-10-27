@@ -63,8 +63,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
           ),
         ),
       ),
-      body: Container(
-        margin: const EdgeInsets.only(bottom: 20),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,55 +95,160 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                       _range = (i==0)?'today':(i==1)?'7d':'30d';
                     });
                   },
-                  children: const [Padding(padding: EdgeInsets.symmetric(horizontal:12), child: Text('Hoy')), Padding(padding: EdgeInsets.symmetric(horizontal:12), child: Text('7d')), Padding(padding: EdgeInsets.symmetric(horizontal:12), child: Text('30d'))],
+                  children: const [
+                    Padding(padding: EdgeInsets.symmetric(horizontal:12), child: Text('Hoy')),
+                    Padding(padding: EdgeInsets.symmetric(horizontal:12), child: Text('7d')),
+                    Padding(padding: EdgeInsets.symmetric(horizontal:12), child: Text('30d'))
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 180,
+              height: 220,
               child: Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: BarChart(
-                    BarChartData(
-                      alignment: BarChartAlignment.spaceAround,
-                      maxY: (_currentData.reduce((a,b)=>a>b?a:b)).toDouble() + 2,
-                      barTouchData: BarTouchData(enabled: true),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, meta) { 
-                          final idx = v.toInt();
-                          return Text('${idx+1}');
-                        })),
-                        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+                  child: _range == '30d' 
+                    ? SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: _currentData.length * 25.0, // 25 pixels por barra
+                          child: BarChart(
+                            BarChartData(
+                              alignment: BarChartAlignment.spaceAround,
+                              maxY: (_currentData.reduce((a,b)=>a>b?a:b)).toDouble() + 2,
+                              barTouchData: BarTouchData(enabled: true),
+                              titlesData: FlTitlesData(
+                                show: true,
+                                bottomTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    interval: 5, // Mostrar cada 5 días
+                                    getTitlesWidget: (v, meta) { 
+                                      final idx = v.toInt();
+                                      // Solo mostrar cada 5 días
+                                      if (idx % 5 == 0) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(top: 4.0),
+                                          child: Text(
+                                            '${idx + 1}',
+                                            style: const TextStyle(fontSize: 10),
+                                          ),
+                                        );
+                                      }
+                                      return const SizedBox.shrink();
+                                    },
+                                  ),
+                                ),
+                                leftTitles: AxisTitles(
+                                  sideTitles: SideTitles(
+                                    showTitles: true,
+                                    reservedSize: 30,
+                                    getTitlesWidget: (value, meta) {
+                                      return Text(
+                                        value.toInt().toString(),
+                                        style: const TextStyle(fontSize: 10),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              ),
+                              gridData: FlGridData(
+                                show: true,
+                                drawVerticalLine: false,
+                              ),
+                              borderData: FlBorderData(show: false),
+                              barGroups: List.generate(
+                                _currentData.length,
+                                (i) => BarChartGroupData(
+                                  x: i,
+                                  barRods: [
+                                    BarChartRodData(
+                                      toY: _currentData[i].toDouble(),
+                                      color: AppColors.universityBlue,
+                                      width: 12,
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : BarChart(
+                        BarChartData(
+                          alignment: BarChartAlignment.spaceAround,
+                          maxY: (_currentData.reduce((a,b)=>a>b?a:b)).toDouble() + 2,
+                          barTouchData: BarTouchData(enabled: true),
+                          titlesData: FlTitlesData(
+                            show: true,
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (v, meta) { 
+                                  final idx = v.toInt();
+                                  return Text(
+                                    '${idx + 1}',
+                                    style: const TextStyle(fontSize: 11),
+                                  );
+                                },
+                              ),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 30,
+                              ),
+                            ),
+                            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          ),
+                          borderData: FlBorderData(show: false),
+                          barGroups: List.generate(
+                            _currentData.length,
+                            (i) => BarChartGroupData(
+                              x: i,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: _currentData[i].toDouble(),
+                                  color: AppColors.universityBlue,
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                      borderData: FlBorderData(show: false),
-                      barGroups: List.generate(_currentData.length, (i) => BarChartGroupData(x: i, barRods: [BarChartRodData(toY: _currentData[i].toDouble(), color: AppColors.universityBlue)])),
-                    ),
-                  ),
                 ),
               ),
             ),
             const SizedBox(height: 12),
             const Text('Actividad reciente', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Expanded(
-              child: ListView.separated(
-                itemCount: 6,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: CircleAvatar(backgroundColor: AppColors.universityPurple, child: const Icon(Icons.person, color: Colors.white)),
-                    title: Text('Usuario ${index + 1}'),
-                    subtitle: Text('Registró asistencia en Sesión ${index + 1}'),
-                    trailing: Text('hace ${index + 1}h', style: const TextStyle(fontSize: 12)),
-                  );
-                },
-              ),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.universityPurple,
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
+                  title: Text('Usuario ${index + 1}'),
+                  subtitle: Text('Registró asistencia en Sesión ${index + 1}'),
+                  trailing: Text('hace ${index + 1}h', style: const TextStyle(fontSize: 12)),
+                );
+              },
             ),
+            const SizedBox(height: 80), // Espacio para el navbar
           ],
         ),
       ),

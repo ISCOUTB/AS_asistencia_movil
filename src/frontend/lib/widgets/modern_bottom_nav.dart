@@ -37,7 +37,7 @@ class ModernBottomNav extends StatelessWidget {
       ),
       child: Container(
         height: 70,
-        margin: const EdgeInsets.symmetric(horizontal: 20),
+        margin: const EdgeInsets.symmetric(horizontal: 12), // Reducido de 20 a 12
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
@@ -53,15 +53,18 @@ class ModernBottomNav extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _navItem(Icons.bookmark, 'Servicios', 0),
-            _navItem(Icons.star, 'Sesiones', 1),
-            _floatingHome(),
-            _navItem(Icons.check_circle, 'Asistencias', 2),
-            _navItem(Icons.bar_chart, 'Dashboard', 3),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8), // Padding interno
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _navItem(Icons.bookmark, 'Servicios', 0),
+              _navItem(Icons.star, 'Sesiones', 1),
+              _floatingHome(),
+              _navItem(Icons.check_circle, 'Asistencias', 2),
+              _navItem(Icons.bar_chart, 'Dashboard', 3),
+            ],
+          ),
         ),
       ),
     );
@@ -69,22 +72,39 @@ class ModernBottomNav extends StatelessWidget {
 
   Widget _navItem(IconData icon, String label, int index) {
     final bool isSelected = index == selectedIndex;
-    return GestureDetector(
-      onTap: () => onTap(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        padding: EdgeInsets.symmetric(vertical: isSelected ? 10 : 8, horizontal: isSelected ? 14 : 10),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white.withOpacity(0.14) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: isSelected ? 24 : 20),
-            const SizedBox(height: 2),
-            Text(label, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: isSelected ? 12 : 10)),
-          ],
+    return Flexible(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          padding: EdgeInsets.symmetric(
+            vertical: isSelected ? 10 : 8, 
+            horizontal: isSelected ? 8 : 4,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white.withOpacity(0.14) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: isSelected ? 24 : 20),
+              const SizedBox(height: 2),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: isSelected ? 11 : 9,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
