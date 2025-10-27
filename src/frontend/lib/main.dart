@@ -14,7 +14,11 @@ void main() async {
     print("Advertencia: No se pudo cargar .env - $e");
   }
   
-  runApp(MyApp());
+  // Bypass de login mientras la universidad configura Microsoft 365
+  runApp(const InicioApp(
+    userEmail: 'usuario@utb.edu.co',
+    userType: 'profesor', // Cambia a 'estudiante' si prefieres ese rol
+  ));
 }
 
 class MyApp extends StatelessWidget {
