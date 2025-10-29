@@ -89,7 +89,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.15),
+                color: Colors.green.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.qr_code_scanner, color: Colors.green, size: 24),
@@ -235,7 +235,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
               margin: const EdgeInsets.symmetric(horizontal: 40),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -285,7 +285,7 @@ class QRScannerOverlay extends CustomPainter {
     
     // Fondo oscuro semitransparente
     final backgroundPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.5);
+      ..color = Colors.black.withOpacity(0.5);
     
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
     

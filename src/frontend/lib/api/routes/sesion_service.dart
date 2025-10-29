@@ -8,40 +8,22 @@ class SesionService {
     'User-Agent': 'Flutter-Client',
   };
 
-  // Simula las cookies de sesión
-  Map<String, String> cookies = {};
-
   SesionService(this.baseUrl);
-
-  // Asegura que haya cookies antes de hacer peticiones
-  Future<void> _ensureCookies() async {
-    if (cookies.isEmpty) {
-      final response = await http.get(Uri.parse(baseUrl), headers: headers);
-      if (response.statusCode == 200) {
-        _updateCookies(response);
-      } else {
-        throw Exception('No se pudieron obtener cookies');
-      }
-    }
-  }
-
-  // Actualiza cookies
-  void _updateCookies(http.Response response) {
-    final rawCookies = response.headers['set-cookie'];
-    if (rawCookies != null) {
-      final cookie = rawCookies.split(';')[0];
-      cookies['cookie'] = cookie;
-      headers['cookie'] = cookie;
-    }
-  }
 
   // GET /sesion/
   Future<List<dynamic>> getSesiones() async {
-    await _ensureCookies();
     final response = await http.get(Uri.parse(baseUrl), headers: headers);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      // Oracle ORDS devuelve {items: [...]} o directamente una lista
+      if (data is Map && data.containsKey('items')) {
+        return data['items'] as List<dynamic>;
+      } else if (data is List) {
+        return data;
+      } else {
+        throw Exception('Formato de respuesta inesperado');
+      }
     } else {
       throw Exception('Error al obtener sesiones: ${response.statusCode}');
     }
@@ -49,11 +31,17 @@ class SesionService {
 
   // GET /sesion/{id}
   Future<Map<String, dynamic>> getSesion(int id) async {
-    await _ensureCookies();
     final response = await http.get(Uri.parse('$baseUrl$id'), headers: headers);
 
     if (response.statusCode == 200 || response.statusCode == 204) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      if (data is Map && data.containsKey('items') && (data['items'] as List).isNotEmpty) {
+        return (data['items'] as List)[0];
+      } else if (data is Map) {
+        return data as Map<String, dynamic>;
+      } else {
+        throw Exception('Formato de respuesta inesperado');
+      }
     } else if (response.statusCode == 404) {
       throw Exception('Sesión con ID $id no encontrada');
     } else {
@@ -63,14 +51,20 @@ class SesionService {
 
   // GET /sesion/servicio/{id_servicio}
   Future<List<dynamic>> getSesionesPorServicio(int idServicio) async {
-    await _ensureCookies();
     final query = jsonEncode({'id_servicio': idServicio});
     final url = Uri.parse('$baseUrl?q=$query');
 
     final response = await http.get(url, headers: headers);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      if (data is Map && data.containsKey('items')) {
+        return data['items'] as List<dynamic>;
+      } else if (data is List) {
+        return data;
+      } else {
+        throw Exception('Formato de respuesta inesperado');
+      }
     } else if (response.statusCode == 404) {
       throw Exception('No se encontraron sesiones para el servicio $idServicio');
     } else {
@@ -80,7 +74,6 @@ class SesionService {
 
   // POST /sesion/
   Future<void> createSesion(Map<String, dynamic> sesion) async {
-    await _ensureCookies();
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {...headers, 'Content-Type': 'application/json'},
@@ -94,7 +87,6 @@ class SesionService {
 
   // PUT /sesion/{id}
   Future<void> updateSesion(int id, Map<String, dynamic> sesion) async {
-    await _ensureCookies();
     final response = await http.put(
       Uri.parse('$baseUrl$id'),
       headers: {...headers, 'Content-Type': 'application/json'},
@@ -108,7 +100,6 @@ class SesionService {
 
   // DELETE /sesion/{id}
   Future<void> deleteSesion(int id) async {
-    await _ensureCookies();
     final response = await http.delete(Uri.parse('$baseUrl$id'), headers: headers);
 
     if (![200, 204].contains(response.statusCode)) {

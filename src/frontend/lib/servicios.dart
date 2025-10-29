@@ -7,6 +7,7 @@ import 'api/routes/servicio_service.dart';
 import 'main_scaffold.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
+import 'crear_servicio.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -343,6 +344,16 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
           ],
         ),
       ),
+      // Botón flotante para crear servicio
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _navegarCrearServicio(context),
+        backgroundColor: AppColors.universityBlue,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'Crear Servicio',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 
@@ -391,6 +402,20 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
         style: TextStyle(fontSize: fontSize, color: Colors.grey),
       ),
     );
+  }
+
+  void _navegarCrearServicio(BuildContext context) async {
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CrearServicioPage(),
+      ),
+    );
+
+    // Si se creó un servicio, recargar la lista
+    if (resultado == true) {
+      _cargarServicios();
+    }
   }
 
   Widget _buildServiceCard(BuildContext context, Map<String, dynamic> servicio) {
