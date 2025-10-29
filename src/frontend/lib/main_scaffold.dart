@@ -5,7 +5,6 @@ import 'asistencias_profesor.dart';
 import 'sesiones_estudiante.dart';
 import 'asistencias_estudiante.dart';
 import 'dashboard.dart';
-import 'inicio_app.dart';
 import 'widgets/modern_bottom_nav.dart';
 
 class AppColors {
@@ -33,6 +32,7 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
   late int _currentIndex;
   late AnimationController _animationController;
   late AnimationController _homeAnimationController;
+  final List<int> _navigationHistory = []; // Historial de navegación
 
   // Páginas para PROFESORES: Servicios, Sesiones, Asistencias, Dashboard
   final List<Widget> _teacherPages = [
@@ -52,6 +52,7 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    _navigationHistory.add(_currentIndex); // Agregar índice inicial al historial
     
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -75,6 +76,7 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
     if (index != _currentIndex) {
       setState(() {
         _currentIndex = index;
+        _navigationHistory.add(index); // Agregar al historial
       });
       
       _animationController.forward().then((_) {
@@ -83,39 +85,27 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
     }
   }
 
+  Future<bool> _onWillPop() async {
+    if (_navigationHistory.length > 1) {
+      // Hay historial, volver a la pestaña anterior
+      setState(() {
+        _navigationHistory.removeLast(); // Quitar el actual
+        _currentIndex = _navigationHistory.last; // Ir al anterior
+      });
+      return false; // No salir de la app
+    }
+    return true; // Permitir salir (volver al HomeScreen)
+  }
+
   void _navigateToHome() {
     _homeAnimationController.forward().then((_) {
       _homeAnimationController.reverse();
     });
 
     Future.delayed(const Duration(milliseconds: 100), () {
-      if (!mounted) return; // Verificar si el widget sigue montado
-      Navigator.pushAndRemoveUntil(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => HomeScreen(
-            userEmail: '', // TODO: Obtener email real del contexto
-            userType: widget.isStudent ? 'estudiante' : 'profesor',
-          ),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween(
-                  begin: const Offset(0.0, -1.0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeInOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
-        (route) => false,
-      );
+      if (!mounted) return;
+      // Volver al menú inicial (HomeScreen)
+      Navigator.popUntil(context, (route) => route.isFirst);
     });
   }
 
@@ -124,23 +114,26 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
     // Seleccionar las páginas según el tipo de usuario
     final pages = widget.isStudent ? _studentPages : _teacherPages;
     
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: pages,
-      ),
-      bottomNavigationBar: ModernBottomNav(
-        selectedIndex: _currentIndex,
-        primaryColor: const Color(0xFF667EEA),
-        accentColor: const Color(0xFF764BA2),
-        isStudent: widget.isStudent,
-        onTap: (index) {
-          if (index == 999) {
-            _navigateToHome();
-            return;
-          }
-          _onNavItemTapped(index);
-        },
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: IndexedStack(
+          index: _currentIndex,
+          children: pages,
+        ),
+        bottomNavigationBar: ModernBottomNav(
+          selectedIndex: _currentIndex,
+          primaryColor: const Color(0xFF667EEA),
+          accentColor: const Color(0xFF764BA2),
+          isStudent: widget.isStudent,
+          onTap: (index) {
+            if (index == 999) {
+              _navigateToHome();
+              return;
+            }
+            _onNavItemTapped(index);
+          },
+        ),
       ),
     );
   }

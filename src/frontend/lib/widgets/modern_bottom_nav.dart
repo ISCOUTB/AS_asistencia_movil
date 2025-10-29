@@ -70,8 +70,6 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     final navHeight = ResponsiveUtils.getBottomNavHeight(context);
-    final hPadding = context.isLandscape ? 6.0 : 8.0;
-    final vPadding = context.isLandscape ? 4.0 : 6.0;
     
     return Container(
       decoration: BoxDecoration(
@@ -107,7 +105,6 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
         top: false,
         child: Container(
           height: navHeight,
-          padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
           child: widget.isStudent ? _buildStudentNav(context) : _buildTeacherNav(context),
         ),
       ),

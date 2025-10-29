@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'servicios.dart';
 import 'sesiones.dart';
 import 'asistencias.dart';
-import 'inicio_app.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
 // ignore: depend_on_referenced_packages
@@ -698,29 +697,8 @@ class ModernDashboardPage extends StatelessWidget {
   }
 
   void _navigateToHome(BuildContext context) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween(
-                begin: const Offset(1.0, 0.0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeInOutCubic,
-              )),
-              child: child,
-            ),
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 300),
-      ),
-      (route) => false,
-    );
+    // Volver al inicio preservando el historial
+    Navigator.popUntil(context, (route) => route.isFirst);
   }
 
   void _navigateWithAnimation(BuildContext context, int index) {

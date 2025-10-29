@@ -33,6 +33,7 @@ class InicioApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'UTB Assists',
+      debugShowCheckedModeBanner: false, // QUITAR BANNER ROJO
       theme: ThemeData(
         primaryColor: AppColors.universityBlue,
         useMaterial3: true,
@@ -79,47 +80,213 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showSettingsDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.settings, color: AppColors.universityBlue),
-            SizedBox(width: 8),
-            Text('Ajustes'),
-          ],
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('¿Deseas cerrar sesión?'),
-            const SizedBox(height: 8),
-            Text(
-              'Correo: ${widget.userEmail}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header del modal
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.universityPurple, AppColors.universityBlue],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.settings, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'Configuración',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Información del usuario
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundLight,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: AppColors.universityBlue.withValues(alpha: 0.2),
+                          child: Icon(
+                            _role == UserRole.professor ? Icons.school : Icons.person,
+                            color: AppColors.universityBlue,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.userEmail,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1A1A1A),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _role == UserRole.professor ? 'Profesor' : 'Estudiante',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // Selector de perfil
+              const Text(
+                'Cambiar perfil',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildRoleOption(
+                      context,
+                      'Profesor',
+                      Icons.school,
+                      UserRole.professor,
+                      _role == UserRole.professor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildRoleOption(
+                      context,
+                      'Estudiante',
+                      Icons.person,
+                      UserRole.student,
+                      _role == UserRole.student,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              // Botón de cerrar sesión
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _handleLogout(context),
+                  icon: const Icon(Icons.logout, size: 20),
+                  label: const Text(
+                    'Cerrar sesión',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade50,
+                    foregroundColor: Colors.red.shade700,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () => _logout(context),
-            icon: const Icon(Icons.logout),
-            label: const Text('Cerrar Sesión'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  Future<void> _logout(BuildContext context) async {
-    // Importar el servicio de sesión
+  Widget _buildRoleOption(
+    BuildContext context,
+    String label,
+    IconData icon,
+    UserRole role,
+    bool isSelected,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _setRole(role);
+        });
+        Navigator.pop(context);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [AppColors.universityPurple, AppColors.universityBlue],
+                )
+              : null,
+          color: isSelected ? null : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.universityBlue : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
     final navigator = Navigator.of(context);
     
     // Cerrar sesión
@@ -195,157 +362,131 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHeader(BuildContext context, bool isLandscape, double logoHeight,
       double hPadding, double vPadding, double borderRadius) {
-    final iconSize = ResponsiveUtils.getIconSize(context, 24);
-    final titleFontSize = ResponsiveUtils.getFontSize(context, 18);
-    final subtitleFontSize = ResponsiveUtils.getFontSize(context, 14);
-    final roleFontSize = ResponsiveUtils.getFontSize(context, 14);
+    final titleFontSize = ResponsiveUtils.getFontSize(context, isLandscape ? 18 : 20);
+    final roleBadgeFontSize = ResponsiveUtils.getFontSize(context, 11);
     
     return Container(
-      padding: EdgeInsets.all(hPadding),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            AppColors.universityPurple,
-            AppColors.universityBlue,
-          ],
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(borderRadius),
-          bottomRight: Radius.circular(borderRadius),
-        ),
+      padding: EdgeInsets.symmetric(
+        horizontal: hPadding,
+        vertical: ResponsiveUtils.getSpacing(context, isLandscape ? 12 : 16),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row superior: logo a la izquierda, selector de rol a la derecha
+          // Row superior: badge, nombre y foto
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Image.asset(
-                "assets/uni-logo.png",
-                height: logoHeight,
-              ),
-              // Selector de rol y botón de ajustes
-              Row(
-                children: [
-                  // Botón de ajustes
-                  IconButton(
-                    icon: Icon(Icons.settings, color: Colors.white, size: iconSize),
-                    onPressed: () => _showSettingsDialog(context),
+              // Badge de rol compacto
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1,
                   ),
-                  SizedBox(width: ResponsiveUtils.getSpacing(context, 8)),
-                  // Selector de rol (Profesor / Estudiante)
-                  Icon(Icons.person, color: Colors.white70, size: ResponsiveUtils.getIconSize(context, 20)),
-                  SizedBox(width: ResponsiveUtils.getSpacing(context, 8)),
-                  PopupMenuButton<UserRole>(
-                    initialValue: _role,
-                    color: Colors.white,
-                    onSelected: _setRole,
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: UserRole.professor,
-                        child: Text('Profesor', style: TextStyle(fontSize: roleFontSize)),
-                      ),
-                      PopupMenuItem(
-                        value: UserRole.student,
-                        child: Text('Estudiante', style: TextStyle(fontSize: roleFontSize)),
-                      ),
-                    ],
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        vertical: isLandscape ? 4.0 : 6.0,
-                        horizontal: isLandscape ? 10.0 : 12.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 20)),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            _role == UserRole.professor ? 'Profesor' : 'Estudiante',
-                            style: TextStyle(color: Colors.white, fontSize: roleFontSize),
-                          ),
-                          SizedBox(width: ResponsiveUtils.getSpacing(context, 6)),
-                          Icon(Icons.arrow_drop_down, color: Colors.white, size: iconSize),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
-          
-          SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
-          isLandscape
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "William David Lozano Julio",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: titleFontSize,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: ResponsiveUtils.getSpacing(context, 4)),
-                          Text(
-                            "Estudiante de Ingeniería de Sistemas",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: subtitleFontSize,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
+                    Icon(
+                      _role == UserRole.professor ? Icons.school : Icons.person,
+                      color: Colors.white,
+                      size: ResponsiveUtils.getIconSize(context, 14),
                     ),
-                    _buildProfilePicture(context),
-                  ],
-                )
-              : Row(
-                  children: [
-                    _buildProfilePicture(context),
-                    SizedBox(width: ResponsiveUtils.getSpacing(context, 16)),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "William David Lozano Julio",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: titleFontSize,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                          SizedBox(height: ResponsiveUtils.getSpacing(context, 4)),
-                          Text(
-                            "Estudiante de Ingeniería de Sistemas",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: subtitleFontSize,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                          ),
-                        ],
+                    SizedBox(width: ResponsiveUtils.getSpacing(context, 4)),
+                    Text(
+                      _role == UserRole.professor ? 'Profesor' : 'Estudiante',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: roleBadgeFontSize,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
+              ),
+              
+              const Spacer(),
+              
+              // Foto de perfil clickeable con diseño bonito
+              GestureDetector(
+                onTap: () => _showSettingsDialog(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 2.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: ResponsiveUtils.getIconSize(context, isLandscape ? 20 : 24),
+                    backgroundImage: const AssetImage('assets/foto-estudiante.jpg'),
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: ResponsiveUtils.getSpacing(context, isLandscape ? 8 : 12)),
+          
+          // Nombre del usuario
+          Text(
+            'William David Lozano Julio',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: titleFontSize,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          
+          SizedBox(height: ResponsiveUtils.getSpacing(context, 8)),
+          
+          // Subtítulo con información de rol
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withValues(alpha: 0.1),
+                  Colors.white.withValues(alpha: 0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.verified_user,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  size: ResponsiveUtils.getIconSize(context, 14),
+                ),
+                SizedBox(width: ResponsiveUtils.getSpacing(context, 6)),
+                Text(
+                  'Universidad Tecnológica de Bolívar',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: ResponsiveUtils.getFontSize(context, 11),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
         ],
       ),
     );
@@ -429,37 +570,37 @@ class _HomeScreenState extends State<HomeScreen> {
     final isPressed = _tappedButtonIndex == title.hashCode;
     
     return AnimatedScale(
-      scale: isPressed ? 0.92 : 1.0,
+      scale: isPressed ? 0.96 : 1.0,
       duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOut,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              Colors.white.withValues(alpha: 0.95),
-              color.withValues(alpha: isPressed ? 0.08 : 0.03),
+              Colors.white.withValues(alpha: 0.97),
+              color.withValues(alpha: isPressed ? 0.1 : 0.04),
             ],
             stops: const [0.0, 0.7, 1.0],
           ),
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
             color: color.withValues(alpha: isPressed ? 0.4 : 0.25),
-            width: isPressed ? 3.0 : 2.5,
+            width: 2.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: isPressed ? 0.3 : 0.5),
+              color: color.withValues(alpha: isPressed ? 0.3 : 0.2),
               blurRadius: isPressed ? 12.0 : 20.0,
-              offset: Offset(0, isPressed ? 4.0 : 8.0),
-              spreadRadius: isPressed ? -1 : 0,
+              offset: Offset(0, isPressed ? 3.0 : 6.0),
             ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: isPressed ? 0.03 : 0.08),
-              blurRadius: isPressed ? 8.0 : 16.0,
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: isPressed ? 10.0 : 18.0,
               offset: Offset(0, isPressed ? 2.0 : 4.0),
             ),
           ],
@@ -469,11 +610,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: InkWell(
             onTap: () {
               setState(() => _tappedButtonIndex = title.hashCode);
-              Future.delayed(const Duration(milliseconds: 150), () {
+              // Navegación inmediata
+              onTap();
+              // Reset de animación rápido
+              Future.delayed(const Duration(milliseconds: 180), () {
                 if (mounted) {
                   setState(() => _tappedButtonIndex = null);
                 }
-                onTap();
               });
             },
             borderRadius: BorderRadius.circular(borderRadius),
@@ -484,11 +627,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Contenedor del ícono con gradiente y animación
+                    // Contenedor del ícono - SIMPLIFICADO
                     AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 150),
+                      curve: Curves.easeOut,
                       transform: isPressed 
-                        ? (Matrix4.rotationZ(0.15)..scale(1.1))
+                        ? (Matrix4.rotationZ(0.1)..scale(1.05))
                         : Matrix4.identity(),
                       width: ResponsiveUtils.getIconSize(context, 64),
                       height: ResponsiveUtils.getIconSize(context, 64),
@@ -505,15 +649,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 18)),
                         boxShadow: [
                           BoxShadow(
-                            color: color.withValues(alpha: isPressed ? 0.7 : 0.5),
-                            blurRadius: isPressed ? 20.0 : 16.0,
-                            offset: Offset(0, isPressed ? 8.0 : 6.0),
-                            spreadRadius: -2,
-                          ),
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
+                            color: color.withValues(alpha: isPressed ? 0.5 : 0.35),
+                            blurRadius: isPressed ? 12.0 : 10.0,
+                            offset: Offset(0, isPressed ? 4.0 : 3.0),
                           ),
                         ],
                       ),
@@ -571,38 +709,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Construir foto de perfil con borde estilizado y más visible
-  Widget _buildProfilePicture(BuildContext context) {
-    final radius = context.isLandscape ? 35.0 : 40.0;
-    final padding = context.isLandscape ? 3.0 : 4.0;
-    
-    return Container(
-      padding: EdgeInsets.all(padding),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: [
-            AppColors.universityPurple,
-            AppColors.universityBlue,
-            AppColors.universityLightBlue,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.6),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: CircleAvatar(
-        radius: radius,
-        backgroundImage: const AssetImage("assets/foto-estudiante.jpg"),
-      ),
-    );
-  }
-  
   /// Botón moderno con animaciones y efectos glassmorphism mejorados
   Widget buildReactiveButton(
     BuildContext context,
@@ -621,40 +727,40 @@ class _HomeScreenState extends State<HomeScreen> {
     
     final isPressed = _tappedButtonIndex == title.hashCode;
     
-    return AnimatedScale(
-      scale: isPressed ? 0.95 : 1.0,
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOutCubic,
+      return AnimatedScale(
+        scale: isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: ResponsiveUtils.getSpacing(context, 6)),
+        margin: EdgeInsets.symmetric(vertical: ResponsiveUtils.getSpacing(context, 8)),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
                 Colors.white,
-                Colors.white.withValues(alpha: 0.95),
-                color.withValues(alpha: isPressed ? 0.08 : 0.03),
+                Colors.white.withValues(alpha: 0.97),
+                color.withValues(alpha: isPressed ? 0.1 : 0.04),
               ],
               stops: const [0.0, 0.7, 1.0],
             ),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
               color: color.withValues(alpha: isPressed ? 0.4 : 0.25),
-              width: isPressed ? 3.0 : 2.5,
+              width: 2.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: isPressed ? 0.3 : 0.5),
+                color: color.withValues(alpha: isPressed ? 0.3 : 0.2),
                 blurRadius: isPressed ? 12.0 : 20.0,
-                offset: Offset(0, isPressed ? 4.0 : 8.0),
-                spreadRadius: isPressed ? -1 : 0,
+                offset: Offset(0, isPressed ? 3.0 : 6.0),
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: isPressed ? 0.03 : 0.08),
-                blurRadius: isPressed ? 8.0 : 16.0,
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: isPressed ? 10.0 : 18.0,
                 offset: Offset(0, isPressed ? 2.0 : 4.0),
               ),
             ],
@@ -664,11 +770,13 @@ class _HomeScreenState extends State<HomeScreen> {
             child: InkWell(
               onTap: () {
                 setState(() => _tappedButtonIndex = title.hashCode);
-                Future.delayed(const Duration(milliseconds: 150), () {
+                // Navegación inmediata
+                onTap();
+                // Reset de animación rápido
+                Future.delayed(const Duration(milliseconds: 180), () {
                   if (mounted) {
                     setState(() => _tappedButtonIndex = null);
                   }
-                  onTap();
                 });
               },
               borderRadius: BorderRadius.circular(borderRadius),
@@ -681,10 +789,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                     children: [
-                      // Contenedor del ícono con gradiente y animación
+                      // Contenedor del ícono - SIMPLIFICADO
                       AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        transform: Matrix4.rotationZ(isPressed ? 0.1 : 0.0),
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOut,
+                        transform: Matrix4.rotationZ(isPressed ? 0.08 : 0.0),
                         width: iconContainerSize,
                         height: iconContainerSize,
                         decoration: BoxDecoration(
@@ -700,15 +809,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 18)),
                           boxShadow: [
                             BoxShadow(
-                              color: color.withValues(alpha: isPressed ? 0.7 : 0.5),
-                              blurRadius: isPressed ? 20 : 16,
-                              offset: Offset(0, isPressed ? 8 : 6),
-                              spreadRadius: -2,
-                            ),
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              color: color.withValues(alpha: isPressed ? 0.5 : 0.35),
+                              blurRadius: isPressed ? 12 : 10,
+                              offset: Offset(0, isPressed ? 4 : 3),
                             ),
                           ],
                         ),
@@ -760,12 +863,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       
-                      // Flecha indicadora con animación
+                      // Flecha indicadora - SIMPLIFICADA
                       AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                        duration: const Duration(milliseconds: 150),
                         curve: Curves.easeOut,
                         transform: Matrix4.translationValues(isPressed ? 8.0 : 0.0, 0, 0),
-                        padding: EdgeInsets.all(ResponsiveUtils.getSpacing(context, 10)),
+                        padding: EdgeInsets.all(ResponsiveUtils.getSpacing(context, 12)),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -778,7 +881,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Icon(
                           Icons.arrow_forward_ios_rounded,
                           color: color,
-                          size: ResponsiveUtils.getIconSize(context, 18),
+                          size: ResponsiveUtils.getIconSize(context, 20),
                         ),
                       ),
                     ],
@@ -877,7 +980,7 @@ class _StudentViewState extends State<StudentView> {
   void _onNavTap(int index) {
     if (index == 999) {
       // home action: volver a selector de rol
-      Navigator.pushAndRemoveUntil(
+      Navigator.push(
         context,
         PageRouteBuilder(
           pageBuilder: (context, a1, a2) => HomeScreen(
@@ -888,7 +991,6 @@ class _StudentViewState extends State<StudentView> {
             return FadeTransition(opacity: animation, child: child);
           },
         ),
-        (route) => false,
       );
       return;
     }

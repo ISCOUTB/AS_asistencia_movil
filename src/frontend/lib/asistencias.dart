@@ -15,7 +15,7 @@ class AsistenciasPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const StudentAsistenciasPage();
   }
-}
+}+
 
 class AsistenciasPageContent extends StatelessWidget {
   const AsistenciasPageContent({super.key});
