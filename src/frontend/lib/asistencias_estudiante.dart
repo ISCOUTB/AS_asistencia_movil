@@ -24,6 +24,13 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
         'estado': ['Presente', 'Ausente', 'Justificada'][i % 3],
       });
 
+  Future<void> _refrescarDatos() async {
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final hPadding = context.horizontalPadding;
@@ -40,26 +47,23 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
             Expanded(
               child: Container(
                 color: AppColors.backgroundLight,
-                child: Column(
-                  children: [
-                    // Botón de actualizar pequeño y discreto
-                    _buildUpdateButton(context),
-                    
-                    // Lista de asistencias con scroll
-                    Expanded(
-                      child: ListView.separated(
-                        padding: EdgeInsets.symmetric(horizontal: hPadding),
-                        itemCount: _asistencias.length,
-                        separatorBuilder: (context, index) => SizedBox(height: spacing),
-                        itemBuilder: (context, index) {
-                          final asistencia = _asistencias[index];
-                          return _buildAsistenciaCard(context, asistencia);
-                        },
-                      ),
+                child: RefreshIndicator(
+                  onRefresh: _refrescarDatos,
+                  color: AppColors.universityBlue,
+                  child: ListView.separated(
+                    padding: EdgeInsets.only(
+                      left: hPadding,
+                      right: hPadding,
+                      top: ResponsiveUtils.getSpacing(context, 16),
+                      bottom: MediaQuery.of(context).padding.bottom + 20,
                     ),
-                    
-                    SizedBox(height: context.verticalPadding),
-                  ],
+                    itemCount: _asistencias.length,
+                    separatorBuilder: (context, index) => SizedBox(height: spacing),
+                    itemBuilder: (context, index) {
+                      final asistencia = _asistencias[index];
+                      return _buildAsistenciaCard(context, asistencia);
+                    },
+                  ),
                 ),
               ),
             ),
@@ -106,7 +110,7 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: const Text('Asistencias actualizadas'),
-                      backgroundColor: AppColors.universityPurple,
+                      backgroundColor: AppColors.universityBlue,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       duration: const Duration(seconds: 1),
@@ -119,14 +123,14 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.refresh, size: iconSize, color: AppColors.universityPurple),
+                      Icon(Icons.refresh, size: iconSize, color: AppColors.universityBlue),
                       SizedBox(width: ResponsiveUtils.getSpacing(context, 6)),
                       Text(
                         'Actualizar',
                         style: TextStyle(
                           fontSize: fontSize,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.universityPurple,
+                          color: AppColors.universityBlue,
                         ),
                       ),
                     ],

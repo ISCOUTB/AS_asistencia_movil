@@ -174,7 +174,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
               Navigator.pop(context); // Cerrar scanner también
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.universityPurple,
+              backgroundColor: AppColors.universityBlue,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
@@ -228,7 +228,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
           
           // Instrucciones
           Positioned(
-            bottom: 80,
+            bottom: MediaQuery.of(context).padding.bottom + 80, // Espacio para botones de navegación
             left: 0,
             right: 0,
             child: Container(
@@ -243,7 +243,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
                 children: [
                   Icon(
                     Icons.qr_code_scanner,
-                    color: AppColors.universityPurple,
+                    color: AppColors.universityBlue,
                     size: 32,
                   ),
                   const SizedBox(height: 8),
@@ -283,28 +283,43 @@ class QRScannerOverlay extends CustomPainter {
     final double left = (size.width - scanArea) / 2;
     final double top = (size.height - scanArea) / 2;
     
-    // Fondo oscuro semitransparente
+    // Fondo oscuro semitransparente (reducida opacidad para mejor visibilidad)
     final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5);
+      ..color = Colors.black.withOpacity(0.6);
     
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), backgroundPaint);
+    // Dibujar el fondo completo
+    final path = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
     
-    // Área transparente para el QR
-    final clearPaint = Paint()
-      ..color = Colors.transparent
-      ..blendMode = BlendMode.clear;
+    // Crear un agujero en el medio (área de escaneo)
+    path.addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(left, top, scanArea, scanArea),
+        const Radius.circular(20),
+      ),
+    );
+    
+    path.fillType = PathFillType.evenOdd;
+    canvas.drawPath(path, backgroundPaint);
+    
+    // Borde del área de escaneo con sombra para mejor visibilidad
+    final shadowPaint = Paint()
+      ..color = Colors.white.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
     
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromLTWH(left, top, scanArea, scanArea),
         const Radius.circular(20),
       ),
-      clearPaint,
+      shadowPaint,
     );
     
-    // Borde del área de escaneo
+    // Borde principal del área de escaneo
     final borderPaint = Paint()
-      ..color = AppColors.universityPurple
+      ..color = AppColors.universityBlue
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
     
@@ -316,9 +331,16 @@ class QRScannerOverlay extends CustomPainter {
       borderPaint,
     );
     
-    // Esquinas decorativas
+    // Esquinas decorativas más gruesas y con glow
+    final cornerGlowPaint = Paint()
+      ..color = AppColors.universityBlue.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    
     final cornerPaint = Paint()
-      ..color = AppColors.universityPurple
+      ..color = AppColors.universityBlue
       ..style = PaintingStyle.stroke
       ..strokeWidth = 5
       ..strokeCap = StrokeCap.round;
@@ -326,18 +348,26 @@ class QRScannerOverlay extends CustomPainter {
     const double cornerLength = 30;
     
     // Esquina superior izquierda
+    canvas.drawLine(Offset(left, top + cornerLength), Offset(left, top), cornerGlowPaint);
+    canvas.drawLine(Offset(left, top), Offset(left + cornerLength, top), cornerGlowPaint);
     canvas.drawLine(Offset(left, top + cornerLength), Offset(left, top), cornerPaint);
     canvas.drawLine(Offset(left, top), Offset(left + cornerLength, top), cornerPaint);
     
     // Esquina superior derecha
+    canvas.drawLine(Offset(left + scanArea - cornerLength, top), Offset(left + scanArea, top), cornerGlowPaint);
+    canvas.drawLine(Offset(left + scanArea, top), Offset(left + scanArea, top + cornerLength), cornerGlowPaint);
     canvas.drawLine(Offset(left + scanArea - cornerLength, top), Offset(left + scanArea, top), cornerPaint);
     canvas.drawLine(Offset(left + scanArea, top), Offset(left + scanArea, top + cornerLength), cornerPaint);
     
     // Esquina inferior izquierda
+    canvas.drawLine(Offset(left, top + scanArea - cornerLength), Offset(left, top + scanArea), cornerGlowPaint);
+    canvas.drawLine(Offset(left, top + scanArea), Offset(left + cornerLength, top + scanArea), cornerGlowPaint);
     canvas.drawLine(Offset(left, top + scanArea - cornerLength), Offset(left, top + scanArea), cornerPaint);
     canvas.drawLine(Offset(left, top + scanArea), Offset(left + cornerLength, top + scanArea), cornerPaint);
     
     // Esquina inferior derecha
+    canvas.drawLine(Offset(left + scanArea - cornerLength, top + scanArea), Offset(left + scanArea, top + scanArea), cornerGlowPaint);
+    canvas.drawLine(Offset(left + scanArea, top + scanArea - cornerLength), Offset(left + scanArea, top + scanArea), cornerGlowPaint);
     canvas.drawLine(Offset(left + scanArea - cornerLength, top + scanArea), Offset(left + scanArea, top + scanArea), cornerPaint);
     canvas.drawLine(Offset(left + scanArea, top + scanArea - cornerLength), Offset(left + scanArea, top + scanArea), cornerPaint);
   }

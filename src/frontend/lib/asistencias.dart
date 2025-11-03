@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'asistencias_estudiante.dart';
 
 class AppColors {
@@ -15,7 +15,7 @@ class AsistenciasPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const StudentAsistenciasPage();
   }
-}+
+}
 
 class AsistenciasPageContent extends StatelessWidget {
   const AsistenciasPageContent({super.key});

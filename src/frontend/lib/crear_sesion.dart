@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'api/routes/sesion_service.dart';
+import 'api/routes/servicio_service.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -19,19 +20,23 @@ class CrearSesionPage extends StatefulWidget {
 class _CrearSesionPageState extends State<CrearSesionPage> {
   final _formKey = GlobalKey<FormState>();
   late SesionService sesionService;
+  late ServicioService servicioService;
   bool isLoading = false;
+  bool loadingServicios = true;
+  List<dynamic> servicios = [];
+  Map<String, List<dynamic>> serviciosPorTipo = {};
 
-  // Controladores de los campos
+  // Controladores de los campos (sin ID servicio ni período)
   final _nombreController = TextEditingController();
   final _descripcionController = TextEditingController();
-  final _idServicioController = TextEditingController();
-  final _idPeriodoController = TextEditingController();
   final _lugarController = TextEditingController();
   final _maxAsistentesController = TextEditingController();
   final _antesSesionController = TextEditingController();
   final _despuesSesionController = TextEditingController();
   
-  // Valores seleccionados
+  // Valores seleccionados para dropdowns
+  int? _idServicioSeleccionado;
+  int? _idPeriodoSeleccionado;
   int _idModalidad = 1; // 1=Presencial, 2=Virtual, 3=Híbrida
   int _idTipo = 1; // 1=Tutoría, 2=Taller, 3=Seminario
   int _idSemana = 1;
@@ -42,25 +47,73 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
   // Switches
   bool _gestionaAsistencia = true;
   bool _facilitadorExterno = false;
+  
+  // Datos para dropdowns
+  final List<Map<String, dynamic>> _periodos = [
+    {'id': 1, 'nombre': '2024-1'},
+    {'id': 2, 'nombre': '2024-2'},
+    {'id': 3, 'nombre': '2025-1'},
+    {'id': 4, 'nombre': '2025-2'},
+  ];
 
   @override
   void initState() {
     super.initState();
-    const baseUrl = 'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/sesiones/';
-    sesionService = SesionService(baseUrl);
+    const baseUrlSesiones = 'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/sesiones/';
+    const baseUrlServicios = 'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/servicios/';
+    sesionService = SesionService(baseUrlSesiones);
+    servicioService = ServicioService(baseUrlServicios);
     
     // Valores por defecto
     _maxAsistentesController.text = '30';
     _antesSesionController.text = '10';
     _despuesSesionController.text = '5';
+    
+    // Cargar servicios
+    _cargarServicios();
+  }
+  
+  Future<void> _cargarServicios() async {
+    try {
+      final resultado = await servicioService.getServicios();
+      setState(() {
+        servicios = resultado;
+        loadingServicios = false;
+        // Agrupar servicios por departamento o tipo inferido del nombre
+        serviciosPorTipo = {};
+        for (var servicio in servicios) {
+          // Inferir tipo del nombre del servicio
+          String nombreServicio = (servicio['nombre_servicio'] ?? '').toString().toLowerCase();
+          String tipo;
+          
+          if (nombreServicio.contains('tutoría') || nombreServicio.contains('tutoria')) {
+            tipo = 'Tutorías';
+          } else if (nombreServicio.contains('taller')) {
+            tipo = 'Talleres';
+          } else if (nombreServicio.contains('seminario')) {
+            tipo = 'Seminarios';
+          } else {
+            tipo = 'Otros Servicios';
+          }
+          
+          if (!serviciosPorTipo.containsKey(tipo)) {
+            serviciosPorTipo[tipo] = [];
+          }
+          serviciosPorTipo[tipo]!.add(servicio);
+        }
+      });
+    } catch (e) {
+      print('Error al cargar servicios: $e');
+      setState(() {
+        loadingServicios = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     _nombreController.dispose();
     _descripcionController.dispose();
-    _idServicioController.dispose();
-    _idPeriodoController.dispose();
     _lugarController.dispose();
     _maxAsistentesController.dispose();
     _antesSesionController.dispose();
@@ -78,7 +131,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: AppColors.universityBlue,
+              primary: AppColors.universityPurple,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -103,7 +156,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: AppColors.universityBlue,
+              primary: AppColors.universityPurple,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -128,7 +181,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: AppColors.universityBlue,
+              primary: AppColors.universityPurple,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -163,6 +216,20 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    
+    if (_idServicioSeleccionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor selecciona un servicio')),
+      );
+      return;
+    }
+    
+    if (_idPeriodoSeleccionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor selecciona un período')),
+      );
+      return;
+    }
 
     setState(() {
       isLoading = true;
@@ -179,8 +246,8 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
 
       // Construir el objeto sesión según la estructura de Oracle ORDS
       final nuevaSesion = {
-        "id_servicio": int.parse(_idServicioController.text),
-        "id_periodo": int.parse(_idPeriodoController.text),
+        "id_servicio": _idServicioSeleccionado!,
+        "id_periodo": _idPeriodoSeleccionado!,
         "id_tipo": _idTipo,
         "descripcion": _descripcionController.text.isNotEmpty ? _descripcionController.text : null,
         "hora_inicio_sesion": _formatTimeOfDay(_horaInicio),
@@ -243,19 +310,16 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Crear Nueva Sesión'),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.universityPurple,
-                AppColors.universityBlue,
-              ],
-            ),
+        title: const Text(
+          'Crear Nueva Sesión',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
         ),
+        backgroundColor: AppColors.universityPurple,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: isLoading
           ? const Center(
@@ -264,7 +328,12 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
               ),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 16.0,
+                bottom: MediaQuery.of(context).padding.bottom + 16.0 + 20, // Espacio para botones de navegación
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -282,7 +351,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                           children: [
                             const Icon(
                               Icons.info_outline,
-                              color: AppColors.universityBlue,
+                              color: AppColors.universityPurple,
                               size: 24,
                             ),
                             const SizedBox(width: 12),
@@ -338,41 +407,144 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ID Servicio (REQUERIDO)
-                    _buildTextField(
-                      controller: _idServicioController,
-                      label: 'ID del Servicio *',
-                      icon: Icons.bookmark,
-                      hint: 'ID del servicio al que pertenece',
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El ID del servicio es requerido';
-                        }
-                        return null;
-                      },
+                    // Dropdown de Servicio (REQUERIDO)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonFormField<int>(
+                        value: _idServicioSeleccionado,
+                        decoration: InputDecoration(
+                          labelText: 'Servicio *',
+                          labelStyle: const TextStyle(color: AppColors.universityPurple),
+                          prefixIcon: const Icon(Icons.bookmark, color: AppColors.universityPurple),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        hint: const Text('Selecciona un servicio'),
+                        isExpanded: true,
+                        items: loadingServicios
+                            ? []
+                            : serviciosPorTipo.entries.expand((entry) {
+                                List<DropdownMenuItem<int>> items = [];
+                                // Items del tipo de servicio (sin header)
+                                items.addAll(entry.value.map((servicio) {
+                                  return DropdownMenuItem<int>(
+                                    value: servicio['id'], // Usar 'id' no 'id_servicio'
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          margin: const EdgeInsets.only(right: 8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.universityPurple,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                servicio['nombre_servicio'] ?? 'Sin nombre',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              Text(
+                                                entry.key,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[600],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList());
+                                return items;
+                              }).toList(),
+                        onChanged: loadingServicios
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _idServicioSeleccionado = value;
+                                });
+                              },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Por favor selecciona un servicio';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                     const SizedBox(height: 16),
 
-                    // ID Periodo (REQUERIDO)
-                    _buildTextField(
-                      controller: _idPeriodoController,
-                      label: 'Periodo *',
-                      icon: Icons.calendar_month,
-                      hint: 'Ej: 202110',
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'El periodo es requerido';
-                        }
-                        return null;
-                      },
+                    // Dropdown de Periodo (REQUERIDO)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonFormField<int>(
+                        value: _idPeriodoSeleccionado,
+                        decoration: InputDecoration(
+                          labelText: 'Período Académico *',
+                          labelStyle: const TextStyle(color: AppColors.universityPurple),
+                          prefixIcon: const Icon(Icons.calendar_month, color: AppColors.universityPurple),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        hint: const Text('Selecciona el período'),
+                        isExpanded: true,
+                        items: _periodos.map((periodo) {
+                          return DropdownMenuItem<int>(
+                            value: periodo['id'],
+                            child: Text(periodo['nombre']),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _idPeriodoSeleccionado = value;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Por favor selecciona un período';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                     const SizedBox(height: 24),
 
@@ -459,7 +631,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Fecha de la Sesión *',
-                          prefixIcon: const Icon(Icons.calendar_today, color: AppColors.universityBlue),
+                          prefixIcon: const Icon(Icons.calendar_today, color: AppColors.universityPurple),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -486,7 +658,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Hora de Inicio *',
-                          prefixIcon: const Icon(Icons.access_time, color: AppColors.universityBlue),
+                          prefixIcon: const Icon(Icons.access_time, color: AppColors.universityPurple),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -513,7 +685,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Hora de Fin *',
-                          prefixIcon: const Icon(Icons.access_time_filled, color: AppColors.universityBlue),
+                          prefixIcon: const Icon(Icons.access_time_filled, color: AppColors.universityPurple),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -654,7 +826,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                                       _gestionaAsistencia = value;
                                     });
                                   },
-                                  activeColor: AppColors.universityBlue,
+                                  activeColor: AppColors.universityPurple,
                                 ),
                               ],
                             ),
@@ -680,7 +852,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                                       _facilitadorExterno = value;
                                     });
                                   },
-                                  activeColor: AppColors.universityBlue,
+                                  activeColor: AppColors.universityPurple,
                                 ),
                               ],
                             ),
@@ -696,7 +868,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                       child: ElevatedButton(
                         onPressed: _crearSesion,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.universityBlue,
+                          backgroundColor: AppColors.universityPurple,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -752,7 +924,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.universityBlue),
+        prefixIcon: Icon(icon, color: AppColors.universityPurple),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -763,7 +935,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.universityBlue, width: 2),
+          borderSide: const BorderSide(color: AppColors.universityPurple, width: 2),
         ),
         filled: true,
         fillColor: Colors.white,
@@ -786,7 +958,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
       value: value,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.universityBlue),
+        prefixIcon: Icon(icon, color: AppColors.universityPurple),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -797,7 +969,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.universityBlue, width: 2),
+          borderSide: const BorderSide(color: AppColors.universityPurple, width: 2),
         ),
         filled: true,
         fillColor: Colors.white,

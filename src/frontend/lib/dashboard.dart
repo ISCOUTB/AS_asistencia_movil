@@ -6,6 +6,7 @@ import 'sesiones.dart';
 import 'asistencias.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
+import 'api/routes/dashboard_service.dart';
 // ignore: depend_on_referenced_packages
 import 'package:fl_chart/fl_chart.dart';
 
@@ -35,16 +36,73 @@ class DashboardPageContent extends StatefulWidget {
 }
 
 class _DashboardPageContentState extends State<DashboardPageContent> {
+  late DashboardService dashboardService;
   String _range = '7d';
-
-  // Mock data for chart (sesiones per day)
-  Map<String, List<int>> _mockData = {
-    'today': [3],
-    '7d': [1,2,3,2,4,3,1],
-    '30d': List.generate(30, (i) => (i % 5) + 1),
+  bool _isLoading = true;
+  
+  Map<String, dynamic> _estadisticas = {
+    'totalSesiones': 0,
+    'sesionesHoy': 0,
+    'totalAsistencias': 0,
+    'asistenciasSemana': 0,
   };
+  
+  Map<String, int> _tendencia = {};
 
-  List<int> get _currentData => _range == 'today' ? _mockData['today']! : _mockData[_range]!;
+  @override
+  void initState() {
+    super.initState();
+    dashboardService = DashboardService(
+      'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/',
+    );
+    _cargarDatos();
+  }
+
+  Future<void> _cargarDatos() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      print('Dashboard: Iniciando carga de datos...');
+      final stats = await dashboardService.getEstadisticas();
+      print('Dashboard: Estadísticas obtenidas: $stats');
+      
+      final trend = await dashboardService.getTendenciaAsistencias(_range);
+      print('Dashboard: Tendencia obtenida: ${trend.length} días');
+      
+      if (mounted) {
+        setState(() {
+          _estadisticas = stats;
+          _tendencia = trend;
+          _isLoading = false;
+        });
+        print('Dashboard: Carga completada exitosamente');
+      }
+    } catch (e, stackTrace) {
+      print('Dashboard ERROR: $e');
+      print('StackTrace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          // Usar datos por defecto en caso de error
+          _estadisticas = {
+            'totalSesiones': 0,
+            'sesionesHoy': 0,
+            'totalAsistencias': 0,
+            'asistenciasSemana': 0,
+          };
+          _tendencia = {};
+        });
+      }
+    }
+  }
+
+  Future<void> _cambiarRango(String nuevoRango) async {
+    setState(() => _range = nuevoRango);
+    final trend = await dashboardService.getTendenciaAsistencias(_range);
+    if (mounted) {
+      setState(() => _tendencia = trend);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,84 +121,99 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
             const ProfessorHeader(title: "Dashboard - Estadísticas"),
             
             Expanded(
-              child: Container(
-                color: AppColors.backgroundLight,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: hPadding,
-                    vertical: vPadding,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Título de sección responsive
-                      _buildSectionHeader(
-                        context,
-                        'Resumen General',
-                        AppColors.universityPurple,
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.universityBlue),
                       ),
-                      SizedBox(height: spacing),
-                      
-                      // Grid de tarjetas responsive
-                      GridView.count(
-                        crossAxisCount: isLandscape ? 3 : (context.screenWidth > 600 ? 3 : 2),
-                        shrinkWrap: true,
-                        crossAxisSpacing: spacing,
-                        mainAxisSpacing: spacing,
-                        childAspectRatio: ResponsiveUtils.getCardAspectRatio(context),
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          _buildStatCard(
-                            context,
-                            'Sesiones hoy',
-                            '3',
-                            Icons.event,
-                            AppColors.universityBlue,
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _cargarDatos,
+                      color: AppColors.universityBlue,
+                      child: Container(
+                        color: AppColors.backgroundLight,
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(
+                            left: hPadding,
+                            right: hPadding,
+                            top: vPadding,
+                            bottom: MediaQuery.of(context).padding.bottom + vPadding + 20,
                           ),
-                          _buildStatCard(
-                            context,
-                            'Asistencias',
-                            '24',
-                            Icons.check_circle,
-                            Colors.green,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Grid de tarjetas mejorado - 2 columnas en móvil, 4 en tablet/landscape
+                              GridView.count(
+                                crossAxisCount: isLandscape ? 4 : 2,
+                                shrinkWrap: true,
+                                crossAxisSpacing: spacing,
+                                mainAxisSpacing: spacing,
+                                childAspectRatio: 1.4,
+                                physics: const NeverScrollableScrollPhysics(),
+                                children: [
+                                  _buildModernStatCard(
+                                    context,
+                                    'Sesiones Hoy',
+                                    _estadisticas['sesionesHoy'].toString(),
+                                    Icons.event_available,
+                                    const Color(0xFF3B82F6),
+                                    const Color(0xFF60A5FA),
+                                  ),
+                                  _buildModernStatCard(
+                                    context,
+                                    'Total Sesiones',
+                                    _estadisticas['totalSesiones'].toString(),
+                                    Icons.school,
+                                    const Color(0xFF8B5CF6),
+                                    const Color(0xFFA78BFA),
+                                  ),
+                                  _buildModernStatCard(
+                                    context,
+                                    'Asistencias',
+                                    _estadisticas['totalAsistencias'].toString(),
+                                    Icons.people,
+                                    const Color(0xFF10B981),
+                                    const Color(0xFF34D399),
+                                  ),
+                                  _buildModernStatCard(
+                                    context,
+                                    'Esta Semana',
+                                    _estadisticas['asistenciasSemana'].toString(),
+                                    Icons.trending_up,
+                                    const Color(0xFFF59E0B),
+                                    const Color(0xFFFBBF24),
+                                  ),
+                                ],
+                              ),
+                              
+                              SizedBox(height: spacing * 2),
+                              
+                              // Sección de tendencia responsive
+                              _buildTrendHeader(context),
+                              SizedBox(height: spacing),
+                              
+                              // Gráfico responsive
+                              _buildResponsiveChart(context),
+                              
+                              SizedBox(height: spacing * 1.75),
+                              
+                              // Actividad reciente
+                              _buildSectionHeader(
+                                context,
+                                'Actividad Reciente',
+                                AppColors.universityLightBlue,
+                              ),
+                              SizedBox(height: spacing * 0.75),
+                              
+                              // Lista de actividad responsive
+                              _buildActivityList(context),
+                              
+                              SizedBox(height: ResponsiveUtils.getBottomNavHeight(context) + 10),
+                            ],
                           ),
-                          _buildStatCard(
-                            context,
-                            'Ausencias',
-                            '2',
-                            Icons.cancel,
-                            Colors.red,
-                          ),
-                        ],
+                        ),
                       ),
-                      
-                      SizedBox(height: spacing * 1.75),
-                      
-                      // Sección de tendencia responsive
-                      _buildTrendHeader(context),
-                      SizedBox(height: spacing),
-                      
-                      // Gráfico responsive
-                      _buildResponsiveChart(context),
-                      
-                      SizedBox(height: spacing * 1.75),
-                      
-                      // Actividad reciente
-                      _buildSectionHeader(
-                        context,
-                        'Actividad Reciente',
-                        AppColors.universityLightBlue,
-                      ),
-                      SizedBox(height: spacing * 0.75),
-                      
-                      // Lista de actividad responsive
-                      _buildActivityList(context),
-                      
-                      SizedBox(height: ResponsiveUtils.getBottomNavHeight(context) + 10),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
             ),
           ],
         ),
@@ -235,14 +308,13 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       child: ToggleButtons(
         isSelected: [_range == 'today', _range == '7d', _range == '30d'],
         onPressed: (i) {
-          setState(() {
-            _range = (i == 0) ? 'today' : (i == 1) ? '7d' : '30d';
-          });
+          final nuevoRango = (i == 0) ? 'today' : (i == 1) ? '7d' : '30d';
+          _cambiarRango(nuevoRango);
         },
         borderRadius: BorderRadius.circular(10),
-        selectedBorderColor: AppColors.universityPurple,
+        selectedBorderColor: AppColors.universityBlue,
         selectedColor: Colors.white,
-        fillColor: AppColors.universityPurple,
+        fillColor: AppColors.universityBlue,
         color: Colors.grey.shade700,
         constraints: BoxConstraints(
           minHeight: isSmall ? 28 : 32,
@@ -306,26 +378,35 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
       ),
       child: Padding(
         padding: padding,
-        child: _range == '30d'
-            ? SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: _currentData.length * 25.0,
-                  child: _buildBarChart(context, fontSize),
+        child: _tendencia.isEmpty
+            ? const Center(
+                child: Text(
+                  'No hay datos disponibles',
+                  style: TextStyle(color: Colors.grey),
                 ),
               )
-            : _buildBarChart(context, fontSize),
+            : (_range == '30d'
+                ? SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: _tendencia.length * 25.0,
+                      child: _buildBarChart(context, fontSize),
+                    ),
+                  )
+                : _buildBarChart(context, fontSize)),
       ),
     );
   }
 
   Widget _buildBarChart(BuildContext context, double fontSize) {
     final barWidth = context.isLandscape ? 10.0 : (_range == 'today' ? 20.0 : 16.0);
+    final valores = _tendencia.values.toList();
+    final maxValor = valores.isEmpty ? 10 : valores.reduce((a, b) => a > b ? a : b);
     
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: (_currentData.reduce((a, b) => a > b ? a : b)).toDouble() + 2,
+        maxY: maxValor.toDouble() + 2,
         barTouchData: BarTouchData(enabled: true),
         titlesData: FlTitlesData(
           show: true,
@@ -335,6 +416,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               interval: _range == '30d' ? 5 : null,
               getTitlesWidget: (v, meta) {
                 final idx = v.toInt();
+                if (idx >= _tendencia.length) return const SizedBox.shrink();
                 if (_range == '30d' && idx % 5 != 0) {
                   return const SizedBox.shrink();
                 }
@@ -382,20 +464,23 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
         ),
         borderData: FlBorderData(show: false),
         barGroups: List.generate(
-          _currentData.length,
-          (i) => BarChartGroupData(
-            x: i,
-            barRods: [
-              BarChartRodData(
-                toY: _currentData[i].toDouble(),
-                color: AppColors.universityBlue,
-                width: barWidth,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(context.isLandscape ? 3 : 4),
-                ),
-              )
-            ],
-          ),
+          _tendencia.length,
+          (i) {
+            final valor = _tendencia.values.elementAt(i);
+            return BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: valor.toDouble(),
+                  color: AppColors.universityBlue,
+                  width: barWidth,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(context.isLandscape ? 3 : 4),
+                  ),
+                )
+              ],
+            );
+          },
         ),
       ),
     );
@@ -444,7 +529,7 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
               height: isLandscape ? 40 : 44,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppColors.universityPurple, AppColors.universityBlue],
+                  colors: [AppColors.universityBlue, AppColors.universityBlue],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -507,7 +592,7 @@ class ModernDashboardPage extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.universityPurple,
+                AppColors.universityBlue,
                 AppColors.universityBlue,
               ],
             ),
@@ -754,68 +839,89 @@ void navegarAMainScaffold(BuildContext context) {
   );
 }
 
-Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
-  final padding = ResponsiveUtils.getCardPadding(context);
-  final iconSize = ResponsiveUtils.getIconSize(context, 28);
-  final valueSize = ResponsiveUtils.getFontSize(context, 28);
-  final titleSize = ResponsiveUtils.getFontSize(context, 13);
-  final borderRadius = ResponsiveUtils.getBorderRadius(context, 16);
-  
-  return Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(borderRadius),
-      border: Border.all(color: Colors.grey.shade200, width: 1),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.08),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
+  Widget _buildModernStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color colorStart,
+    Color colorEnd,
+  ) {
+    final borderRadius = ResponsiveUtils.getBorderRadius(context, 16);
+    final iconSize = ResponsiveUtils.getIconSize(context, 28);
+    final valueSize = ResponsiveUtils.getFontSize(context, 28);
+    final titleSize = ResponsiveUtils.getFontSize(context, 12);
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colorStart, colorEnd],
         ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Icono más grande en contenedor
-        Container(
-          padding: EdgeInsets.all(context.isLandscape ? 10 : 12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: colorStart.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
           ),
-          child: Icon(icon, color: color, size: iconSize),
-        ),
-        
-        // Valor y título más claros
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: valueSize,
-                fontWeight: FontWeight.bold,
-                color: color,
-                height: 1.1,
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Icono
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: iconSize,
+                ),
               ),
-            ),
-            SizedBox(height: context.isLandscape ? 2 : 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: titleSize,
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
+              
+              const Spacer(),
+              
+              // Valor y título
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: valueSize,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: titleSize,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
+

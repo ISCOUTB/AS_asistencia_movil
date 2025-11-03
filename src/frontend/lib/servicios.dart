@@ -6,7 +6,7 @@ import 'api/routes/servicio_service.dart';
 import 'main_scaffold.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
-import 'crear_servicio.dart';
+// import 'crear_servicio.dart'; - Eliminado: Los profesores no crean servicios
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -297,7 +297,7 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
                 margin: const EdgeInsets.only(bottom: 0),
                 child: isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(color: AppColors.universityPurple),
+                        child: CircularProgressIndicator(color: AppColors.universityBlue),
                       )
                   : errorMessage != null
                       ? _buildErrorView(context)
@@ -306,7 +306,12 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
                           : RefreshIndicator(
                               onRefresh: _cargarServicios,
                               child: ListView.builder(
-                                padding: EdgeInsets.all(hPadding),
+                                padding: EdgeInsets.only(
+                                  left: hPadding,
+                                  right: hPadding,
+                                  top: hPadding,
+                                  bottom: MediaQuery.of(context).padding.bottom + 20, // Espacio para botones de navegación
+                                ),
                                 itemCount: servicios.length,
                                 itemBuilder: (context, index) {
                                   final servicio = servicios[index];
@@ -322,16 +327,7 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
           ],
         ),
       ),
-      // Botón flotante para crear servicio
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navegarCrearServicio(context),
-        backgroundColor: AppColors.universityBlue,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Crear Servicio',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
+      // Botón de crear servicio eliminado - Solo administradores pueden crear servicios
     );
   }
 
@@ -382,19 +378,7 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
     );
   }
 
-  void _navegarCrearServicio(BuildContext context) async {
-    final resultado = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CrearServicioPage(),
-      ),
-    );
-
-    // Si se creó un servicio, recargar la lista
-    if (resultado == true) {
-      _cargarServicios();
-    }
-  }
+  // Método eliminado - Los profesores no pueden crear servicios
 
   Widget _buildServiceCard(BuildContext context, Map<String, dynamic> servicio) {
     final cardPadding = ResponsiveUtils.getCardPadding(context);
@@ -424,7 +408,7 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [
-                      AppColors.universityPurple,
+                      AppColors.universityBlue,
                       AppColors.universityBlue,
                     ],
                   ),
@@ -501,7 +485,7 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.universityPurple,
+                          AppColors.universityBlue,
                           AppColors.universityBlue,
                         ],
                       ),
@@ -564,7 +548,7 @@ class _ServiciosPageContentState extends State<ServiciosPageContent> {
                             icon: Icons.book,
                             title: 'Materia',
                             content: servicio['materia'].toString(),
-                            color: AppColors.universityPurple,
+                            color: AppColors.universityBlue,
                           ),
                         if (servicio['materia'] != null && servicio['materia'].toString().isNotEmpty)
                           SizedBox(height: spacing),

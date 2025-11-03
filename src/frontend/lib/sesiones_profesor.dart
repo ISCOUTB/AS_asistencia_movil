@@ -89,7 +89,7 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
                 margin: const EdgeInsets.only(bottom: 0),
                 child: isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(color: AppColors.universityPurple),
+                        child: CircularProgressIndicator(color: AppColors.universityBlue),
                       )
                     : errorMessage != null
                         ? _buildErrorView(context)
@@ -98,7 +98,12 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
                             : RefreshIndicator(
                                 onRefresh: _cargarSesiones,
                                 child: ListView.builder(
-                                  padding: EdgeInsets.all(hPadding),
+                                  padding: EdgeInsets.only(
+                                    left: hPadding,
+                                    right: hPadding,
+                                    top: hPadding,
+                                    bottom: MediaQuery.of(context).padding.bottom + 80, // Espacio para botones de navegación
+                                  ),
                                   itemCount: sesiones.length,
                                   itemBuilder: (context, index) {
                                     final sesion = sesiones[index];
@@ -193,91 +198,229 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
 
   Widget _buildSesionCard(BuildContext context, Map<String, dynamic> sesion) {
     final cardPadding = ResponsiveUtils.getCardPadding(context);
-    final borderRadius = ResponsiveUtils.getBorderRadius(context, 16);
-    final iconSize = ResponsiveUtils.getIconSize(context, 28);
-    final iconContainerSize = context.isLandscape ? 45.0 : 50.0;
-    final iconBorderRadius = ResponsiveUtils.getBorderRadius(context, 12);
-    final titleFontSize = ResponsiveUtils.getFontSize(context, 16);
-    final subtitleFontSize = ResponsiveUtils.getFontSize(context, 14);
-    final chevronSize = ResponsiveUtils.getIconSize(context, 28);
-    final spacing = ResponsiveUtils.getSpacing(context, 16);
+    final borderRadius = ResponsiveUtils.getBorderRadius(context, 20);
+    final iconSize = ResponsiveUtils.getIconSize(context, 24);
+    final titleFontSize = ResponsiveUtils.getFontSize(context, 17);
+    final subtitleFontSize = ResponsiveUtils.getFontSize(context, 13);
+    final detailFontSize = ResponsiveUtils.getFontSize(context, 12);
 
-    // Determinar el icono según la modalidad
+    // Determinar el icono y color según la modalidad
     IconData modalidadIcon;
     Color modalidadColor;
+    String modalidadTexto;
     final modalidad = sesion['id_modalidad'];
     if (modalidad == 1) {
-      modalidadIcon = Icons.place;
-      modalidadColor = AppColors.universityBlue;
+      modalidadIcon = Icons.location_on;
+      modalidadColor = const Color(0xFF10B981); // Verde
+      modalidadTexto = 'Presencial';
     } else if (modalidad == 2) {
-      modalidadIcon = Icons.laptop;
-      modalidadColor = AppColors.universityPurple;
+      modalidadIcon = Icons.computer;
+      modalidadColor = AppColors.universityBlue;
+      modalidadTexto = 'Virtual';
     } else {
-      modalidadIcon = Icons.stars;
-      modalidadColor = AppColors.universityLightBlue;
+      modalidadIcon = Icons.language;
+      modalidadColor = const Color(0xFFF59E0B); // Naranja
+      modalidadTexto = 'Híbrida';
     }
 
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
+    // Formatear fecha y hora
+    String fecha = sesion['fecha']?.toString().substring(0, 10) ?? 'Sin fecha';
+    String horaInicio = sesion['hora_inicio_sesion'] ?? '';
+    String horaFin = sesion['hora_fin']?.toString().substring(11, 16) ?? '';
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.universityBlue.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(borderRadius),
-        onTap: () => _mostrarDetalleSesion(context, sesion),
-        child: Padding(
-          padding: cardPadding,
-          child: Row(
-            children: [
-              Container(
-                width: iconContainerSize,
-                height: iconContainerSize,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      modalidadColor,
-                      modalidadColor.withOpacity(0.7),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(iconBorderRadius),
-                ),
-                child: Icon(
-                  modalidadIcon,
-                  color: Colors.white,
-                  size: iconSize,
-                ),
-              ),
-              SizedBox(width: spacing),
-              Expanded(
-                child: Column(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(borderRadius),
+          onTap: () => _mostrarDetalleSesion(context, sesion),
+          child: Padding(
+            padding: cardPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header con nombre y badge de modalidad
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      sesion['nombre_sesion']?.toString() ?? 'Sin nombre',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: titleFontSize,
+                    // Icono de sesión
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.universityBlue,
+                            AppColors.universityBlue.withValues(alpha: 0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.universityBlue.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      child: Icon(
+                        Icons.school,
+                        color: Colors.white,
+                        size: iconSize,
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      sesion['fecha']?.toString().substring(0, 10) ?? 'Sin fecha',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: subtitleFontSize,
+                    const SizedBox(width: 12),
+                    // Nombre de la sesión
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sesion['nombre_sesion']?.toString() ?? 'Sin nombre',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: titleFontSize,
+                              color: const Color(0xFF1A202C),
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          // Badge de modalidad
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: modalidadColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: modalidadColor.withValues(alpha: 0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  modalidadIcon,
+                                  size: 14,
+                                  color: modalidadColor,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  modalidadTexto,
+                                  style: TextStyle(
+                                    color: modalidadColor,
+                                    fontSize: detailFontSize,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    // Icono de flecha
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey[400],
                     ),
                   ],
                 ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: Colors.grey[400],
-                size: chevronSize,
-              ),
-            ],
+                
+                const SizedBox(height: 16),
+                
+                // Información de fecha, hora y lugar
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9FA),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      // Fecha
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: AppColors.universityBlue,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            fecha,
+                            style: TextStyle(
+                              fontSize: subtitleFontSize,
+                              color: const Color(0xFF4A5568),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const Spacer(),
+                          // Hora
+                          Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: AppColors.universityBlue,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$horaInicio - $horaFin',
+                            style: TextStyle(
+                              fontSize: subtitleFontSize,
+                              color: const Color(0xFF4A5568),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Lugar
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.place,
+                            size: 16,
+                            color: AppColors.universityBlue,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              sesion['lugar_sesion']?.toString() ?? 'Sin lugar',
+                              style: TextStyle(
+                                fontSize: subtitleFontSize,
+                                color: const Color(0xFF4A5568),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -325,7 +468,7 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          AppColors.universityPurple,
+                          AppColors.universityBlue,
                           AppColors.universityBlue,
                         ],
                       ),
@@ -386,7 +529,7 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
                             icon: Icons.place,
                             title: 'Lugar',
                             content: sesion['lugar_sesion'].toString(),
-                            color: AppColors.universityPurple,
+                            color: AppColors.universityBlue,
                           ),
                         if (sesion['lugar_sesion'] != null)
                           SizedBox(height: spacing),

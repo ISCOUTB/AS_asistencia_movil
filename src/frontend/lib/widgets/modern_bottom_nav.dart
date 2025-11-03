@@ -70,8 +70,10 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     final navHeight = ResponsiveUtils.getBottomNavHeight(context);
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     
     return Container(
+      // Sin padding lateral, directo al borde
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
@@ -101,22 +103,19 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Container(
-          height: navHeight,
-          child: widget.isStudent ? _buildStudentNav(context) : _buildTeacherNav(context),
-        ),
+      // Altura total = altura del nav + padding del sistema (barra de navegación Android)
+      height: navHeight + bottomPadding,
+      padding: EdgeInsets.only(
+        bottom: bottomPadding, // Solo padding inferior para la barra del sistema
       ),
+      child: widget.isStudent ? _buildStudentNav(context) : _buildTeacherNav(context),
     );
   }
 
   // Barra para ESTUDIANTES: Solo Sesiones, QR, Asistencias
   Widget _buildStudentNav(BuildContext context) {
-    final spacing = ResponsiveUtils.getSpacing(context, 4);
-    
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
@@ -129,9 +128,7 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
             color: const Color(0xFFEC4899),
           ),
         ),
-        SizedBox(width: spacing),
         _buildQRButton(context),
-        SizedBox(width: spacing),
         Expanded(
           child: _buildNavItem(
             context: context,
@@ -148,10 +145,8 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
 
   // Barra para PROFESORES: Servicios, Sesiones, Home, Asistencias, Dashboard
   Widget _buildTeacherNav(BuildContext context) {
-    final spacing = ResponsiveUtils.getSpacing(context, 4);
-    
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
@@ -174,9 +169,7 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
             color: const Color(0xFFEC4899),
           ),
         ),
-        SizedBox(width: spacing),
         _buildHomeButton(context),
-        SizedBox(width: spacing),
         Expanded(
           child: _buildNavItem(
             context: context,

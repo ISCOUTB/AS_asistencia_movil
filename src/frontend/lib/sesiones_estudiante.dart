@@ -45,6 +45,164 @@ class StudentSesionesPage extends StatefulWidget {
 class _StudentSesionesPageState extends State<StudentSesionesPage> {
   final Map<int, String> _attendance = {};
 
+  Future<void> _refrescarDatos() async {
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _mostrarDialogoAsistencia(BuildContext context, int index) {
+    final TextEditingController codigoController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icono y título
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [AppColors.universityBlue, AppColors.universityBlue],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lock_outline, color: Colors.white, size: 32),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Código de Asistencia',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Solicita el código al profesor',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              
+              // Campo de código
+              TextField(
+                controller: codigoController,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 8,
+                ),
+                maxLength: 6,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: '000000',
+                  counterText: '',
+                  filled: true,
+                  fillColor: AppColors.backgroundLight,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(
+                      color: AppColors.universityBlue,
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Botones
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final codigo = codigoController.text.trim();
+                        if (codigo.length == 6) {
+                          // Aquí validarías el código con el backend
+                          // Por ahora, simulamos que es correcto
+                          setState(() {
+                            _attendance[index] = 'Presente';
+                          });
+                          Navigator.pop(dialogContext);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(width: 12),
+                                  Text('Asistencia registrada correctamente'),
+                                ],
+                              ),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            SnackBar(
+                              content: const Text('El código debe tener 6 dígitos'),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: AppColors.universityBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Confirmar'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -124,10 +282,10 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                   Container(
                     padding: EdgeInsets.all(iconPadding),
                     decoration: BoxDecoration(
-                      color: AppColors.universityPurple.withValues(alpha: 0.15),
+                      color: AppColors.universityBlue.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(modalContext, 12)),
                     ),
-                    child: Icon(Icons.how_to_reg, color: AppColors.universityPurple, size: iconSize),
+                    child: Icon(Icons.how_to_reg, color: AppColors.universityBlue, size: iconSize),
                   ),
                   SizedBox(width: spacing),
                   Expanded(
@@ -309,7 +467,6 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
   @override
   Widget build(BuildContext context) {
     final hPadding = context.horizontalPadding;
-    final vPadding = context.verticalPadding;
     final spacing = ResponsiveUtils.getSpacing(context, 10);
     
     return Scaffold(
@@ -323,54 +480,51 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
             Expanded(
               child: Container(
                 color: AppColors.backgroundLight,
-                child: Column(
-                  children: [
-                    // Botón de actualizar pequeño y discreto
-                    _buildUpdateButton(context),
-                    
-                    // Lista de sesiones
-                    Expanded(
-                      child: ListView.separated(
-                        padding: EdgeInsets.symmetric(horizontal: hPadding),
-                        itemCount: sesiones.length,
-                        separatorBuilder: (context, index) => SizedBox(height: spacing),
-                        itemBuilder: (context, index) {
-                          final s = sesiones[index];
-                          final hasAttendance = _attendance.containsKey(index);
-                          final attendanceStatus = _attendance[index];
-                          
-                          // Determinar color según estado
-                          Color statusColor = Colors.grey;
-                          IconData statusIcon = Icons.help_outline;
-                          
-                          if (attendanceStatus == 'Presente') {
-                            statusColor = Colors.green;
-                            statusIcon = Icons.check_circle;
-                          } else if (attendanceStatus == 'Ausente') {
-                            statusColor = Colors.red;
-                            statusIcon = Icons.cancel;
-                          } else if (attendanceStatus == 'Inasistencia Justificada') {
-                            statusColor = Colors.orange;
-                            statusIcon = Icons.assignment_turned_in;
-                          } else if (attendanceStatus == 'Inasistencia No Justificada') {
-                            statusColor = Colors.deepOrange;
-                            statusIcon = Icons.assignment_late;
-                          }
-                          
-                          return _buildSessionCard(
-                            context, 
-                            s, 
-                            index, 
-                            hasAttendance, 
-                            statusColor, 
-                            statusIcon
-                          );
-                        },
-                      ),
+                child: RefreshIndicator(
+                  onRefresh: _refrescarDatos,
+                  color: AppColors.universityBlue,
+                  child: ListView.separated(
+                    padding: EdgeInsets.only(
+                      left: hPadding,
+                      right: hPadding,
+                      top: ResponsiveUtils.getSpacing(context, 16),
+                      bottom: MediaQuery.of(context).padding.bottom + 20,
                     ),
-                    
-                    SizedBox(height: vPadding),
-                  ],
+                    itemCount: sesiones.length,
+                    separatorBuilder: (context, index) => SizedBox(height: spacing),
+                    itemBuilder: (context, index) {
+                      final s = sesiones[index];
+                      final hasAttendance = _attendance.containsKey(index);
+                      final attendanceStatus = _attendance[index];
+                      
+                      // Determinar color según estado
+                      Color statusColor = Colors.grey;
+                      IconData statusIcon = Icons.help_outline;
+                      
+                      if (attendanceStatus == 'Presente') {
+                        statusColor = Colors.green;
+                        statusIcon = Icons.check_circle;
+                      } else if (attendanceStatus == 'Ausente') {
+                        statusColor = Colors.red;
+                        statusIcon = Icons.cancel;
+                      } else if (attendanceStatus == 'Inasistencia Justificada') {
+                        statusColor = Colors.orange;
+                        statusIcon = Icons.assignment_turned_in;
+                      } else if (attendanceStatus == 'Inasistencia No Justificada') {
+                        statusColor = Colors.deepOrange;
+                        statusIcon = Icons.assignment_late;
+                      }
+                      
+                      return _buildSessionCard(
+                        context, 
+                        s, 
+                        index, 
+                        hasAttendance, 
+                        statusColor, 
+                        statusIcon
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -417,7 +571,7 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: const Text('Sesiones actualizadas'),
-                      backgroundColor: AppColors.universityPurple,
+                      backgroundColor: AppColors.universityBlue,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       duration: const Duration(seconds: 1),
@@ -430,14 +584,14 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.refresh, size: iconSize, color: AppColors.universityPurple),
+                      Icon(Icons.refresh, size: iconSize, color: AppColors.universityBlue),
                       SizedBox(width: ResponsiveUtils.getSpacing(context, 6)),
                       Text(
                         'Actualizar',
                         style: TextStyle(
                           fontSize: fontSize,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.universityPurple,
+                          color: AppColors.universityBlue,
                         ),
                       ),
                     ],
@@ -498,10 +652,10 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
               Container(
                 padding: EdgeInsets.all(iconBg),
                 decoration: BoxDecoration(
-                  color: AppColors.universityPurple.withValues(alpha: 0.12),
+                  color: AppColors.universityBlue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(iconBorderRadius),
                 ),
-                child: Icon(Icons.event_note, color: AppColors.universityPurple, size: iconSize),
+                child: Icon(Icons.event_note, color: AppColors.universityBlue, size: iconSize),
               ),
               SizedBox(width: spacing),
               Expanded(
@@ -574,21 +728,23 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _showAttendanceModal(context, index),
+              onPressed: hasAttendance ? null : () => _mostrarDialogoAsistencia(context, index),
               icon: Icon(
-                hasAttendance ? Icons.edit : Icons.how_to_reg,
+                hasAttendance ? Icons.check_circle : Icons.how_to_reg,
                 size: buttonIconSize,
               ),
               label: Text(
-                hasAttendance ? 'Cambiar' : 'Registrar',
+                hasAttendance ? 'Ya registrada' : 'Registrar Asistencia',
                 style: TextStyle(fontSize: buttonFontSize, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: hasAttendance ? AppColors.universityBlue : AppColors.universityPurple,
+                backgroundColor: hasAttendance ? Colors.green : AppColors.universityBlue,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(vertical: buttonVPadding),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(iconBorderRadius)),
-                elevation: 1,
+                elevation: hasAttendance ? 0 : 2,
+                disabledBackgroundColor: Colors.green.withValues(alpha: 0.5),
+                disabledForegroundColor: Colors.white,
               ),
             ),
           ),
@@ -604,7 +760,7 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
     
     return Row(
       children: [
-        Icon(icon, size: iconSize, color: AppColors.universityPurple),
+        Icon(icon, size: iconSize, color: AppColors.universityBlue),
         SizedBox(width: spacing),
         Expanded(
           child: Text(

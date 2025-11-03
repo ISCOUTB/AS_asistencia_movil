@@ -140,7 +140,7 @@ class _CrearServicioPageState extends State<CrearServicioPage> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.universityPurple,
+                AppColors.universityBlue,
                 AppColors.universityBlue,
               ],
             ),
@@ -150,11 +150,16 @@ class _CrearServicioPageState extends State<CrearServicioPage> {
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: AppColors.universityPurple,
+                color: AppColors.universityBlue,
               ),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.only(
+                left: 16.0,
+                right: 16.0,
+                top: 16.0,
+                bottom: MediaQuery.of(context).padding.bottom + 16.0 + 20, // Espacio para botones de navegación
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
