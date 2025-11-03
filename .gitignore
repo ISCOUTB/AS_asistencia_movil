@@ -11,3 +11,4 @@ coverage.xml
 src/backend/api/.env
 .pyc
 src/frontend/android/debug.keystore
+src/frontend/assets/.env
