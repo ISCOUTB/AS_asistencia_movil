@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.asistenciamovilutb"
+    namespace = "com.example.asistencia_movil"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.asistenciamovilutb"
+        applicationId = "com.example.asistencia_movil"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -29,7 +29,7 @@ android {
 
     signingConfigs {
         getByName("debug") {
-            storeFile = file("../debug.keystore")
+            storeFile = file("../keystore/debug.keystore")
             storePassword = "android"
             keyAlias = "androiddebugkey"
             keyPassword = "android"
