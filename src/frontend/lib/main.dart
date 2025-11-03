@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'api/core/auth.dart';
+import 'dart:io';
 
 void main() async {
-  await dotenv.load(fileName: ".env");
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: "assets/.env");
+
   runApp(MyApp());
 }
 

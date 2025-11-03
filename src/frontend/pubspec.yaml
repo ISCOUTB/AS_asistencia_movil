@@ -30,3 +30,5 @@ flutter:
   assets:
     - assets/uni-logo.png
     - assets/foto-estudiante.jpg
+    - assets/.env
+
