@@ -35,7 +35,7 @@
 
                 <!-- Debe coincidir con tu .env -->
                 <data
-                    android:scheme="com.example.asistencia_movil.auth"
+                    android:scheme="com.example.asistenciamovil.auth"
                     android:host="callback" />
             </intent-filter>
         </activity>

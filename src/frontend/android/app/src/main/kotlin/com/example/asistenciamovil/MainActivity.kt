@@ -1,4 +1,4 @@
-package com.example.asistencia_movil
+package com.example.asistenciamovil
 
 import io.flutter.embedding.android.FlutterActivity
 

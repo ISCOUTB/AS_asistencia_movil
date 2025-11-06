@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.asistencia_movil"
+    namespace = "com.example.asistenciamovil"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.asistencia_movil"
+        applicationId = "com.example.asistenciamovil"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
