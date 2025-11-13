@@ -17,12 +17,20 @@ dependencies:
   flutter_dotenv: ^6.0.0
   jwt_decoder: ^2.0.1
   flutter_web_auth_2: ^4.1.0
+  msal_auth: ^3.3.0
+  flutter_appauth: ^6.0.2
+  provider: ^6.1.2
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+
+dependency_overrides:
+  msal_flutter:
+    path: plugins/msal_flutter
 
 flutter:
   uses-material-design: true
@@ -31,4 +39,5 @@ flutter:
     - assets/uni-logo.png
     - assets/foto-estudiante.jpg
     - assets/.env
+    - assets/msal_config.json
 

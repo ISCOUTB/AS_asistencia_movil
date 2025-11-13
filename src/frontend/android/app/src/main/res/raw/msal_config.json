@@ -1,0 +1,17 @@
+{
+  "client_id": "95659aae-1833-417b-92eb-e9efbacdf134",
+  "redirect_uri": "msauth://com.example.asistenciamovil/1f7MrQgTBTnvlZsLO+Ww6gkuOo=",
+  "authorization_user_agent": "DEFAULT",
+  "account_mode": "SINGLE",
+  "broker_redirect_uri_registered": false,
+  "multiple_clouds_supported": false,
+  "authorities": [
+    {
+      "type": "AAD",
+      "audience": {
+        "type": "AzureADMyOrg",
+        "tenant_id": "eeefd6bf-96ae-45fe-ab13-8ff7fd3e5801"
+      }
+    }
+  ]
+}

@@ -1,102 +1,196 @@
-import 'dart:convert';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Servicio para manejar la autenticación con Microsoft 365 (Azure AD v2.0)
-class MicrosoftAuthService {
-  final String clientId = dotenv.env['MICROSOFT_CLIENT_ID'] ?? '';
-  final String tenantId = dotenv.env['MICROSOFT_TENANT_ID'] ?? '';
-  final String clientSecret = dotenv.env['MICROSOFT_CLIENT_SECRET'] ?? '';
-  final String redirectUri = dotenv.env['MICROSOFT_REDIRECT_URI'] ?? '';
-  final String scopes = dotenv.env['MICROSOFT_SCOPES'] ?? 'openid profile email';
+class AuthService extends ChangeNotifier {
+  final FlutterAppAuth _appAuth = FlutterAppAuth();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  String get authority => "https://login.microsoftonline.com/$tenantId";
-  String get tokenUrl => "$authority/oauth2/v2.0/token";
-  String get jwksUri => "$authority/discovery/v2.0/keys";
+  String? _accessToken;
+  String? _idToken;
+  String? _refreshToken;
+  Map<String, dynamic>? _decodedToken;
+  Timer? _refreshTimer;
 
-  /// Inicia el flujo de autenticación de Microsoft 365
-  Future<Map<String, dynamic>?> signInWithMicrosoft() async {
-    try {
-      final url =
-          "$authority/oauth2/v2.0/authorize?client_id=$clientId&response_type=code"
-          "&redirect_uri=$redirectUri&response_mode=query&scope=$scopes";
+  String? get accessToken => _accessToken;
+  Map<String, dynamic>? get decodedToken => _decodedToken;
 
-      // Abre el navegador para el inicio de sesión
-      final result = await FlutterWebAuth2.authenticate(
-        url: url,
-        callbackUrlScheme: Uri.parse(redirectUri).scheme,
-      );
+  /// Inicializa AuthService (carga sesión previa si existe)
+  Future<void> init() async {
+    debugPrint("------ AppAuth Init ------");
+    debugPrint("Mode: ${kReleaseMode ? 'RELEASE' : 'DEBUG'}");
 
-      // Extrae el código de autorización
-      final code = Uri.parse(result).queryParameters['code'];
-      if (code == null) throw Exception('No se recibió el código de autorización.');
+    _accessToken = await _secureStorage.read(key: 'accessToken');
+    _refreshToken = await _secureStorage.read(key: 'refreshToken');
+    _idToken = await _secureStorage.read(key: 'idToken');
 
-      // Intercambia el código por los tokens
-      final response = await http.post(
-        Uri.parse(tokenUrl),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'client_id': clientId,
-          'client_secret': clientSecret,
-          'grant_type': 'authorization_code',
-          'code': code,
-          'redirect_uri': redirectUri,
-          'scope': scopes,
-        },
-      );
-
-      final data = jsonDecode(response.body);
-      if (data['id_token'] == null) {
-        throw Exception("Error al obtener el id_token: ${data.toString()}");
+    if (_accessToken != null) {
+      // Verifica si aún es válido
+      final expired = JwtDecoder.isExpired(_accessToken!);
+      if (!expired) {
+        _decodedToken = JwtDecoder.decode(_accessToken!);
+        debugPrint("🔐 Sesión restaurada desde almacenamiento seguro.");
+        _scheduleAutoRefresh();
+      } else {
+        debugPrint("⚠️ Token expirado, intentando loginSilent...");
+        await loginSilent();
       }
+    } else {
+      debugPrint("ℹ️ No hay sesión previa guardada.");
+    }
 
-      // Decodifica el token JWT
-      final claims = JwtDecoder.decode(data['id_token']);
+    debugPrint("--------------------------");
+  }
 
-      return {
-        "success": true,
-        "access_token": data['access_token'],
-        "id_token": data['id_token'],
-        "user": {
-          "name": claims["name"],
-          "email": claims["preferred_username"],
-          "oid": claims["oid"],
-        },
-        "claims": claims,
-      };
-    } catch (e) {
-      print("Error en signInWithMicrosoft: $e");
-      return {"success": false, "error": e.toString()};
+  /// Login interactivo con Microsoft
+  Future<bool> loginInteractive({List<String>? scopes}) async {
+    final clientId = dotenv.env["MICROSOFT_CLIENT_ID"]!;
+    final redirectUri = dotenv.env["MICROSOFT_REDIRECT_URI"]!;
+    final tenantId = dotenv.env["MICROSOFT_TENANT_ID"]!;
+    final discoveryUrl =
+        "https://login.microsoftonline.com/$tenantId/v2.0/.well-known/openid-configuration";
+
+    final useScopes = scopes ??
+        [
+          'openid',
+          'profile',
+          'email',
+          'offline_access',
+          'User.Read',
+        ];
+
+    try {
+      final AuthorizationTokenResponse? result =
+          await _appAuth.authorizeAndExchangeCode(
+        AuthorizationTokenRequest(
+          clientId,
+          redirectUri,
+          discoveryUrl: discoveryUrl,
+          scopes: useScopes,
+          promptValues: ['login'],
+        ),
+      );
+
+      if (result != null) {
+        await _saveTokens(result);
+        debugPrint("✅ Login interactivo exitoso");
+        return true;
+      } else {
+        debugPrint("⚠️ Login cancelado o sin respuesta.");
+        return false;
+      }
+    } catch (e, s) {
+      debugPrint("❌ Error en login interactivo: $e");
+      debugPrint("Stack trace:\n$s");
+      return false;
     }
   }
 
-  /// Verifica localmente un token JWT
-  Future<Map<String, dynamic>> validateToken(String idToken) async {
-    try {
-      final jwksResponse = await http.get(Uri.parse(jwksUri));
-      if (jwksResponse.statusCode != 200) {
-        throw Exception('Error al obtener las claves públicas de Microsoft');
-      }
+  /// Login silencioso usando refresh token
+  Future<bool> loginSilent({List<String>? scopes}) async {
+    final clientId = dotenv.env["MICROSOFT_CLIENT_ID"]!;
+    final redirectUri = dotenv.env["MICROSOFT_REDIRECT_URI"]!;
+    final tenantId = dotenv.env["MICROSOFT_TENANT_ID"]!;
+    final discoveryUrl =
+        "https://login.microsoftonline.com/$tenantId/v2.0/.well-known/openid-configuration";
 
-      // Decodificar sin validación criptográfica (validación básica cliente)
-      final claims = JwtDecoder.decode(idToken);
+    final useScopes = scopes ??
+        [
+          'openid',
+          'profile',
+          'email',
+          'offline_access',
+          'User.Read',
+        ];
 
-      // Verifica expiración
-      if (JwtDecoder.isExpired(idToken)) {
-        throw Exception("El token ha expirado.");
-      }
-
-      return {
-        "valid": true,
-        "claims": claims,
-      };
-    } catch (e) {
-      return {
-        "valid": false,
-        "error": e.toString(),
-      };
+    if (_refreshToken == null) {
+      debugPrint("⚠️ No hay refresh token. Debes iniciar sesión primero.");
+      return false;
     }
+
+    try {
+      final TokenResponse? result = await _appAuth.token(
+        TokenRequest(
+          clientId,
+          redirectUri,
+          discoveryUrl: discoveryUrl,
+          refreshToken: _refreshToken,
+          scopes: useScopes,
+        ),
+      );
+
+      if (result != null) {
+        await _saveTokens(result);
+        debugPrint("✅ Login silencioso exitoso");
+        return true;
+      } else {
+        debugPrint("⚠️ Login silencioso fallido.");
+        return false;
+      }
+    } catch (e, s) {
+      debugPrint("❌ Error en login silencioso: $e");
+      debugPrint("Stack trace:\n$s");
+      return false;
+    }
+  }
+
+  /// Guarda los tokens en memoria y en almacenamiento seguro
+  Future<void> _saveTokens(TokenResponse result) async {
+    _accessToken = result.accessToken;
+    _idToken = result.idToken;
+    _refreshToken = result.refreshToken ?? _refreshToken;
+
+    if (_accessToken != null) {
+      _decodedToken = JwtDecoder.decode(_accessToken!);
+      debugPrint("🧩 Token decodificado: $_decodedToken");
+      await _persistTokens();
+      _scheduleAutoRefresh();
+    }
+
+    notifyListeners();
+  }
+
+  /// Guarda los tokens cifrados en almacenamiento seguro
+  Future<void> _persistTokens() async {
+    await _secureStorage.write(key: 'accessToken', value: _accessToken);
+    await _secureStorage.write(key: 'refreshToken', value: _refreshToken);
+    await _secureStorage.write(key: 'idToken', value: _idToken);
+  }
+
+  /// Programa la renovación automática del token antes de expirar
+  void _scheduleAutoRefresh() {
+    _refreshTimer?.cancel();
+
+    if (_accessToken == null) return;
+
+    final expiration = JwtDecoder.getExpirationDate(_accessToken!);
+    final now = DateTime.now();
+    final duration = expiration.difference(now) - const Duration(minutes: 1);
+
+    if (duration.isNegative) return;
+
+    debugPrint("⏰ Token expira en ${duration.inMinutes} min, programando refresh automático.");
+
+    _refreshTimer = Timer(duration, () async {
+      debugPrint("🔄 Renovando token automáticamente...");
+      await loginSilent();
+    });
+  }
+
+  /// Logout local y limpieza del almacenamiento seguro
+  Future<void> logout() async {
+    _refreshTimer?.cancel();
+    _accessToken = null;
+    _idToken = null;
+    _refreshToken = null;
+    _decodedToken = null;
+
+    await _secureStorage.deleteAll();
+    notifyListeners();
+
+    debugPrint("✅ Logout local y limpieza de tokens segura");
   }
 }
