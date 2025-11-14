@@ -90,6 +90,26 @@ async def get_persona_por_documento(documento: str):
         }
     except Exception as exc:
         return {"error": str(exc)}
+    
+@app.get("/correo/{correo}")
+async def get_persona_por_documento(correo: str):
+    """Obtener una persona por su correo institucional"""
+    await ensure_cookies()
+    try:
+        query = {"correo_institucional": correo}
+        url = f"{BASE_URL}?q={json.dumps(query)}"
+        resp = await session.get(url, headers=HEADERS)
+        resp.raise_for_status()
+        return resp.json()
+    except httpx.TimeoutException:
+        return {"error": "Timeout: ORDS no respondió"}
+    except httpx.HTTPStatusError as exc:
+        return {
+            "error": f"HTTP {exc.response.status_code}",
+            "detalle": exc.response.text,
+        }
+    except Exception as exc:
+        return {"error": str(exc)}
 
 
 @app.post("/")

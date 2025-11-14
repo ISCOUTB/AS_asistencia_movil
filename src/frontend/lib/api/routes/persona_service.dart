@@ -78,6 +78,24 @@ class PersonaService {
     }
   }
 
+  // GET /personas/correo_institucional/{correo}
+  Future<List<dynamic>> getPersonaPorCorreo(String correo) async {
+    await _ensureCookies();
+    final query = jsonEncode({'correo_institucional': correo});
+    final url = Uri.parse('$baseUrl?q=$query');
+
+    final response = await http.get(url, headers: headers);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 404) {
+      throw Exception('Persona con correo institucional: $correo no encontrada');
+    } else {
+      throw Exception('Error al buscar persona: ${response.statusCode}');
+    }
+  }
+
+
   // POST /personas/
   Future<void> createPersona(Map<String, dynamic> persona) async {
     await _ensureCookies();

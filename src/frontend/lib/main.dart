@@ -1,21 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+
 import 'api/core/auth.dart';
+import 'api/universal_class.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Carga las variables de entorno (.env)
+  // Cargar variables de entorno (.env)
   await dotenv.load(fileName: "assets/.env");
 
-  // Inicializa el servicio de autenticación
+  // Inicializar AuthService
   final authService = AuthService();
   await authService.init();
 
+  // Inicializar BackendApi
+  final baseUrl = dotenv.env["URL_MAIN"];
+  if (baseUrl == null) {
+    throw Exception("La variable URL_MAIN no se pudo cargar. Revisa el archivo .env");
+  } 
+  final backendApi = BackendApi(baseUrl);
+
+  // si ya hay sesión cargada (token válido), cargamos info del usuario
+  if (authService.accessToken != null) {
+    await authService.loadUserData(backendApi);
+  }
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => authService,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthService>.value(value: authService),
+        Provider<BackendApi>.value(value: backendApi),
+      ],
       child: const MyApp(),
     ),
   );
@@ -54,13 +71,14 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-/// Pantalla de Login con Microsoft
+/// Pantalla de Login
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context, listen: false);
+    final backend = Provider.of<BackendApi>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(title: const Text("Inicio de Sesión")),
@@ -71,6 +89,9 @@ class LoginScreen extends StatelessWidget {
           onPressed: () async {
             final success = await auth.loginInteractive();
             if (success && context.mounted) {
+              // 👉 Cargar datos desde backend una vez autenticado
+              await auth.loadUserData(backend);
+
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -87,20 +108,15 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-/// Pantalla principal después del login
+/// Pantalla principal (Home)
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthService>(context);
-
-    final decoded = auth.decodedToken;
-    final name = decoded?['name'] ?? 'Usuario desconocido';
-    final email = decoded?['preferred_username'] ?? 'Sin correo';
-    final exp = decoded?['exp'] != null
-        ? DateTime.fromMillisecondsSinceEpoch(decoded!['exp'] * 1000)
-        : null;
+    final backend = Provider.of<BackendApi>(context, listen: false);
+    final user = auth.currentUser;
 
     return Scaffold(
       appBar: AppBar(
@@ -114,7 +130,7 @@ class HomeScreen extends StatelessWidget {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
+                  (_) => false,
                 );
               }
             },
@@ -124,41 +140,47 @@ class HomeScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(Icons.verified_user, size: 80, color: Colors.indigo),
-              const SizedBox(height: 16),
-              Text(
-                "Hola, $name 👋",
-                style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                email,
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              if (exp != null)
-                Text(
-                  "⏳ Token expira el:\n${exp.toLocal()}",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14),
+          child: user == null
+              ? const CircularProgressIndicator()
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.verified_user,
+                        size: 80, color: Colors.indigo),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Hola, ${user.name} 👋",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      user.email,
+                      style:
+                          const TextStyle(fontSize: 16, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 12),
+
+                    // 👉 Mostrar datos desde Oracle APEX (persona)
+                    if (user.persona.isNotEmpty)
+                      Text(
+                        "Codigo_Banner: ${user.persona.first["codigo_banner"]}",
+                        style: const TextStyle(fontSize: 16),
+                      )
+                    else
+                      const Text(
+                        "No se encontró información en el backend.",
+                        style: TextStyle(color: Colors.redAccent),
+                      ),
+                  ],
                 ),
-              const SizedBox(height: 24),
-              const Divider(),
-              const SizedBox(height: 12),
-              Text(
-                "Access Token (recortado):\n${auth.accessToken?.substring(0, 40)}...",
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'user_session.dart';
+import '../universal_class.dart';
+
 
 class AuthService extends ChangeNotifier {
   final FlutterAppAuth _appAuth = FlutterAppAuth();
@@ -12,6 +16,7 @@ class AuthService extends ChangeNotifier {
   String? _accessToken;
   String? _idToken;
   String? _refreshToken;
+  UserSession? currentUser;
   Map<String, dynamic>? _decodedToken;
   Timer? _refreshTimer;
 
@@ -152,6 +157,34 @@ class AuthService extends ChangeNotifier {
 
     notifyListeners();
   }
+  Future<UserSession?> loadUserData(BackendApi backend) async {
+    final decoded = _decodedToken;
+    if (decoded == null) return null;
+
+    final name = decoded["name"] ?? "Usuario";
+    final email = decoded["unique_name"];
+
+    // Traer datos desde el backend
+    final response = await backend.persona.getPersonaPorCorreo(email);
+
+    final persona = response
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    currentUser = UserSession(
+      name: name,
+      email: email,
+      uniqueName: email,
+      expiration: decoded["exp"] != null
+          ? DateTime.fromMillisecondsSinceEpoch(decoded["exp"] * 1000)
+          : null,
+      persona: persona,
+    );
+    
+    notifyListeners();
+    return currentUser;
+  }
+
 
   /// Guarda los tokens cifrados en almacenamiento seguro
   Future<void> _persistTokens() async {
