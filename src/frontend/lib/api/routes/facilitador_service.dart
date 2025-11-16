@@ -58,20 +58,28 @@ class FacilitadorService {
   }
 
   // GET /facilitador/correo_institucional/{correo}
-  Future<List<dynamic>> getPersonaPorCorreo(String correo) async {
+  Future<List<dynamic>> getFacilitadorPorCorreo(String correo) async {
     await _ensureCookies();
-    final query = jsonEncode({'correo_institucional': correo});
+    final query = jsonEncode({'correo_facilitador': correo});
     final url = Uri.parse('$baseUrl?q=$query');
 
-    final response = await http.get(url, headers: headers);
+    final resp = await http.get(url, headers: headers);
+    if (resp.statusCode == 200) {
+      final decoded = jsonDecode(resp.body);
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else if (response.statusCode == 404) {
-      throw Exception('Facilitador con correo institucional: $correo no encontrada');
-    } else {
-      throw Exception('Error al buscar facilitador: ${response.statusCode}');
+      // extraemos la lista de items si existe
+      if (decoded is Map<String, dynamic> && decoded["items"] is List) {
+        return decoded["items"];
+      } else {
+        return [];
+      }
     }
+
+    if (resp.statusCode == 404 || resp.statusCode == 403 ) {
+      return [];
+    }
+
+    throw Exception("Error al buscar facilitador: ${resp.statusCode}");
   }
 
 

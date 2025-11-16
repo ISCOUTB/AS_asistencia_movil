@@ -6,12 +6,17 @@ import 'package:flutter_appauth/flutter_appauth.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'user_session.dart';
-import '../universal_class.dart';
+import '../routes/persona_service.dart';
+import '../routes/facilitador_service.dart';
 
 
 class AuthService extends ChangeNotifier {
   final FlutterAppAuth _appAuth = FlutterAppAuth();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  late PersonaService personaService;
+  late FacilitadorService facilitadorService;
+
 
   String? _accessToken;
   String? _idToken;
@@ -157,30 +162,102 @@ class AuthService extends ChangeNotifier {
 
     notifyListeners();
   }
-  Future<UserSession?> loadUserData(BackendApi backend) async {
+
+  // Versión robusta de loadUserData para auth.dart
+  Future<UserSession?> loadUserData() async {
+    personaService = PersonaService(
+      'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/personas/',
+    );
+    facilitadorService = FacilitadorService(
+      'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/facilitadores/',
+    );
+    
     final decoded = _decodedToken;
     if (decoded == null) return null;
 
-    final name = decoded["name"] ?? "Usuario";
-    final email = decoded["unique_name"];
+    final String name = decoded['name'] ?? 'Usuario';
 
-    // Traer datos desde el backend
-    final response = await backend.persona.getPersonaPorCorreo(email);
+    final dynamic uniqueName = decoded['unique_name'];
+    if (uniqueName == null || uniqueName is! String) {
+      debugPrint('loadUserData: unique_name ausente o inválido en token');
+      return null;
+    }
+    final String email = uniqueName;
 
-    final persona = response
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    // Parse id de forma segura (int o string)
+    int ? id;
+    final dynamic rawId = decoded['id'];
+    if (rawId != null) {
+      if (rawId is num) {
+        id = rawId.toInt();
+      } else {
+        id = int.tryParse(rawId.toString());
+      }
+    }
+
+    // Parse exp de forma segura (podría ser null, int, double, string)
+    int? expSeconds;
+    final dynamic rawExp = decoded['exp'];
+    if (rawExp != null) {
+      if (rawExp is num) {
+        expSeconds = rawExp.toInt();
+      } else {
+        expSeconds = int.tryParse(rawExp.toString());
+      }
+    }
+    final DateTime? expiration =
+        expSeconds != null ? DateTime.fromMillisecondsSinceEpoch(expSeconds * 1000) : null;
+
+    // Intentar facilitador primero; si no hay resultados, intentar persona.
+    List<Map<String, dynamic>> persona = [];
+    bool isFacilitador = false;
+
+    try {
+      final facilItems = await facilitadorService.getFacilitadorPorCorreo(email);
+      if (facilItems.isNotEmpty) {
+        isFacilitador = true;
+        persona = facilItems
+            .where((e) => e is Map)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      } else {
+        // Si facilitador devuelve vacío, intentar persona
+        try {
+          final personaItems = await personaService.getPersonaPorCorreo(email);
+          persona = personaItems
+              .where((e) => e is Map)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        } catch (e, st) {
+          debugPrint('loadUserData: error al obtener persona (fallback): $e\n$st');
+          // dejamos persona vacía; puedes decidir return null si lo prefieres
+        }
+      }
+    } catch (e, st) {
+      debugPrint('loadUserData: error al obtener facilitador: $e\n$st');
+      // Fallback: intentar persona si facilitador falló
+      try {
+        final personaItems = await personaService.getPersonaPorCorreo(email);
+        persona = personaItems
+            .where((e) => e is Map)
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+      } catch (e2, st2) {
+        debugPrint('loadUserData: error al obtener persona tras fallo facilitador: $e2\n$st2');
+        return null; // ambas llamadas fallaron -> no podemos cargar usuario
+      }
+    }
 
     currentUser = UserSession(
+      id: id,
       name: name,
       email: email,
       uniqueName: email,
-      expiration: decoded["exp"] != null
-          ? DateTime.fromMillisecondsSinceEpoch(decoded["exp"] * 1000)
-          : null,
+      expiration: expiration,
       persona: persona,
+      isFacilitador: isFacilitador,
     );
-    
+
     notifyListeners();
     return currentUser;
   }

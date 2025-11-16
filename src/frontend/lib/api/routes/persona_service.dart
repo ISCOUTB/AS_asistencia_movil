@@ -84,15 +84,24 @@ class PersonaService {
     final query = jsonEncode({'correo_institucional': correo});
     final url = Uri.parse('$baseUrl?q=$query');
 
-    final response = await http.get(url, headers: headers);
+    final resp = await http.get(url, headers: headers);
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else if (response.statusCode == 404) {
-      throw Exception('Persona con correo institucional: $correo no encontrada');
-    } else {
-      throw Exception('Error al buscar persona: ${response.statusCode}');
+    if (resp.statusCode == 200) {
+      final decoded = jsonDecode(resp.body);
+
+      // extraemos la lista de items si existe
+      if (decoded is Map<String, dynamic> && decoded["items"] is List) {
+        return decoded["items"];
+      } else {
+        return [];
+      }
     }
+
+    if (resp.statusCode == 404 || resp.statusCode == 403 ) {
+      return [];
+    }
+
+    throw Exception("Error al buscar facilitador: ${resp.statusCode}");
   }
 
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'servicios.dart';
 import 'sesiones.dart';
-import 'asistencias.dart';
+import 'asistencias.dart' as asistencias;
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -17,7 +17,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _pages = [
     const ServiciosPage(),
     SesionesPage(),
-    const AsistenciasPage(),
+    const asistencias.AsistenciasPage(),
     const DashboardPage(),
   ];
 
@@ -37,7 +37,7 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: AppColors.universityBlue,
+        selectedItemColor: asistencias.AppColors.universityBlue,
         unselectedItemColor: Colors.grey,
         elevation: 10,
         items: const [
