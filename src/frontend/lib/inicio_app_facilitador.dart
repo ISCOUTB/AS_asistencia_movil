@@ -24,10 +24,12 @@ class HomeScreen extends StatefulWidget {
 
   final String userEmail;
   final String userType;
+  final int? userID;
   
   const HomeScreen({
     super.key,
     this.userEmail = '',
+    this.userID=0,
     this.userType = 'estudiante',
   });
 

@@ -41,7 +41,10 @@ class SesionService {
     final response = await http.get(Uri.parse(baseUrl), headers: headers);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+
+      // EXTRAER LA LISTA REAL
+      return decoded["items"] as List;
     } else {
       throw Exception('Error al obtener sesiones: ${response.statusCode}');
     }
@@ -73,6 +76,23 @@ class SesionService {
       return jsonDecode(response.body);
     } else if (response.statusCode == 404) {
       throw Exception('No se encontraron sesiones para el servicio $idServicio');
+    } else {
+      throw Exception('Error al obtener sesiones: ${response.statusCode}');
+    }
+  }
+
+    // GET /sesion/servicio/{id_facilitador}
+  Future<List<dynamic>> getSesionesPorFacilitador(int idFacilitador) async {
+    await _ensureCookies();
+    final query = jsonEncode({'id_faciltiador': idFacilitador});
+    final url = Uri.parse('$baseUrl?q=$query');
+
+    final response = await http.get(url, headers: headers);
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+
+      return decoded["items"] as List;
     } else {
       throw Exception('Error al obtener sesiones: ${response.statusCode}');
     }

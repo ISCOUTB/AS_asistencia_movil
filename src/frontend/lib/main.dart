@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'inicio_app_facilitador.dart' as app_facilitador;
+import 'dashboard.dart' as app_estudiante;
 import 'package:provider/provider.dart';
+import '../api/core/user_session_provider.dart';
 import 'api/core/auth.dart';
 
 void main() async {
@@ -24,6 +26,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthService>.value(value: authService),
+        ChangeNotifierProvider(create: (_) => UserSessionProvider()),
       ],
       child: MyApp(),
     ),
@@ -60,8 +63,51 @@ class AuthWrapper extends StatelessWidget {
     if (auth.accessToken == null) {
       return LoginPage();
     } else {
-      return HomeScreen();
+      final user = auth.currentUser;
+      context.read<UserSessionProvider>().setSession(user);
+      
+      // Si el usuario está cargado, redirigir según su rol
+      if (user != null && user.persona.isNotEmpty) {
+        if (user.isFacilitador) {
+          // Usuario es facilitador/profesor
+          return app_facilitador.HomeScreen(
+            userEmail: user.email,
+            userID: user.id,
+            userType: 'profesor',
+          );
+        } else {
+          // Usuario es estudiante
+          return app_estudiante.DashboardPage();
+        }
+      }
+      
+      // Si aún no se ha cargado el usuario, mostrar pantalla de carga
+      return const LoadingScreen();
     }
+  }
+}
+
+/// Pantalla de carga mientras se obtienen los datos del usuario
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Cargando información del usuario...',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -223,14 +269,13 @@ class _LoginPageState extends State<LoginPage> {
                           loginSuccess = await auth.loginInteractive();
 
                           if (loginSuccess) {
-                            // carga datos del usuario; captura si devuelve null o lanza
+                            // Carga datos del usuario
                             final user = await auth.loadUserData();
                             if (user == null) {
                               localError = 'No se pudo cargar los datos del usuario.';
-                            } else {
-                              // aquí puedes navegar o actualizar algo fuera del setState,
-                              // pero si necesitas actualizar el estado visual, lo haremos abajo.
                             }
+                            // No necesitamos hacer nada más aquí,
+                            // AuthWrapper se encargará de redirigir automáticamente
                           } else {
                             localError = 'No se pudo iniciar sesión.';
                           }
@@ -286,72 +331,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Pantalla principal (Home)
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = Provider.of<AuthService>(context);
-    final user = auth.currentUser;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Bienvenido a Asistencias UTB"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await auth.logout();
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => LoginPage()),
-                  (_) => false,
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: user == null
-              ? const CircularProgressIndicator()
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.verified_user,
-                        size: 80, color: Colors.indigo),
-                    const SizedBox(height: 16),
-                    Text(
-                      "Hola, ${user.name} 👋",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      user.email,
-                      style:
-                          const TextStyle(fontSize: 16, color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    const SizedBox(height: 12),
-                  ],
-                ),
         ),
       ),
     );

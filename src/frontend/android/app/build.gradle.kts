@@ -7,20 +7,27 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Cargar propiedades del keystore
+// Load keystore properties more safely
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 
-if (!keystorePropertiesFile.exists()) {
-    throw GradleException("El archivo key.properties no existe.")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+} else {
+    // Fail with a clear message about where to create the file
+    throw GradleException(
+        "key.properties not found at ${keystorePropertiesFile.path}. " +
+        "Create the file in the project root with storePassword, keyPassword and keyAlias (see sample key.properties)."
+    )
 }
 
-keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+fun prop(name: String): String =
+    keystoreProperties.getProperty(name)
+        ?: throw GradleException("Missing '$name' in key.properties")
 
 android {
     namespace = "com.example.asistenciamovil"
 
-    // ✅ SDKs actualizados según los avisos del build
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -29,36 +36,35 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    // Kotlin jvm target
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = "11"
     }
 
     defaultConfig {
         applicationId = "com.example.asistenciamovil"
-
-        // ✅ Se recomienda especificar explícitamente estos valores
         minSdk = flutter.minSdkVersion
         targetSdk = 36
 
         versionCode = 1
         versionName = "1.0"
 
-        // 🔹 Necesario para sustituir ${appAuthRedirectScheme} en el AndroidManifest.xml
         manifestPlaceholders["appAuthRedirectScheme"] = "msauth"
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
+            // Verify this path exists relative to android/ directory
+            storeFile = rootProject.file("../assets/nuevo_keystore.jks")
+            storePassword = prop("storePassword")
+            keyAlias = prop("keyAlias")
+            keyPassword = prop("keyPassword")
         }
     }
 
     buildTypes {
         getByName("debug") {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName("release") // optional but OK for local tests
             isMinifyEnabled = false
             isShrinkResources = false
         }

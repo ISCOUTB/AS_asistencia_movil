@@ -41,7 +41,9 @@ class ServicioService {
     final response = await http.get(Uri.parse(baseUrl), headers: headers);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
+
+      return decoded["items"] as List;
     } else {
       throw Exception('Error al obtener servicios: ${response.statusCode}');
     }

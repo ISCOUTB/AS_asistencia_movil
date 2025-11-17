@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
+import 'package:provider/provider.dart';
 import 'api/routes/sesion_service.dart';
+import '../api/core/user_session_provider.dart';
 import 'crear_sesion.dart';
 
 class AppColors {
@@ -29,7 +31,9 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
     super.initState();
     const baseUrl = 'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/sesiones/';
     sesionService = SesionService(baseUrl);
+    Future.microtask(() {
     _cargarSesiones();
+    });
   }
 
   Future<void> _cargarSesiones() async {
@@ -39,7 +43,12 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
     });
 
     try {
-      final data = await sesionService.getSesiones();
+      final userProvider = context.read<UserSessionProvider>();
+      final facilitadorId = userProvider.session?.id;
+      if (facilitadorId == null) {
+        throw Exception("No hay ID del facilitador en la sesión");
+      }
+      final data = await sesionService.getSesionesPorFacilitador(facilitadorId);
       setState(() {
         sesiones = data;
         isLoading = false;
@@ -69,8 +78,11 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserSessionProvider>();
+    final facilitadorId = userProvider.session?.id;
     final hPadding = context.horizontalPadding;
     final cardSpacing = ResponsiveUtils.getSpacing(context, 12);
+    
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
