@@ -350,13 +350,6 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     const Divider(),
                     const SizedBox(height: 12),
-
-                    // Se verifica rol y redirigir a la página correspondiente
-                    if (user.persona.isNotEmpty)
-                      if(user.isFacilitador == true)
-                        //pagina para profesor/facilitador
-                      else
-                        //pagina para estudiante/persona
                   ],
                 ),
         ),
