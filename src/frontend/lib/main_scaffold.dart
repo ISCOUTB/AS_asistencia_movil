@@ -42,7 +42,7 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
     const DashboardPageContent(),
   ];
 
-  // Páginas para ESTUDIANTES: Sesiones, Asistencias (solo 2 páginas)
+  // Páginas para ESTUDIANTES: Sesiones, Asistencias
   final List<Widget> _studentPages = [
     const StudentSesionesPage(),
     const StudentAsistenciasPage(),

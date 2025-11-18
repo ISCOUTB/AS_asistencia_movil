@@ -112,7 +112,7 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
     );
   }
 
-  // Barra para ESTUDIANTES: Solo Sesiones, QR, Asistencias
+  // Barra para ESTUDIANTES: Sesiones, QR, Asistencias
   Widget _buildStudentNav(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

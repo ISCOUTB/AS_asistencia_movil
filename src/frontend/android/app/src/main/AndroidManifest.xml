@@ -38,7 +38,7 @@
                 <data
                     android:scheme="${appAuthRedirectScheme}"
                     android:host="com.example.asistenciamovil"
-                    android:path="/1f7MrQgTBTnvlZsLO+cWw6gkuOo="/>
+                    android:path="/1f7MrQgTBTnvlZsLO%2BWw6gkuOo%3D"/>
             </intent-filter>
 
         </activity>

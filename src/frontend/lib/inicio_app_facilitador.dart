@@ -5,11 +5,9 @@ import 'utils/custom_page_route.dart';
 import 'utils/responsive_utils.dart';
 import 'main_scaffold.dart';
 import 'widgets/modern_bottom_nav.dart';
-import  'api/core/auth.dart';
-import 'package:provider/provider.dart';
-import 'main.dart';
 import 'sesiones.dart' as sesiones;
 import 'asistencias.dart' as asistencias;
+import 'widgets/custom_header.dart';
 
 /// Colores institucionales
 class AppColors {
@@ -51,433 +49,53 @@ class _HomeScreenState extends State<HomeScreen> {
     _role = widget.userType == 'profesor' ? UserRole.professor : UserRole.student;
   }
 
-  void _setRole(UserRole role) {
-    setState(() {
-      _role = role;
-    });
-  }
-
-  void _showSettingsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header del modal
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.universityBlue, AppColors.universityBlue],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.settings, color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Configuración',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              // Información del usuario
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundLight,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.universityBlue.withValues(alpha: 0.2),
-                          child: Icon(
-                            _role == UserRole.professor ? Icons.school : Icons.person,
-                            color: AppColors.universityBlue,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.userEmail,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1A1A1A),
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _role == UserRole.professor ? 'Profesor' : 'Estudiante',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // Selector de perfil
-              const Text(
-                'Cambiar perfil',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildRoleOption(
-                      context,
-                      'Profesor',
-                      Icons.school,
-                      UserRole.professor,
-                      _role == UserRole.professor,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildRoleOption(
-                      context,
-                      'Estudiante',
-                      Icons.person,
-                      UserRole.student,
-                      _role == UserRole.student,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              
-              // Botón de cerrar sesión
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _handleLogout(context),
-                  icon: const Icon(Icons.logout, size: 20),
-                  label: const Text(
-                    'Cerrar sesión',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade50,
-                    foregroundColor: Colors.red.shade700,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoleOption(
-    BuildContext context,
-    String label,
-    IconData icon,
-    UserRole role,
-    bool isSelected,
-  ) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _setRole(role);
-        });
-        Navigator.pop(context);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [AppColors.universityBlue, AppColors.universityBlue],
-                )
-              : null,
-          color: isSelected ? null : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.universityBlue : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
-              size: 28,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _handleLogout(BuildContext context) async {
-    final auth = Provider.of<AuthService>(context);
-    final navigator = Navigator.of(context);
-    
-    // Cerrar sesión
-    await auth.logout();
-    
-    // Cerrar el diálogo
-    navigator.pop();
-    
-    // Navegar al login
-    navigator.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => LoginPage()),
-      (route) => false,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final isLandscape = context.isLandscape;
-    final logoHeight = ResponsiveUtils.getIconSize(context, 60);
     final hPadding = context.horizontalPadding;
-    final vPadding = context.verticalPadding;
     final borderRadius = ResponsiveUtils.getBorderRadius(context, 24);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [
-              AppColors.universityBlue,
-              AppColors.universityBlue,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Parte superior con logo, avatar, nombre y carrera
-              _buildHeader(context, isLandscape, logoHeight, hPadding, vPadding, borderRadius),
-
-              SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
-
-              // Fondo blanco para el contenido (según rol)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(borderRadius),
-                      topRight: Radius.circular(borderRadius),
-                    ),
-                  ),
-                  // SIN PADDING para estudiantes - el padding lo manejan las páginas individuales
-                  child: _role == UserRole.professor
-                      ? Padding(
-                          padding: EdgeInsets.only(
-                            left: hPadding,
-                            right: hPadding,
-                            top: hPadding,
-                            bottom: MediaQuery.of(context).padding.bottom + hPadding + 20,
-                          ),
-                          child: _buildProfessorView(context, isLandscape),
-                        )
-                      : StudentView(
-                          primaryColor: AppColors.universityBlue,
-                          accentColor: AppColors.universityLightBlue,
-                          userEmail: widget.userEmail,
-                          userType: widget.userType,
-                        ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, bool isLandscape, double logoHeight,
-      double hPadding, double vPadding, double borderRadius) {
-    final titleFontSize = ResponsiveUtils.getFontSize(context, isLandscape ? 18 : 20);
-    final roleBadgeFontSize = ResponsiveUtils.getFontSize(context, 11);
-    
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: hPadding,
-        vertical: ResponsiveUtils.getSpacing(context, isLandscape ? 12 : 16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
         children: [
-          // Row superior: badge, nombre y foto
-          Row(
-            children: [
-              // Badge de rol compacto
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
+          // Header unificado
+          const ProfessorHeader(title: 'Inicio'),
+          
+          // Contenido (según rol)
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(borderRadius),
+                  topRight: Radius.circular(borderRadius),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _role == UserRole.professor ? Icons.school : Icons.person,
-                      color: Colors.white,
-                      size: ResponsiveUtils.getIconSize(context, 14),
-                    ),
-                    SizedBox(width: ResponsiveUtils.getSpacing(context, 4)),
-                    Text(
-                      _role == UserRole.professor ? 'Profesor' : 'Estudiante',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: roleBadgeFontSize,
-                        fontWeight: FontWeight.w600,
+              ),
+              // SIN PADDING para estudiantes - el padding lo manejan las páginas individuales
+              child: _role == UserRole.professor
+                  ? Padding(
+                      padding: EdgeInsets.only(
+                        left: hPadding,
+                        right: hPadding,
+                        top: hPadding,
+                        bottom: MediaQuery.of(context).padding.bottom + hPadding + 20,
                       ),
+                      child: _buildProfessorView(context, isLandscape),
+                    )
+                  : StudentView(
+                      primaryColor: AppColors.universityBlue,
+                      accentColor: AppColors.universityLightBlue,
+                      userEmail: widget.userEmail,
+                      userType: widget.userType,
                     ),
-                  ],
-                ),
-              ),
-              
-              const Spacer(),
-              
-              // Foto de perfil clickeable con diseño bonito
-              GestureDetector(
-                onTap: () => _showSettingsDialog(context),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 2.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: CircleAvatar(
-                    radius: ResponsiveUtils.getIconSize(context, isLandscape ? 20 : 24),
-                    backgroundImage: const AssetImage('assets/foto-estudiante.jpg'),
-                    backgroundColor: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: ResponsiveUtils.getSpacing(context, isLandscape ? 8 : 12)),
-          
-          // Nombre del usuario
-          Text(
-            'William David Lozano Julio',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: titleFontSize,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
             ),
           ),
-          
-          SizedBox(height: ResponsiveUtils.getSpacing(context, 8)),
-          
-          // Subtítulo con información de rol
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withValues(alpha: 0.1),
-                  Colors.white.withValues(alpha: 0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.verified_user,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  size: ResponsiveUtils.getIconSize(context, 14),
-                ),
-                SizedBox(width: ResponsiveUtils.getSpacing(context, 6)),
-                Text(
-                  'Universidad Tecnológica de Bolívar',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: ResponsiveUtils.getFontSize(context, 11),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
         ],
       ),
     );
   }
+
 
   Widget _buildProfessorView(BuildContext context, bool isLandscape) {
     return LayoutBuilder(

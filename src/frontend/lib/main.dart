@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'inicio_app_facilitador.dart' as app_facilitador;
-import 'dashboard.dart' as app_estudiante;
 import 'package:provider/provider.dart';
-import '../api/core/user_session_provider.dart';
+import 'api/core/user_session_provider.dart';
 import 'api/core/auth.dart';
+import 'main_scaffold.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,8 +76,11 @@ class AuthWrapper extends StatelessWidget {
             userType: 'profesor',
           );
         } else {
-          // Usuario es estudiante
-          return app_estudiante.DashboardPage();
+          // Usuario es estudiante - usar MainScaffold con barra de navegación
+          return const MainScaffold(
+            initialIndex: 0,
+            isStudent: true,
+          );
         }
       }
       

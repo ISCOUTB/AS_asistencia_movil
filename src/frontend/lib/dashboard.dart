@@ -143,47 +143,60 @@ class _DashboardPageContentState extends State<DashboardPageContent> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Grid de tarjetas mejorado - 2 columnas en móvil, 4 en tablet/landscape
-                              GridView.count(
-                                crossAxisCount: isLandscape ? 4 : 2,
-                                shrinkWrap: true,
-                                crossAxisSpacing: spacing,
-                                mainAxisSpacing: spacing,
-                                childAspectRatio: 1.4,
-                                physics: const NeverScrollableScrollPhysics(),
-                                children: [
-                                  _buildModernStatCard(
-                                    context,
-                                    'Sesiones Hoy',
-                                    _estadisticas['sesionesHoy'].toString(),
-                                    Icons.event_available,
-                                    const Color(0xFF3B82F6),
-                                    const Color(0xFF60A5FA),
-                                  ),
-                                  _buildModernStatCard(
-                                    context,
-                                    'Total Sesiones',
-                                    _estadisticas['totalSesiones'].toString(),
-                                    Icons.school,
-                                    const Color(0xFF8B5CF6),
-                                    const Color(0xFFA78BFA),
-                                  ),
-                                  _buildModernStatCard(
-                                    context,
-                                    'Asistencias',
-                                    _estadisticas['totalAsistencias'].toString(),
-                                    Icons.people,
-                                    const Color(0xFF10B981),
-                                    const Color(0xFF34D399),
-                                  ),
-                                  _buildModernStatCard(
-                                    context,
-                                    'Esta Semana',
-                                    _estadisticas['asistenciasSemana'].toString(),
-                                    Icons.trending_up,
-                                    const Color(0xFFF59E0B),
-                                    const Color(0xFFFBBF24),
-                                  ),
-                                ],
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final columns = isLandscape ? 4 : 2;
+                                  final rows = isLandscape ? 1 : 2;
+                                  final cardWidth = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+                                  final cardHeight = cardWidth / 1.4;
+                                  final totalHeight = (cardHeight * rows) + (spacing * (rows - 1));
+                                  
+                                  return SizedBox(
+                                    height: totalHeight,
+                                    child: GridView.count(
+                                      crossAxisCount: columns,
+                                      shrinkWrap: true,
+                                      crossAxisSpacing: spacing,
+                                      mainAxisSpacing: spacing,
+                                      childAspectRatio: 1.4,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      children: [
+                                        _buildModernStatCard(
+                                          context,
+                                          'Sesiones Hoy',
+                                          _estadisticas['sesionesHoy'].toString(),
+                                          Icons.event_available,
+                                          const Color(0xFF3B82F6),
+                                          const Color(0xFF60A5FA),
+                                        ),
+                                        _buildModernStatCard(
+                                          context,
+                                          'Total Sesiones',
+                                          _estadisticas['totalSesiones'].toString(),
+                                          Icons.school,
+                                          const Color(0xFF8B5CF6),
+                                          const Color(0xFFA78BFA),
+                                        ),
+                                        _buildModernStatCard(
+                                          context,
+                                          'Asistencias',
+                                          _estadisticas['totalAsistencias'].toString(),
+                                          Icons.people,
+                                          const Color(0xFF10B981),
+                                          const Color(0xFF34D399),
+                                        ),
+                                        _buildModernStatCard(
+                                          context,
+                                          'Esta Semana',
+                                          _estadisticas['asistenciasSemana'].toString(),
+                                          Icons.trending_up,
+                                          const Color(0xFFF59E0B),
+                                          const Color(0xFFFBBF24),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                               
                               SizedBox(height: spacing * 2),
@@ -848,9 +861,10 @@ void navegarAMainScaffold(BuildContext context) {
     Color colorEnd,
   ) {
     final borderRadius = ResponsiveUtils.getBorderRadius(context, 16);
-    final iconSize = ResponsiveUtils.getIconSize(context, 28);
-    final valueSize = ResponsiveUtils.getFontSize(context, 28);
-    final titleSize = ResponsiveUtils.getFontSize(context, 12);
+    final iconSize = ResponsiveUtils.getIconSize(context, 24);
+    final valueSize = ResponsiveUtils.getFontSize(context, 24);
+    final titleSize = ResponsiveUtils.getFontSize(context, 11);
+    final cardPadding = ResponsiveUtils.getSpacing(context, 12);
     
     return Container(
       decoration: BoxDecoration(
@@ -872,53 +886,67 @@ void navegarAMainScaffold(BuildContext context) {
       child: Material(
         color: Colors.transparent,
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Icono
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: iconSize,
-                ),
-              ),
-              
-              const Spacer(),
-              
-              // Valor y título
-              Column(
+          padding: EdgeInsets.all(cardPadding),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    value,
-                    style: TextStyle(
-                      fontSize: valueSize,
-                      fontWeight: FontWeight.w800,
+                  // Icono
+                  Container(
+                    padding: EdgeInsets.all(cardPadding * 0.6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      icon,
                       color: Colors.white,
-                      height: 1.1,
+                      size: iconSize,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      letterSpacing: 0.3,
+                  
+                  SizedBox(height: cardPadding * 0.5),
+                  
+                  // Valor y título
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            value,
+                            style: TextStyle(
+                              fontSize: valueSize,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: cardPadding * 0.25),
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: titleSize,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.9),
+                            letterSpacing: 0.2,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
