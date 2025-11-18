@@ -4,6 +4,7 @@ import 'inicio_app_facilitador.dart' as app_facilitador;
 import 'package:provider/provider.dart';
 import 'api/core/user_session_provider.dart';
 import 'api/core/auth.dart';
+import 'api/notificacion_service.dart';
 import 'main_scaffold.dart';
 
 void main() async {
@@ -27,6 +28,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider<AuthService>.value(value: authService),
         ChangeNotifierProvider(create: (_) => UserSessionProvider()),
+        ChangeNotifierProvider(create: (_) => NotificacionService()),
       ],
       child: MyApp(),
     ),
@@ -260,11 +262,14 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: _isLoading
                     ? null
                     : () async {
-                        // estado inicial inmediato
+                        // ✅ OPTIMIZACIÓN: Actualizar UI INMEDIATAMENTE antes de cualquier operación
                         setState(() {
                           _isLoading = true;
                           _errorMessage = null;
                         });
+                        
+                        // ✅ OPTIMIZACIÓN: Dar tiempo al UI para renderizar antes de bloquear con auth
+                        await Future.delayed(const Duration(milliseconds: 50));
 
                         String? localError;
                         bool loginSuccess = false;

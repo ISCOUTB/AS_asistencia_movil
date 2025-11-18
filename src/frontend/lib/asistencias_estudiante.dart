@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
+import 'api/routes/asistencia_service.dart';
+import 'api/core/user_session_provider.dart';
+import 'api/notificacion_service.dart';
+import 'notificaciones.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -17,15 +22,60 @@ class StudentAsistenciasPage extends StatefulWidget {
 }
 
 class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
-  final List<Map<String, String>> _asistencias = List.generate(10, (i) => {
-        'titulo': 'Asistencia ${i + 1}',
-        'materia': ['Matemáticas', 'Algoritmos', 'Redes', 'Bases'][i % 4],
-        'fecha': '2025-0${(i % 9) + 1}-0${(i % 28) + 1}',
-        'estado': ['Presente', 'Ausente', 'Justificada'][i % 3],
+  List<Map<String, dynamic>> _asistencias = [];
+  bool _isLoadingAsistencias = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarAsistencias();
+    
+    // Cargar notificaciones del usuario
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userEmail = context.read<UserSessionProvider>().email;
+      if (userEmail.isNotEmpty) {
+        context.read<NotificacionService>().cargarNotificaciones(userEmail);
+      }
+    });
+  }
+
+  Future<void> _cargarAsistencias() async {
+    setState(() {
+      _isLoadingAsistencias = true;
+    });
+
+    try {
+      final userSession = context.read<UserSessionProvider>();
+      final email = userSession.email;
+
+      if (email.isEmpty) {
+        setState(() {
+          _isLoadingAsistencias = false;
+        });
+        return;
+      }
+
+      final asistenciaService = AsistenciaService(
+        'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/asistencia_sesiones/',
+      );
+
+      final asistencias = await asistenciaService.getAsistenciasPorEstudiante(email);
+
+      setState(() {
+        _asistencias = asistencias;
+        _isLoadingAsistencias = false;
       });
+    } catch (e) {
+      debugPrint('Error cargando asistencias: $e');
+      setState(() {
+        _isLoadingAsistencias = false;
+      });
+    }
+  }
 
   Future<void> _refrescarDatos() async {
-    await Future.delayed(const Duration(seconds: 1));
+    await _cargarAsistencias();
+    await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
       setState(() {});
     }
@@ -42,7 +92,22 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
         child: Column(
           children: [
             // Header discreto para estudiantes
-            const StudentHeader(title: "Asistencias"),
+            Consumer<NotificacionService>(
+              builder: (context, notifService, child) {
+                return StudentHeader(
+                  title: "Asistencias",
+                  notificationCount: notifService.noLeidas,
+                  onNotificationTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificacionesPage(),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
             
             Expanded(
               child: Container(
@@ -50,20 +115,69 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
                 child: RefreshIndicator(
                   onRefresh: _refrescarDatos,
                   color: AppColors.universityBlue,
-                  child: ListView.separated(
-                    padding: EdgeInsets.only(
-                      left: hPadding,
-                      right: hPadding,
-                      top: ResponsiveUtils.getSpacing(context, 16),
-                      bottom: MediaQuery.of(context).padding.bottom + 20,
-                    ),
-                    itemCount: _asistencias.length,
-                    separatorBuilder: (context, index) => SizedBox(height: spacing),
-                    itemBuilder: (context, index) {
-                      final asistencia = _asistencias[index];
-                      return _buildAsistenciaCard(context, asistencia);
-                    },
-                  ),
+                  child: _isLoadingAsistencias
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView(
+                          padding: EdgeInsets.only(
+                            left: hPadding,
+                            right: hPadding,
+                            top: ResponsiveUtils.getSpacing(context, 16),
+                            bottom: MediaQuery.of(context).padding.bottom + 20,
+                          ),
+                          children: [
+                            // Título del historial de asistencias
+                            Padding(
+                              padding: EdgeInsets.only(bottom: ResponsiveUtils.getSpacing(context, 12)),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Historial de Asistencias',
+                                    style: TextStyle(
+                                      fontSize: ResponsiveUtils.getFontSize(context, 16),
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF1A1A1A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            // Lista de asistencias
+                            if (_asistencias.isEmpty)
+                              Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.getSpacing(context, 32)),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.event_busy,
+                                        size: 64,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
+                                      Text(
+                                        'No hay asistencias registradas',
+                                        style: TextStyle(
+                                          fontSize: ResponsiveUtils.getFontSize(context, 16),
+                                          color: Colors.grey.shade600,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              ..._asistencias.asMap().entries.map((entry) {
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: spacing),
+                                  child: _buildAsistenciaCard(context, entry.value),
+                                );
+                              }),
+                          ],
+                        ),
                 ),
               ),
             ),
@@ -73,81 +187,53 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
     );
   }
 
-  Widget _buildUpdateButton(BuildContext context) {
-    final iconSize = ResponsiveUtils.getIconSize(context, 16);
-    final fontSize = ResponsiveUtils.getFontSize(context, 13);
-    final isLandscape = context.isLandscape;
-    final hPadding = isLandscape ? 12.0 : 14.0;
-    final vPadding = isLandscape ? 6.0 : 8.0;
-    
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        context.horizontalPadding, 
-        ResponsiveUtils.getSpacing(context, 12), 
-        context.horizontalPadding, 
-        ResponsiveUtils.getSpacing(context, 8)
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 20)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+  void _mostrarMensaje(String titulo, String mensaje, IconData icono, Color color) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icono, color: color, size: 24),
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  setState(() {});
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Asistencias actualizadas'),
-                      backgroundColor: AppColors.universityBlue,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 20)),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.refresh, size: iconSize, color: AppColors.universityBlue),
-                      SizedBox(width: ResponsiveUtils.getSpacing(context, 6)),
-                      Text(
-                        'Actualizar',
-                        style: TextStyle(
-                          fontSize: fontSize,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.universityBlue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                titulo,
+                style: const TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
+          ],
+        ),
+        content: Text(mensaje),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: const Text('OK'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAsistenciaCard(BuildContext context, Map<String, String> asistencia) {
-    final Color statusColor = asistencia['estado'] == 'Presente'
+  Widget _buildAsistenciaCard(BuildContext context, Map<String, dynamic> asistencia) {
+    // Determinar color según el estado
+    final String estado = asistencia['estado']?.toString() ?? 'Presente';
+    final Color statusColor = estado == 'Presente'
         ? Colors.green
-        : asistencia['estado'] == 'Ausente'
+        : estado.contains('Ausente') || estado.contains('Falta')
             ? Colors.red
             : Colors.orange;
 
@@ -189,8 +275,8 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
               borderRadius: BorderRadius.circular(iconBorderRadius),
             ),
             child: Icon(
-              asistencia['estado'] == 'Presente' ? Icons.check_circle : 
-              asistencia['estado'] == 'Ausente' ? Icons.cancel : Icons.access_time,
+              estado == 'Presente' ? Icons.check_circle : 
+              estado.contains('Ausente') || estado.contains('Falta') ? Icons.cancel : Icons.access_time,
               color: statusColor,
               size: iconSize,
             ),
@@ -203,7 +289,7 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  asistencia['titulo'] ?? '',
+                  asistencia['nombre_sesion']?.toString() ?? 'Sesión',
                   style: TextStyle(
                     fontSize: titleFontSize,
                     fontWeight: FontWeight.w700,
@@ -213,21 +299,28 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
                 SizedBox(height: ResponsiveUtils.getSpacing(context, 4)),
                 Row(
                   children: [
-                    Icon(Icons.book, size: infoIconSize, color: Colors.grey.shade600),
+                    Icon(Icons.location_on, size: infoIconSize, color: Colors.grey.shade600),
                     SizedBox(width: ResponsiveUtils.getSpacing(context, 4)),
-                    Text(
-                      asistencia['materia'] ?? '',
-                      style: TextStyle(
-                        fontSize: infoFontSize,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
+                    Flexible(
+                      child: Text(
+                        asistencia['lugar']?.toString() ?? 'Sin ubicación',
+                        style: TextStyle(
+                          fontSize: infoFontSize,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    SizedBox(width: ResponsiveUtils.getSpacing(context, 8)),
+                  ],
+                ),
+                SizedBox(height: ResponsiveUtils.getSpacing(context, 2)),
+                Row(
+                  children: [
                     Icon(Icons.calendar_today, size: infoIconSize, color: Colors.grey.shade600),
                     SizedBox(width: ResponsiveUtils.getSpacing(context, 4)),
                     Text(
-                      asistencia['fecha'] ?? '',
+                      asistencia['fecha_sesion']?.toString() ?? '',
                       style: TextStyle(
                         fontSize: infoFontSize,
                         color: Colors.grey.shade600,
@@ -249,7 +342,7 @@ class _StudentAsistenciasPageState extends State<StudentAsistenciasPage> {
               border: Border.all(color: statusColor, width: 1),
             ),
             child: Text(
-              asistencia['estado'] ?? '',
+              estado,
               style: TextStyle(
                 color: statusColor,
                 fontSize: badgeFontSize,

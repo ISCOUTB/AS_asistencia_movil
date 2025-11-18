@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'api/routes/sesion_service.dart';
+import 'api/core/user_session_provider.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -17,6 +22,7 @@ class QRScannerScreen extends StatefulWidget {
 class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingObserver {
   late MobileScannerController cameraController;
   bool isScanning = true;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -28,9 +34,15 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
       torchEnabled: false,
     );
     // Iniciar la cámara después de que el widget esté construido
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (mounted) {
-        cameraController.start();
+        try {
+          await cameraController.start();
+        } catch (e) {
+          setState(() {
+            errorMessage = 'Error al iniciar cámara: $e';
+          });
+        }
       }
     });
   }
@@ -77,7 +89,105 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
     }
   }
 
-  void _showQRResult(String qrCode) {
+  void _showQRResult(String qrCode) async {
+    // Mostrar diálogo de carga
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Validando código...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // Obtener email del estudiante
+      final userSession = context.read<UserSessionProvider>();
+      final emailEstudiante = userSession.email;
+
+      if (emailEstudiante.isEmpty) {
+        if (!mounted) return;
+        Navigator.pop(context); // Cerrar diálogo de carga
+        _mostrarError('Error', 'No se pudo obtener la información del estudiante.');
+        return;
+      }
+
+      // Validar código de acceso
+      final sesionService = SesionService('https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/sesiones/');
+      final sesionData = await sesionService.validarCodigoAcceso(qrCode);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar diálogo de carga
+
+      if (sesionData == null) {
+        // Código inválido
+        _mostrarError('Código inválido', 'El código QR escaneado no corresponde a ninguna sesión activa.');
+        return;
+      }
+
+      // Guardar sesión como pendiente en SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final String key = 'sesiones_pendientes_$emailEstudiante';
+      final String? existingData = prefs.getString(key);
+      List<Map<String, dynamic>> sesionesPendientes = [];
+      
+      if (existingData != null) {
+        final decoded = jsonDecode(existingData) as List;
+        sesionesPendientes = decoded.map((e) => e as Map<String, dynamic>).toList();
+      }
+
+      // Verificar si ya existe esta sesión pendiente
+      final bool yaExiste = sesionesPendientes.any((s) => s['id'] == sesionData['id']);
+      
+      if (yaExiste) {
+        _mostrarError('Sesión duplicada', 'Ya tienes esta sesión en tus asistencias pendientes.');
+        return;
+      }
+
+      // Agregar nueva sesión pendiente
+      sesionesPendientes.add({
+        'id': sesionData['id'],
+        'nombre_sesion': sesionData['nombre_sesion'],
+        'fecha_sesion': sesionData['fecha_sesion'],
+        'codigo_acceso': qrCode,
+        'email_estudiante': emailEstudiante,
+        'fecha_escaneo': DateTime.now().toIso8601String(),
+      });
+
+      await prefs.setString(key, jsonEncode(sesionesPendientes));
+
+      if (!mounted) return;
+
+      // Mostrar mensaje de éxito
+      _mostrarSesionAgregada(
+        sesionData['nombre_sesion'] ?? 'Sesión',
+        sesionData['fecha_sesion'] ?? '',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      // Intentar cerrar diálogo de carga si sigue abierto
+      try {
+        Navigator.pop(context);
+      } catch (_) {}
+      
+      _mostrarError('Error', 'Ocurrió un error al procesar el código: $e');
+    }
+  }
+
+  void _mostrarSesionAgregada(String nombreSesion, String fechaSesion) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -89,15 +199,15 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.15),
+                color: AppColors.universityBlue.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.qr_code_scanner, color: Colors.green, size: 24),
+              child: const Icon(Icons.add_task, color: AppColors.universityBlue, size: 24),
             ),
             const SizedBox(width: 12),
             const Text(
-              'QR Escaneado',
-              style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold),
+              'Sesión Agregada',
+              style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
@@ -105,45 +215,48 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Código detectado:',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: AppColors.universityBlue.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade300),
               ),
-              child: SelectableText(
-                qrCode,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1A1A1A),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nombreSesion,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    fechaSesion,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: Colors.orange.shade50,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.universityBlue, size: 20),
+                  Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Funcionalidad en desarrollo',
+                      'Ve a "Asistencias" e ingresa el código de verificación para confirmar tu registro',
                       style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF1A1A1A),
@@ -156,16 +269,75 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
           ],
         ),
         actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Cerrar diálogo
+              Navigator.pop(context); // Cerrar scanner
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.universityBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: const Text('Ir a Asistencias'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mostrarError(String titulo, String mensaje) {
+    setState(() {
+      isScanning = true; // Permitir escanear de nuevo
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.error_outline, color: Colors.red, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                titulo,
+                style: const TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            mensaje,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+        ),
+        actions: [
           TextButton(
             onPressed: () {
-              setState(() {
-                isScanning = true;
-              });
               Navigator.pop(context);
             },
             child: Text(
-              'Escanear Otro',
-              style: TextStyle(color: Colors.grey.shade700),
+              'Reintentar',
+              style: TextStyle(color: AppColors.universityBlue),
             ),
           ),
           ElevatedButton(
@@ -174,7 +346,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
               Navigator.pop(context); // Cerrar scanner también
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.universityBlue,
+              backgroundColor: Colors.red,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               elevation: 0,
             ),
@@ -218,6 +390,70 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
             controller: cameraController,
             onDetect: isScanning ? _onDetect : null,
             fit: BoxFit.cover,
+            errorBuilder: (context, error, child) {
+              return Container(
+                color: Colors.black,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.camera_alt_outlined,
+                        size: 64,
+                        color: Colors.white54,
+                      ),
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          'Error al acceder a la cámara',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          'Por favor, verifica los permisos de cámara en la configuración de tu dispositivo',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          try {
+                            await cameraController.start();
+                            setState(() {
+                              errorMessage = null;
+                            });
+                          } catch (e) {
+                            setState(() {
+                              errorMessage = 'No se pudo reiniciar la cámara';
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reintentar'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.universityBlue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
           
           // Overlay con guías

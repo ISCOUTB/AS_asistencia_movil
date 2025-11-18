@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'dart:math';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api/routes/sesion_service.dart';
 import 'api/routes/servicio_service.dart';
+import 'api/core/user_session_provider.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -71,6 +76,18 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
     
     // Cargar servicios
     _cargarServicios();
+  }
+  
+  // Generar código alfanumérico aleatorio de 6 caracteres
+  String _generarCodigoAlfanumerico() {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random();
+    return String.fromCharCodes(
+      Iterable.generate(
+        6,
+        (_) => caracteres.codeUnitAt(random.nextInt(caracteres.length)),
+      ),
+    );
   }
   
   Future<void> _cargarServicios() async {
@@ -236,13 +253,30 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
     });
 
     try {
-      // Obtener información del facilitador (simulado por ahora)
-      // TODO: Obtener del UserSession cuando esté implementado
-      const idFacilitador = 'usuario@utb.edu.co';
+      // Obtener información del facilitador desde UserSession
+      final userProvider = context.read<UserSessionProvider>();
+      final idFacilitador = userProvider.email;
+      
+      if (idFacilitador.isEmpty) {
+        throw Exception('No se pudo obtener el correo del facilitador');
+      }
+      
+      debugPrint('🔑 ID Facilitador para crear sesión: $idFacilitador');
+
+      // Generar código alfanumérico de 6 caracteres
+      final codigoAcceso = _generarCodigoAlfanumerico();
+      debugPrint('🔐 Código de acceso generado: $codigoAcceso');
 
       // Combinar fecha con horas
       final horaInicioCompleta = _combinarFechaHora(_fechaSesion, _horaInicio);
       final horaFinCompleta = _combinarFechaHora(_fechaSesion, _horaFin);
+
+      // Formatear fechas correctamente para Oracle (sin doble Z)
+      String formatearFechaParaOracle(DateTime fecha) {
+        final isoString = fecha.toUtc().toIso8601String();
+        // Remover los milisegundos si existen, pero mantener solo una Z
+        return isoString.replaceAll(RegExp(r'\.\d+Z$'), 'Z');
+      }
 
       // Construir el objeto sesión según la estructura de Oracle ORDS
       final nuevaSesion = {
@@ -251,14 +285,14 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
         "id_tipo": _idTipo,
         "descripcion": _descripcionController.text.isNotEmpty ? _descripcionController.text : null,
         "hora_inicio_sesion": _formatTimeOfDay(_horaInicio),
-        "fecha_fin": horaFinCompleta.toUtc().toIso8601String().replaceAll('.000', 'Z'),
+        "fecha_fin": formatearFechaParaOracle(horaFinCompleta),
         "nombre_sesion": _nombreController.text,
         "id_modalidad": _idModalidad,
         "lugar_sesion": _lugarController.text,
-        "fecha": _fechaSesion.toUtc().toIso8601String().replaceAll('.000', 'Z'),
+        "fecha": formatearFechaParaOracle(_fechaSesion),
         "id_semana": _idSemana,
-        "hora_inicio": horaInicioCompleta.toUtc().toIso8601String().replaceAll('.000', 'Z'),
-        "hora_fin": horaFinCompleta.toUtc().toIso8601String().replaceAll('.000', 'Z'),
+        "hora_inicio": formatearFechaParaOracle(horaInicioCompleta),
+        "hora_fin": formatearFechaParaOracle(horaFinCompleta),
         "id_faciltiador": idFacilitador, // Nota: typo intencional en BD
         "n_maximo_asistentes": int.parse(_maxAsistentesController.text),
         "inscritos_actuales": 0,
@@ -266,10 +300,32 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
         "despues_sesion": int.parse(_despuesSesionController.text),
         "gestiona_asis": _gestionaAsistencia ? "S" : "N",
         "facilitador_externo": _facilitadorExterno ? "S" : "N",
+        "codigo_acceso": codigoAcceso, // Código alfanumérico de 6 caracteres
       };
 
+      debugPrint('📦 Objeto sesión a enviar:');
+      debugPrint('  - id_servicio: ${nuevaSesion["id_servicio"]}');
+      debugPrint('  - id_periodo: ${nuevaSesion["id_periodo"]}');
+      debugPrint('  - nombre_sesion: ${nuevaSesion["nombre_sesion"]}');
+      debugPrint('  - id_faciltiador: ${nuevaSesion["id_faciltiador"]}');
+      debugPrint('  - codigo_acceso: ${nuevaSesion["codigo_acceso"]}');
+      debugPrint('  - fecha: ${nuevaSesion["fecha"]}');
+      debugPrint('  - hora_inicio: ${nuevaSesion["hora_inicio"]}');
+      debugPrint('  - hora_fin: ${nuevaSesion["hora_fin"]}');
+
       // Enviar al backend
-      await sesionService.createSesion(nuevaSesion);
+      final sesionCreada = await sesionService.createSesion(nuevaSesion);
+      
+      // SOLUCIÓN TEMPORAL: Guardar código de acceso localmente
+      // (El backend Oracle APEX no devuelve el campo codigo_acceso)
+      if (sesionCreada != null && sesionCreada['id'] != null) {
+        final prefs = await SharedPreferences.getInstance();
+        final codigosGuardados = prefs.getString('codigos_acceso') ?? '{}';
+        final Map<String, dynamic> codigos = jsonDecode(codigosGuardados);
+        codigos[sesionCreada['id'].toString()] = codigoAcceso;
+        await prefs.setString('codigos_acceso', jsonEncode(codigos));
+        debugPrint('💾 Código guardado localmente: ${sesionCreada['id']} -> $codigoAcceso');
+      }
       
       setState(() {
         isLoading = false;
@@ -294,11 +350,34 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
       });
 
       if (mounted) {
+        // Extraer el mensaje de error más específico
+        String errorMsg = e.toString();
+        if (errorMsg.startsWith('Exception: ')) {
+          errorMsg = errorMsg.substring('Exception: '.length);
+        }
+        
+        debugPrint('❌ Error al crear sesión: $errorMsg');
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al crear sesión: $e'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Error al crear sesión',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  errorMsg,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -314,17 +393,30 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
           'Crear Nueva Sesión',
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
           ),
         ),
-        backgroundColor: AppColors.universityPurple,
+        backgroundColor: AppColors.universityBlue,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.universityBlue,
+                AppColors.universityBlue.withValues(alpha: 0.9),
+              ],
+            ),
+          ),
+        ),
       ),
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: AppColors.universityPurple,
+                color: AppColors.universityBlue,
               ),
             )
           : SingleChildScrollView(
@@ -340,32 +432,49 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Información del formulario
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.universityBlue.withValues(alpha: 0.12),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.universityBlue.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              color: AppColors.universityPurple,
-                              size: 24,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.universityBlue.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Complete los datos de la nueva sesión',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[700],
-                                ),
+                            child: const Icon(
+                              Icons.edit_note,
+                              color: AppColors.universityBlue,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Complete los datos de la nueva sesión',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -411,12 +520,16 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey.withValues(alpha: 0.12),
+                          width: 1,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
@@ -424,8 +537,8 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                         value: _idServicioSeleccionado,
                         decoration: InputDecoration(
                           labelText: 'Servicio *',
-                          labelStyle: const TextStyle(color: AppColors.universityPurple),
-                          prefixIcon: const Icon(Icons.bookmark, color: AppColors.universityPurple),
+                          labelStyle: const TextStyle(color: AppColors.universityBlue),
+                          prefixIcon: const Icon(Icons.bookmark, color: AppColors.universityBlue),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -450,7 +563,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                                           height: 8,
                                           margin: const EdgeInsets.only(right: 8),
                                           decoration: BoxDecoration(
-                                            color: AppColors.universityPurple,
+                                            color: AppColors.universityBlue,
                                             shape: BoxShape.circle,
                                           ),
                                         ),
@@ -492,12 +605,16 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey.withValues(alpha: 0.12),
+                          width: 1,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
@@ -505,8 +622,8 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                         value: _idPeriodoSeleccionado,
                         decoration: InputDecoration(
                           labelText: 'Período Académico *',
-                          labelStyle: const TextStyle(color: AppColors.universityPurple),
-                          prefixIcon: const Icon(Icons.calendar_month, color: AppColors.universityPurple),
+                          labelStyle: const TextStyle(color: AppColors.universityBlue),
+                          prefixIcon: const Icon(Icons.calendar_month, color: AppColors.universityBlue),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide.none,
@@ -620,7 +737,8 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Fecha de la Sesión *',
-                          prefixIcon: const Icon(Icons.calendar_today, color: AppColors.universityPurple),
+                          labelStyle: TextStyle(color: Colors.grey[700]),
+                          prefixIcon: const Icon(Icons.calendar_today, color: AppColors.universityBlue),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -647,7 +765,8 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Hora de Inicio *',
-                          prefixIcon: const Icon(Icons.access_time, color: AppColors.universityPurple),
+                          labelStyle: TextStyle(color: Colors.grey[700]),
+                          prefixIcon: const Icon(Icons.access_time, color: AppColors.universityBlue),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -674,7 +793,8 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                       child: InputDecorator(
                         decoration: InputDecoration(
                           labelText: 'Hora de Fin *',
-                          prefixIcon: const Icon(Icons.access_time_filled, color: AppColors.universityPurple),
+                          labelStyle: TextStyle(color: Colors.grey[700]),
+                          prefixIcon: const Icon(Icons.access_time_filled, color: AppColors.universityBlue),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -784,95 +904,177 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Switches
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    // Switches - Opciones adicionales
+                    Text(
+                      'OPCIONES ADICIONALES',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                        letterSpacing: 1.2,
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            // Gestiona asistencia
-                            Row(
-                              children: [
-                                Icon(
-                                  _gestionaAsistencia ? Icons.check_circle : Icons.cancel,
-                                  color: _gestionaAsistencia ? Colors.green : Colors.grey,
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'Gestiona asistencia',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                ),
-                                Switch(
-                                  value: _gestionaAsistencia,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _gestionaAsistencia = value;
-                                    });
-                                  },
-                                  activeColor: AppColors.universityPurple,
-                                ),
-                              ],
-                            ),
-                            const Divider(),
-                            // Facilitador externo
-                            Row(
-                              children: [
-                                Icon(
-                                  _facilitadorExterno ? Icons.check_circle : Icons.cancel,
-                                  color: _facilitadorExterno ? Colors.green : Colors.grey,
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'Facilitador externo',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                ),
-                                Switch(
-                                  value: _facilitadorExterno,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _facilitadorExterno = value;
-                                    });
-                                  },
-                                  activeColor: AppColors.universityPurple,
-                                ),
-                              ],
-                            ),
-                          ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey.withValues(alpha: 0.12),
+                          width: 1,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          // Gestiona asistencia
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: (_gestionaAsistencia ? AppColors.universityBlue : Colors.grey).withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  _gestionaAsistencia ? Icons.how_to_reg : Icons.block,
+                                  color: _gestionaAsistencia ? AppColors.universityBlue : Colors.grey,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Gestiona asistencia',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1A202C),
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Controlar registro de asistentes',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _gestionaAsistencia,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _gestionaAsistencia = value;
+                                  });
+                                },
+                                activeColor: AppColors.universityBlue,
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(color: Colors.grey.withValues(alpha: 0.15), height: 1),
+                          ),
+                          // Facilitador externo
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: (_facilitadorExterno ? AppColors.universityBlue : Colors.grey).withValues(alpha: 0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  _facilitadorExterno ? Icons.person_add : Icons.person_off,
+                                  color: _facilitadorExterno ? AppColors.universityBlue : Colors.grey,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Facilitador externo',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1A202C),
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Invitado de fuera de la universidad',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _facilitadorExterno,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _facilitadorExterno = value;
+                                  });
+                                },
+                                activeColor: AppColors.universityBlue,
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 32),
 
                     // Botón de crear
                     SizedBox(
-                      height: 50,
+                      height: 56,
                       child: ElevatedButton(
                         onPressed: _crearSesion,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.universityPurple,
+                          backgroundColor: AppColors.universityBlue,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 0,
+                          shadowColor: AppColors.universityBlue.withValues(alpha: 0.3),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_circle, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text(
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
                               'Crear Sesión',
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.white,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
@@ -913,18 +1115,24 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.universityPurple),
+        labelStyle: TextStyle(color: Colors.grey[700]),
+        hintStyle: TextStyle(color: Colors.grey[400]),
+        prefixIcon: Icon(icon, color: AppColors.universityBlue),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.universityPurple, width: 2),
+          borderSide: const BorderSide(color: AppColors.universityBlue, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
         ),
         filled: true,
         fillColor: Colors.white,
@@ -947,18 +1155,19 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
       value: value,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.universityPurple),
+        labelStyle: TextStyle(color: Colors.grey[700]),
+        prefixIcon: Icon(icon, color: AppColors.universityBlue),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey[300]!),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.universityPurple, width: 2),
+          borderSide: const BorderSide(color: AppColors.universityBlue, width: 2),
         ),
         filled: true,
         fillColor: Colors.white,

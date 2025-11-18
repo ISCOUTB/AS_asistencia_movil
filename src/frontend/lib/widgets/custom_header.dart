@@ -19,90 +19,104 @@ class ProfessorHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserSessionProvider>();
+    final userName = userProvider.nombre.isNotEmpty ? userProvider.nombre : 'Profesor';
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            AppColors.universityBlue.withValues(alpha: 0.02),
+          ],
+        ),
         border: Border(
           bottom: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: Colors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: MediaQuery.of(context).padding.top + 16,
+        bottom: 16,
       ),
       child: Row(
         children: [
+          // Logo institucional
           Container(
-            width: 4,
-            height: 24,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.universityPurple,
-                  AppColors.universityBlue,
-                ],
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.universityBlue.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                "assets/uni-logo.png",
+                fit: BoxFit.cover,
               ),
-              borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(width: 12),
+          // Título y nombre de usuario
           Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFF1A1A1A),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    color: Color(0xFF1A202C),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
-          // Botón de menú de usuario - MÁS VISIBLE
+          // Botón de menú de usuario
           IconButton(
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.universityBlue,
-                    AppColors.universityPurple,
-                  ],
-                ),
+                color: AppColors.universityBlue.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.universityBlue.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
               child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
+                Icons.person_outline,
+                color: AppColors.universityBlue,
+                size: 22,
               ),
             ),
             onPressed: () {
               _showUserMenu(context);
             },
-          ),
-          const SizedBox(width: 4),
-          Image.asset(
-            "assets/uni-logo.png",
-            height: 32,
-            opacity: const AlwaysStoppedAnimation(0.6),
           ),
         ],
       ),
@@ -199,101 +213,165 @@ class ProfessorHeader extends StatelessWidget {
   }
 }
 
-/// Header estilo estudiante - Más discreto y minimalista en modo claro
+/// Header estilo estudiante - Con el mismo diseño mejorado que el profesor
 class StudentHeader extends StatelessWidget {
   final String title;
+  final int notificationCount;
+  final VoidCallback? onNotificationTap;
   
   const StudentHeader({
     super.key,
     required this.title,
+    this.notificationCount = 0,
+    this.onNotificationTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserSessionProvider>();
+    final userName = userProvider.nombre.isNotEmpty ? userProvider.nombre : 'Estudiante';
+    
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            AppColors.universityBlue.withValues(alpha: 0.02),
+          ],
+        ),
         border: Border(
           bottom: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: Colors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+      ),
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: MediaQuery.of(context).padding.top + 16,
+        bottom: 16,
       ),
       child: Row(
         children: [
+          // Logo institucional
           Container(
-            width: 4,
-            height: 24,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  AppColors.universityPurple,
-                  AppColors.universityBlue,
-                ],
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.universityBlue.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                "assets/uni-logo.png",
+                fit: BoxFit.cover,
               ),
-              borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(width: 12),
+          // Título y nombre de usuario
           Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Color(0xFF1A1A1A),
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  userName,
+                  style: const TextStyle(
+                    color: Color(0xFF1A202C),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
-          // Botón de menú de usuario - MÁS VISIBLE
+          // Botón de notificaciones (solo si está habilitado)
+          if (onNotificationTap != null)
+            Stack(
+              children: [
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.universityBlue.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: AppColors.universityBlue,
+                      size: 22,
+                    ),
+                  ),
+                  onPressed: onNotificationTap,
+                ),
+                if (notificationCount > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        notificationCount > 9 ? '9+' : '$notificationCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          // Botón de menú de usuario
           IconButton(
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.universityBlue,
-                    AppColors.universityPurple,
-                  ],
-                ),
+                color: AppColors.universityBlue.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.universityBlue.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
               child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 20,
+                Icons.person_outline,
+                color: AppColors.universityBlue,
+                size: 22,
               ),
             ),
             onPressed: () {
               _showUserMenu(context);
             },
-          ),
-          const SizedBox(width: 4),
-          Image.asset(
-            "assets/uni-logo.png",
-            height: 32,
-            opacity: const AlwaysStoppedAnimation(0.6),
           ),
         ],
       ),

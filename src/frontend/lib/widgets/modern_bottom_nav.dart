@@ -73,33 +73,24 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     
     return Container(
-      // Sin padding lateral, directo al borde
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF2C2C2E),
-            Color(0xFF1C1C1E),
-          ],
-        ),
+        color: Colors.white,
         border: Border(
           top: BorderSide(
-            color: widget.primaryColor.withValues(alpha: 0.2),
-            width: 2,
+            color: widget.primaryColor.withValues(alpha: 0.12),
+            width: 1.5,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: widget.primaryColor.withValues(alpha: 0.15),
-            blurRadius: 24,
-            offset: const Offset(0, -8),
-            spreadRadius: 0,
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: widget.primaryColor.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, -4),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
         ],
       ),

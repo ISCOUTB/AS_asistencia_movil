@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SesionService {
   final String baseUrl;
@@ -13,14 +15,17 @@ class SesionService {
 
   SesionService(this.baseUrl);
 
-  // Asegura que haya cookies antes de hacer peticiones
+  // Asegura que haya cookies antes de hacer peticiones (opcional)
   Future<void> _ensureCookies() async {
     if (cookies.isEmpty) {
-      final response = await http.get(Uri.parse(baseUrl), headers: headers);
-      if (response.statusCode == 200) {
-        _updateCookies(response);
-      } else {
-        throw Exception('No se pudieron obtener cookies');
+      try {
+        final response = await http.get(Uri.parse(baseUrl), headers: headers);
+        if (response.statusCode == 200) {
+          _updateCookies(response);
+        }
+      } catch (e) {
+        // Las cookies son opcionales, continuar sin ellas
+        debugPrint('⚠️ No se pudieron obtener cookies (continuando sin ellas): $e');
       }
     }
   }
@@ -82,34 +87,187 @@ class SesionService {
   }
 
     // GET /sesion/servicio/{id_facilitador}
-  Future<List<dynamic>> getSesionesPorFacilitador(int idFacilitador) async {
+  // Nota: id_faciltiador en la BD es el correo electrónico, no un ID numérico
+  Future<List<dynamic>> getSesionesPorFacilitador(String emailFacilitador) async {
     await _ensureCookies();
-    final query = jsonEncode({'id_faciltiador': idFacilitador});
+    final query = jsonEncode({'id_faciltiador': emailFacilitador});
     final url = Uri.parse('$baseUrl?q=$query');
+
+    print('🔍 Buscando sesiones del facilitador: $emailFacilitador');
+    print('🌐 URL: $url');
 
     final response = await http.get(url, headers: headers);
 
+    print('📥 Respuesta: ${response.statusCode}');
+    print('📄 Body: ${response.body}');
+
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-
-      return decoded["items"] as List;
+      final items = decoded["items"] as List;
+      print('✅ Sesiones encontradas: ${items.length}');
+      return items;
     } else {
-      throw Exception('Error al obtener sesiones: ${response.statusCode}');
+      // Mostrar el error detallado del servidor
+      String errorMsg = 'Error al obtener sesiones: ${response.statusCode}';
+      try {
+        final errorBody = jsonDecode(response.body);
+        if (errorBody is Map && errorBody.containsKey('message')) {
+          errorMsg = 'Error del servidor: ${errorBody['message']}';
+        }
+      } catch (e) {
+        // Si no se puede decodificar, usar el mensaje genérico
+      }
+      throw Exception(errorMsg);
+    }
+  }
+
+  // Validar código de acceso y obtener información de la sesión
+  // SOLUCIÓN TEMPORAL: Busca en almacenamiento local ya que el backend no tiene el campo codigo_acceso
+  Future<Map<String, dynamic>?> validarCodigoAcceso(String codigo) async {
+    debugPrint('🔍 Validando código de acceso: $codigo');
+    
+    // 1. Buscar el ID de sesión en el almacenamiento local usando el código
+    final prefs = await SharedPreferences.getInstance();
+    final codigosGuardados = prefs.getString('codigos_acceso') ?? '{}';
+    final Map<String, dynamic> codigosLocales = jsonDecode(codigosGuardados);
+    
+    // Buscar qué ID de sesión tiene este código
+    String? idSesionEncontrado;
+    for (var entry in codigosLocales.entries) {
+      if (entry.value == codigo) {
+        idSesionEncontrado = entry.key;
+        break;
+      }
+    }
+    
+    if (idSesionEncontrado == null) {
+      debugPrint('❌ Código no encontrado en almacenamiento local');
+      return null;
+    }
+    
+    debugPrint('✅ Código encontrado localmente para sesión ID: $idSesionEncontrado');
+    
+    // 2. Obtener los datos completos de la sesión desde el backend usando el ID
+    final url = Uri.parse('$baseUrl$idSesionEncontrado');
+    debugPrint('🌐 URL: $url');
+
+    final response = await http.get(url, headers: headers);
+    debugPrint('📥 Respuesta: ${response.statusCode}');
+    debugPrint('📄 Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final sesion = jsonDecode(response.body) as Map<String, dynamic>;
+      debugPrint('✅ Sesión encontrada: ${sesion['nombre_sesion']}');
+      // Agregar el código de acceso al objeto (ya que el backend no lo devuelve)
+      sesion['codigo_acceso'] = codigo;
+      return sesion;
+    } else {
+      debugPrint('❌ Error al obtener sesión: ${response.statusCode}');
+      return null;
+    }
+  }
+
+  // GET sesiones activas (para estudiantes)
+  Future<List<Map<String, dynamic>>> getSesionesActivas() async {
+    debugPrint('📤 Obteniendo sesiones activas');
+    
+    try {
+      await _ensureCookies();
+      final response = await http.get(Uri.parse(baseUrl), headers: headers);
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        List<dynamic> sesiones = [];
+        
+        if (decoded is Map && decoded.containsKey('items')) {
+          sesiones = decoded['items'] as List<dynamic>;
+        } else if (decoded is List) {
+          sesiones = decoded;
+        }
+
+        debugPrint('📥 Total sesiones: ${sesiones.length}');
+
+        // Obtener códigos guardados localmente
+        final prefs = await SharedPreferences.getInstance();
+        final codigosGuardados = prefs.getString('codigos_acceso') ?? '{}';
+        final Map<String, dynamic> codigosLocales = jsonDecode(codigosGuardados);
+
+        // Mapear sesiones con códigos
+        final List<Map<String, dynamic>> resultado = sesiones.map((s) {
+          final id = s['id'];
+          final codigoBackend = s['codigo_acceso'];
+          final codigoLocal = codigosLocales[id.toString()];
+          
+          return {
+            'id': id,
+            'nombre_sesion': s['nombre_sesion'] ?? 'Sesión',
+            'fecha_sesion': s['fecha_sesion'] ?? '',
+            'hora_inicio_sesion': s['hora_inicio_sesion'] ?? '',
+            'hora_fin': s['hora_fin'] ?? '',
+            'lugar_sesion': s['lugar_sesion'] ?? '',
+            'id_servicio': s['id_servicio'],
+            'id_faciltiador': s['id_faciltiador'],
+            'codigo_acceso': codigoBackend ?? codigoLocal ?? 'N/A',
+          };
+        }).toList();
+
+        debugPrint('✅ Sesiones activas: ${resultado.length}');
+        return resultado;
+      } else if (response.statusCode == 404) {
+        return [];
+      } else {
+        throw Exception('Error al obtener sesiones: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error: $e');
+      return [];
     }
   }
 
   // POST /sesion/
-  Future<void> createSesion(Map<String, dynamic> sesion) async {
+  Future<Map<String, dynamic>?> createSesion(Map<String, dynamic> sesion) async {
     await _ensureCookies();
+    
+    // Debug: Mostrar lo que se está enviando
+    print('📤 Enviando sesión al backend:');
+    print(jsonEncode(sesion));
+    
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {...headers, 'Content-Type': 'application/json'},
       body: jsonEncode(sesion),
     );
 
+    print('📥 Respuesta del servidor: ${response.statusCode}');
+    print('📄 Body de respuesta: ${response.body}');
+
     if (![200, 201, 204].contains(response.statusCode)) {
-      throw Exception('Error al crear sesión: ${response.statusCode}');
+      // Intentar decodificar el mensaje de error del backend
+      String errorMessage = 'Error al crear sesión: ${response.statusCode}';
+      try {
+        final errorBody = jsonDecode(response.body);
+        if (errorBody is Map && errorBody.containsKey('message')) {
+          errorMessage = 'Error del servidor: ${errorBody['message']}';
+        } else if (errorBody is Map && errorBody.containsKey('error')) {
+          errorMessage = 'Error del servidor: ${errorBody['error']}';
+        } else {
+          errorMessage = 'Error del servidor: ${response.body}';
+        }
+      } catch (e) {
+        errorMessage = 'Error ${response.statusCode}: ${response.body}';
+      }
+      throw Exception(errorMessage);
     }
+    
+    // Devolver la sesión creada si el backend la retorna
+    if (response.body.isNotEmpty) {
+      try {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   // PUT /sesion/{id}
@@ -126,13 +284,106 @@ class SesionService {
     }
   }
 
-  // DELETE /sesion/{id}
+  // DELETE /sesiones/{id}
   Future<void> deleteSesion(int id) async {
     await _ensureCookies();
-    final response = await http.delete(Uri.parse('$baseUrl$id'), headers: headers);
+    
+    // Agregar headers adicionales para DELETE con autenticación básica
+    final deleteHeaders = {
+      ...headers,
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+      // Oracle ORDS puede requerir autenticación básica
+      'Authorization': 'Basic ${base64Encode(utf8.encode('ecoutb_workspace:'))}',
+    };
+    
+    debugPrint('🗑️ Intentando eliminar sesión $id');
+    debugPrint('URL: $baseUrl$id');
+    
+    try {
+      // Intentar primero con POST _method=DELETE (alternativa para ORDS)
+      debugPrint('🔄 Método 1: Intentando con POST y _method=DELETE');
+      var response = await http.post(
+        Uri.parse('$baseUrl$id'),
+        headers: deleteHeaders,
+        body: jsonEncode({'_method': 'DELETE'}),
+      );
+      
+      debugPrint('📥 Respuesta POST/_method: ${response.statusCode}');
+      
+      // Si POST no funciona, intentar con DELETE estándar
+      if (response.statusCode == 302 || response.statusCode >= 400) {
+        debugPrint('🔄 Método 2: Intentando con DELETE estándar');
+        response = await http.delete(
+          Uri.parse('$baseUrl$id'),
+          headers: deleteHeaders,
+          body: jsonEncode({}),
+        );
+        debugPrint('📥 Respuesta DELETE: ${response.statusCode}');
+      }
+      
+      debugPrint('Body: ${response.body}');
 
-    if (![200, 204].contains(response.statusCode)) {
+      // Manejar códigos de éxito
+      if ([200, 204].contains(response.statusCode)) {
+        debugPrint('✅ Sesión eliminada exitosamente (código ${response.statusCode})');
+        return;
+      }
+      
+      // Si es 302, verificar si realmente se eliminó
+      if ([301, 302, 303, 307, 308].contains(response.statusCode)) {
+        debugPrint('⚠️ Redirección detectada (${response.statusCode}), verificando eliminación...');
+        
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        try {
+          final checkResponse = await http.get(
+            Uri.parse('$baseUrl$id'),
+            headers: headers,
+          );
+          
+          debugPrint('📥 Verificación GET: ${checkResponse.statusCode}');
+          
+          if (checkResponse.statusCode == 404) {
+            debugPrint('✅ Sesión eliminada exitosamente (verificado con 404)');
+            return;
+          }
+          
+          if (checkResponse.statusCode == 200) {
+            throw Exception('La sesión no fue eliminada (aún existe en el servidor). Puede que necesites permisos especiales para eliminar sesiones.');
+          }
+        } catch (e) {
+          if (e.toString().contains('404')) {
+            debugPrint('✅ Sesión eliminada exitosamente (404 en verificación)');
+            return;
+          }
+          debugPrint('⚠️ Error al verificar: $e');
+          throw Exception('No se pudo verificar si la sesión fue eliminada. Error: $e');
+        }
+      }
+      
+      // Mejorar mensaje de error para 400
+      if (response.statusCode == 400) {
+        final errorBody = response.body;
+        
+        // Detectar error de integridad referencial (asistencias existentes)
+        if (errorBody.contains('ORA-02292') || errorBody.contains('child record found')) {
+          throw Exception('No se puede eliminar: esta sesión tiene asistencias registradas. Elimina primero las asistencias o usa la opción de eliminar en cascada.');
+        }
+        
+        throw Exception('Error de validación del servidor (400). Detalles: $errorBody');
+      }
+      
+      // Error 403 = sin permisos
+      if (response.statusCode == 403) {
+        throw Exception('No tienes permisos para eliminar esta sesión. Verifica que seas el facilitador de esta sesión.');
+      }
+      
       throw Exception('Error al eliminar sesión: ${response.statusCode}');
+      
+    } catch (e) {
+      debugPrint('❌ Error en deleteSesion: $e');
+      rethrow;
     }
   }
 }

@@ -24,6 +24,12 @@ class AuthService extends ChangeNotifier {
   UserSession? currentUser;
   Map<String, dynamic>? _decodedToken;
   Timer? _refreshTimer;
+  
+  // ✅ OPTIMIZACIÓN: Cachear configuración de autenticación
+  String? _cachedDiscoveryUrl;
+  String? _cachedClientId;
+  String? _cachedRedirectUri;
+  String? _cachedTenantId;
 
   String? get accessToken => _accessToken;
   Map<String, dynamic>? get decodedToken => _decodedToken;
@@ -32,6 +38,12 @@ class AuthService extends ChangeNotifier {
   Future<void> init() async {
     debugPrint("------ AppAuth Init ------");
     debugPrint("Mode: ${kReleaseMode ? 'RELEASE' : 'DEBUG'}");
+    
+    // ✅ OPTIMIZACIÓN: Cachear configuración de autenticación una sola vez
+    _cachedClientId = dotenv.env["MICROSOFT_CLIENT_ID"]!;
+    _cachedRedirectUri = dotenv.env["MICROSOFT_REDIRECT_URI"]!;
+    _cachedTenantId = dotenv.env["MICROSOFT_TENANT_ID"]!;
+    _cachedDiscoveryUrl = "https://login.microsoftonline.com/$_cachedTenantId/v2.0/.well-known/openid-configuration";
 
     _accessToken = await _secureStorage.read(key: 'accessToken');
     _refreshToken = await _secureStorage.read(key: 'refreshToken');
@@ -57,10 +69,11 @@ class AuthService extends ChangeNotifier {
 
   /// Login interactivo con Microsoft
   Future<bool> loginInteractive({List<String>? scopes}) async {
-    final clientId = dotenv.env["MICROSOFT_CLIENT_ID"]!;
-    final redirectUri = dotenv.env["MICROSOFT_REDIRECT_URI"]!;
-    final tenantId = dotenv.env["MICROSOFT_TENANT_ID"]!;
-    final discoveryUrl =
+    // ✅ OPTIMIZACIÓN: Usar configuración cacheada en lugar de leer dotenv cada vez
+    final clientId = _cachedClientId ?? dotenv.env["MICROSOFT_CLIENT_ID"]!;
+    final redirectUri = _cachedRedirectUri ?? dotenv.env["MICROSOFT_REDIRECT_URI"]!;
+    final tenantId = _cachedTenantId ?? dotenv.env["MICROSOFT_TENANT_ID"]!;
+    final discoveryUrl = _cachedDiscoveryUrl ?? 
         "https://login.microsoftonline.com/$tenantId/v2.0/.well-known/openid-configuration";
 
     final useScopes = scopes ??
@@ -73,6 +86,7 @@ class AuthService extends ChangeNotifier {
         ];
 
     try {
+      // ✅ OPTIMIZACIÓN: Configuración adicional para mejorar rendimiento
       final AuthorizationTokenResponse? result =
           await _appAuth.authorizeAndExchangeCode(
         AuthorizationTokenRequest(
@@ -81,6 +95,8 @@ class AuthService extends ChangeNotifier {
           discoveryUrl: discoveryUrl,
           scopes: useScopes,
           promptValues: ['login'],
+          // ✅ Configuraciones adicionales para optimizar
+          allowInsecureConnections: false, // Mantener seguridad
         ),
       );
 
@@ -156,11 +172,14 @@ class AuthService extends ChangeNotifier {
     if (_accessToken != null) {
       _decodedToken = JwtDecoder.decode(_accessToken!);
       debugPrint("🧩 Token decodificado: $_decodedToken");
-      await _persistTokens();
+      
+      // ✅ OPTIMIZACIÓN: Notificar listeners primero para UI inmediata
+      notifyListeners();
+      
+      // ✅ OPTIMIZACIÓN: Guardar tokens en background sin bloquear
+      _persistTokens(); // No await - se ejecuta en background
       _scheduleAutoRefresh();
     }
-
-    notifyListeners();
   }
 
   // Versión robusta de loadUserData para auth.dart
@@ -184,16 +203,10 @@ class AuthService extends ChangeNotifier {
     }
     final String email = uniqueName;
 
-    // Parse id de forma segura (int o string)
-    int ? id;
-    final dynamic rawId = decoded['id'];
-    if (rawId != null) {
-      if (rawId is num) {
-        id = rawId.toInt();
-      } else {
-        id = int.tryParse(rawId.toString());
-      }
-    }
+    // 🔥 NUEVA LÓGICA: Obtener el ID real desde el backend
+    int? realId;
+    List<Map<String, dynamic>> persona = [];
+    bool isFacilitador = false;
 
     // Parse exp de forma segura (podría ser null, int, double, string)
     int? expSeconds;
@@ -209,9 +222,6 @@ class AuthService extends ChangeNotifier {
         expSeconds != null ? DateTime.fromMillisecondsSinceEpoch(expSeconds * 1000) : null;
 
     // Intentar facilitador primero; si no hay resultados, intentar persona.
-    List<Map<String, dynamic>> persona = [];
-    bool isFacilitador = false;
-
     try {
       final facilItems = await facilitadorService.getFacilitadorPorCorreo(email);
       if (facilItems.isNotEmpty) {
@@ -220,6 +230,23 @@ class AuthService extends ChangeNotifier {
             .where((e) => e is Map)
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
+        
+        // 🔥 OBTENER EL ID REAL DEL FACILITADOR desde el backend
+        if (persona.isNotEmpty) {
+          final firstFacilitador = persona[0];
+          // Intentar obtener el ID con diferentes nombres de campo posibles
+          if (firstFacilitador.containsKey('id')) {
+            final rawId = firstFacilitador['id'];
+            realId = (rawId is int) ? rawId : int.tryParse(rawId.toString());
+          } else if (firstFacilitador.containsKey('id_facilitador')) {
+            final rawId = firstFacilitador['id_facilitador'];
+            realId = (rawId is int) ? rawId : int.tryParse(rawId.toString());
+          } else if (firstFacilitador.containsKey('correo_institucional')) {
+            // Si no hay ID numérico, usar el email como identificador
+            realId = null;
+          }
+          debugPrint('✅ ID del facilitador obtenido desde backend: $realId');
+        }
       } else {
         // Si facilitador devuelve vacío, intentar persona
         try {
@@ -228,6 +255,19 @@ class AuthService extends ChangeNotifier {
               .where((e) => e is Map)
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList();
+          
+          // 🔥 OBTENER EL ID REAL DE LA PERSONA desde el backend
+          if (persona.isNotEmpty) {
+            final firstPersona = persona[0];
+            if (firstPersona.containsKey('id')) {
+              final rawId = firstPersona['id'];
+              realId = (rawId is int) ? rawId : int.tryParse(rawId.toString());
+            } else if (firstPersona.containsKey('id_persona')) {
+              final rawId = firstPersona['id_persona'];
+              realId = (rawId is int) ? rawId : int.tryParse(rawId.toString());
+            }
+            debugPrint('✅ ID de la persona obtenido desde backend: $realId');
+          }
         } catch (e, st) {
           debugPrint('loadUserData: error al obtener persona (fallback): $e\n$st');
           // dejamos persona vacía; puedes decidir return null si lo prefieres
@@ -242,6 +282,19 @@ class AuthService extends ChangeNotifier {
             .where((e) => e is Map)
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
+        
+        // 🔥 OBTENER EL ID REAL DE LA PERSONA desde el backend
+        if (persona.isNotEmpty) {
+          final firstPersona = persona[0];
+          if (firstPersona.containsKey('id')) {
+            final rawId = firstPersona['id'];
+            realId = (rawId is int) ? rawId : int.tryParse(rawId.toString());
+          } else if (firstPersona.containsKey('id_persona')) {
+            final rawId = firstPersona['id_persona'];
+            realId = (rawId is int) ? rawId : int.tryParse(rawId.toString());
+          }
+          debugPrint('✅ ID de la persona obtenido desde backend (fallback): $realId');
+        }
       } catch (e2, st2) {
         debugPrint('loadUserData: error al obtener persona tras fallo facilitador: $e2\n$st2');
         return null; // ambas llamadas fallaron -> no podemos cargar usuario
@@ -249,7 +302,7 @@ class AuthService extends ChangeNotifier {
     }
 
     currentUser = UserSession(
-      id: id,
+      id: realId,  // 🔥 AHORA TIENE EL ID REAL DEL BACKEND
       name: name,
       email: email,
       uniqueName: email,
@@ -258,6 +311,8 @@ class AuthService extends ChangeNotifier {
       isFacilitador: isFacilitador,
     );
 
+    debugPrint('🔐 UserSession creado - ID: $realId, Email: $email, Es Facilitador: $isFacilitador');
+    
     notifyListeners();
     return currentUser;
   }
@@ -265,9 +320,12 @@ class AuthService extends ChangeNotifier {
 
   /// Guarda los tokens cifrados en almacenamiento seguro
   Future<void> _persistTokens() async {
-    await _secureStorage.write(key: 'accessToken', value: _accessToken);
-    await _secureStorage.write(key: 'refreshToken', value: _refreshToken);
-    await _secureStorage.write(key: 'idToken', value: _idToken);
+    // ✅ OPTIMIZACIÓN: Ejecutar escrituras en paralelo en lugar de secuencial
+    await Future.wait([
+      _secureStorage.write(key: 'accessToken', value: _accessToken),
+      _secureStorage.write(key: 'refreshToken', value: _refreshToken),
+      _secureStorage.write(key: 'idToken', value: _idToken),
+    ]);
   }
 
   /// Programa la renovación automática del token antes de expirar

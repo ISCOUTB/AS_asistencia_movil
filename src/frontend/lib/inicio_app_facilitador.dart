@@ -100,75 +100,176 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildProfessorView(BuildContext context, bool isLandscape) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (isLandscape) {
-          // Botones en modo horizontal (grid) con diseño compacto tipo card
-          final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
-          return GridView.builder(
-            padding: EdgeInsets.all(ResponsiveUtils.getSpacing(context, 8)),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: ResponsiveUtils.getSpacing(context, 12),
-              mainAxisSpacing: ResponsiveUtils.getSpacing(context, 12),
-              childAspectRatio: 1.1,
-            ),
-            itemCount: 4,
-            itemBuilder: (context, index) {
-              final buttons = getButtons();
-              final button = buttons[index];
-              return _buildGridButton(
-                context,
-                button["title"] as String,
-                button["color"] as Color,
-                button["icon"] as IconData,
-                () {
-                  Navigator.push(
-                    context,
-                    CustomPageRoute(
-                      page: button["page"] as Widget,
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        } else {
-          // Botones en modo vertical (list) con diseño completo
-          final buttons = getButtons();
-          return ListView.builder(
-            padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.getSpacing(context, 8)),
-            itemCount: buttons.length,
-            itemBuilder: (context, index) {
-              final button = buttons[index];
-              return buildReactiveButton(
-                context,
-                button["title"] as String,
-                button["color"] as Color,
-                button["icon"] as IconData,
-                () {
-                  Navigator.push(
-                    context,
-                    CustomPageRoute(
-                      page: button["page"] as Widget,
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        }
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Sección de bienvenida con logo
+              _buildWelcomeSection(context),
+              
+              SizedBox(height: ResponsiveUtils.getSpacing(context, 24)),
+              
+              // Tarjetas de acciones principales
+              if (isLandscape)
+                _buildGridLayout(context, constraints)
+              else
+                _buildListLayout(context),
+            ],
+          ),
+        );
       },
     );
   }
 
-  /// Botón tipo card para vista grid (horizontal)
-  Widget _buildGridButton(
+  Widget _buildWelcomeSection(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(ResponsiveUtils.getSpacing(context, 20)),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.universityBlue.withValues(alpha: 0.08),
+            AppColors.universityPurple.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 20)),
+        border: Border.all(
+          color: AppColors.universityBlue.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Logo institucional
+          Container(
+            width: ResponsiveUtils.getIconSize(context, 60),
+            height: ResponsiveUtils.getIconSize(context, 60),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 15)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.universityBlue.withValues(alpha: 0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 15)),
+              child: Image.asset(
+                'assets/uni-logo.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          
+          SizedBox(width: ResponsiveUtils.getSpacing(context, 16)),
+          
+          // Texto de bienvenida
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '¡Bienvenido, Profesor!',
+                  style: TextStyle(
+                    color: AppColors.universityPurple,
+                    fontSize: ResponsiveUtils.getFontSize(context, 20),
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                SizedBox(height: ResponsiveUtils.getSpacing(context, 4)),
+                Text(
+                  'Panel de gestión académica',
+                  style: TextStyle(
+                    color: const Color(0xFF718096),
+                    fontSize: ResponsiveUtils.getFontSize(context, 14),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridLayout(BuildContext context, BoxConstraints constraints) {
+    final crossAxisCount = constraints.maxWidth > 600 ? 2 : 2;
+    final buttons = getButtons();
+    
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(ResponsiveUtils.getSpacing(context, 8)),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        crossAxisSpacing: ResponsiveUtils.getSpacing(context, 16),
+        mainAxisSpacing: ResponsiveUtils.getSpacing(context, 16),
+        childAspectRatio: 1.15,
+      ),
+      itemCount: buttons.length,
+      itemBuilder: (context, index) {
+        final button = buttons[index];
+        return _buildEnhancedGridButton(
+          context,
+          button["title"] as String,
+          button["color"] as Color,
+          button["icon"] as IconData,
+          () {
+            Navigator.push(
+              context,
+              CustomPageRoute(
+                page: button["page"] as Widget,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildListLayout(BuildContext context) {
+    final buttons = getButtons();
+    
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.getSpacing(context, 8)),
+      itemCount: buttons.length,
+      itemBuilder: (context, index) {
+        final button = buttons[index];
+        return _buildEnhancedListButton(
+          context,
+          button["title"] as String,
+          button["color"] as Color,
+          button["icon"] as IconData,
+          () {
+            Navigator.push(
+              context,
+              CustomPageRoute(
+                page: button["page"] as Widget,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Card minimalista y elegante para vista grid
+  Widget _buildEnhancedGridButton(
     BuildContext context,
     String title,
     Color color,
     IconData icon,
     VoidCallback onTap,
   ) {
-    final iconSize = ResponsiveUtils.getIconSize(context, 36);
+    final iconSize = ResponsiveUtils.getIconSize(context, 32);
     final fontSize = ResponsiveUtils.getFontSize(context, 15);
     final borderRadius = ResponsiveUtils.getBorderRadius(context, 20);
     
@@ -178,35 +279,19 @@ class _HomeScreenState extends State<HomeScreen> {
       scale: isPressed ? 0.96 : 1.0,
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeOut,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
+      child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.white.withValues(alpha: 0.97),
-              color.withValues(alpha: isPressed ? 0.1 : 0.04),
-            ],
-            stops: const [0.0, 0.7, 1.0],
-          ),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: color.withValues(alpha: isPressed ? 0.4 : 0.25),
-            width: 2.0,
+            color: color.withValues(alpha: 0.12),
+            width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: isPressed ? 0.3 : 0.2),
-              blurRadius: isPressed ? 12.0 : 20.0,
-              offset: Offset(0, isPressed ? 3.0 : 6.0),
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: isPressed ? 10.0 : 18.0,
-              offset: Offset(0, isPressed ? 2.0 : 4.0),
+              color: color.withValues(alpha: 0.08),
+              blurRadius: isPressed ? 8 : 16,
+              offset: Offset(0, isPressed ? 2 : 6),
             ),
           ],
         ),
@@ -215,136 +300,108 @@ class _HomeScreenState extends State<HomeScreen> {
           child: InkWell(
             onTap: () {
               setState(() => _tappedButtonIndex = title.hashCode);
-              // Navegación inmediata
               onTap();
-              // Reset de animación rápido
               Future.delayed(const Duration(milliseconds: 180), () {
-                if (mounted) {
-                  setState(() => _tappedButtonIndex = null);
-                }
+                if (mounted) setState(() => _tappedButtonIndex = null);
               });
             },
             borderRadius: BorderRadius.circular(borderRadius),
-            splashColor: color.withValues(alpha: 0.15),
-            highlightColor: color.withValues(alpha: 0.1),
+            splashColor: color.withValues(alpha: 0.08),
+            highlightColor: color.withValues(alpha: 0.04),
             child: Padding(
-                padding: EdgeInsets.all(ResponsiveUtils.getSpacing(context, 16)),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Contenedor del ícono - SIMPLIFICADO
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      curve: Curves.easeOut,
-                      transform: isPressed 
-                        ? (Matrix4.rotationZ(0.1)..scale(1.05))
-                        : Matrix4.identity(),
-                      width: ResponsiveUtils.getIconSize(context, 64),
-                      height: ResponsiveUtils.getIconSize(context, 64),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            color,
-                            color.withValues(alpha: 0.85),
-                            color.withValues(alpha: 0.7),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 18)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: isPressed ? 0.5 : 0.35),
-                            blurRadius: isPressed ? 12.0 : 10.0,
-                            offset: Offset(0, isPressed ? 4.0 : 3.0),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        icon,
-                        color: Colors.white,
-                        size: iconSize,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.26),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
+              padding: EdgeInsets.all(ResponsiveUtils.getSpacing(context, 20)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Ícono simple con fondo de color
+                  Container(
+                    width: ResponsiveUtils.getIconSize(context, 64),
+                    height: ResponsiveUtils.getIconSize(context, 64),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
                     ),
-                    
-                    SizedBox(height: ResponsiveUtils.getSpacing(context, 12)),
-                    
-                    // Título
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: const Color(0xFF1A1A1A),
-                        fontWeight: FontWeight.bold,
-                        fontSize: fontSize,
-                        letterSpacing: 0.3,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: iconSize,
                     ),
-                    
-                    SizedBox(height: ResponsiveUtils.getSpacing(context, 4)),
-                    
-                    // Subtítulo más pequeño
-                    Text(
-                      _getButtonSubtitle(title),
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: ResponsiveUtils.getFontSize(context, 11),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  SizedBox(height: ResponsiveUtils.getSpacing(context, 14)),
+                  
+                  // Título
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: const Color(0xFF1A202C),
+                      fontWeight: FontWeight.bold,
+                      fontSize: fontSize,
+                      letterSpacing: -0.3,
                     ),
-                  ],
-                ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  SizedBox(height: ResponsiveUtils.getSpacing(context, 6)),
+                  
+                  // Subtítulo
+                  Text(
+                    _getButtonSubtitle(title),
+                    style: TextStyle(
+                      color: const Color(0xFF64748B),
+                      fontSize: ResponsiveUtils.getFontSize(context, 11),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ),
         ),
+      ),
     );
   }
 
-  /// Botón minimalista estilo Pinterest - Simple y elegante
-  Widget buildReactiveButton(
+  /// Card minimalista para lista vertical
+  Widget _buildEnhancedListButton(
     BuildContext context,
     String title,
     Color color,
     IconData icon,
     VoidCallback onTap,
   ) {
-    final iconSize = ResponsiveUtils.getIconSize(context, 28);
+    final iconSize = ResponsiveUtils.getIconSize(context, 26);
     final fontSize = ResponsiveUtils.getFontSize(context, 16);
     final vPadding = ResponsiveUtils.getSpacing(context, 18);
-    final hPadding = ResponsiveUtils.getSpacing(context, 20);
+    final hPadding = ResponsiveUtils.getSpacing(context, 18);
     final borderRadius = ResponsiveUtils.getBorderRadius(context, 16);
     final spacing = ResponsiveUtils.getSpacing(context, 14);
-    final iconContainerSize = ResponsiveUtils.getIconSize(context, 50);
+    final iconContainerSize = ResponsiveUtils.getIconSize(context, 56);
     
     final isPressed = _tappedButtonIndex == title.hashCode;
     
-    // Animación suave y sutil
     return AnimatedScale(
       scale: isPressed ? 0.98 : 1.0,
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
       child: Container(
         margin: EdgeInsets.symmetric(vertical: ResponsiveUtils.getSpacing(context, 6)),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(
+            color: color.withValues(alpha: 0.12),
+            width: 1.5,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isPressed ? 0.08 : 0.05),
-              blurRadius: isPressed ? 8 : 12,
+              color: color.withValues(alpha: isPressed ? 0.06 : 0.04),
+              blurRadius: isPressed ? 6 : 12,
               offset: Offset(0, isPressed ? 2 : 4),
             ),
           ],
@@ -360,19 +417,25 @@ class _HomeScreenState extends State<HomeScreen> {
               });
             },
             borderRadius: BorderRadius.circular(borderRadius),
+            splashColor: color.withValues(alpha: 0.06),
+            highlightColor: color.withValues(alpha: 0.03),
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: vPadding, horizontal: hPadding),
               child: Row(
                 children: [
-                  // Ícono minimalista
+                  // Ícono simple con fondo de color
                   Container(
                     width: iconContainerSize,
                     height: iconContainerSize,
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 14)),
                     ),
-                    child: Icon(icon, color: color, size: iconSize),
+                    child: Icon(
+                      icon,
+                      color: color,
+                      size: iconSize,
+                    ),
                   ),
                   
                   SizedBox(width: spacing),
@@ -386,19 +449,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           title,
                           style: TextStyle(
-                            color: const Color(0xFF2D3748),
-                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF1A202C),
+                            fontWeight: FontWeight.bold,
                             fontSize: fontSize,
-                            letterSpacing: -0.2,
+                            letterSpacing: -0.3,
                           ),
                         ),
                         SizedBox(height: ResponsiveUtils.getSpacing(context, 4)),
                         Text(
                           _getButtonSubtitle(title),
                           style: TextStyle(
-                            color: const Color(0xFF718096),
+                            color: const Color(0xFF64748B),
                             fontSize: ResponsiveUtils.getFontSize(context, 12),
-                            fontWeight: FontWeight.w400,
+                            fontWeight: FontWeight.w500,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -407,11 +470,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   
+                  SizedBox(width: ResponsiveUtils.getSpacing(context, 8)),
+                  
                   // Flecha simple
                   Icon(
                     Icons.arrow_forward_ios_rounded,
-                    color: const Color(0xFFCBD5E0),
-                    size: ResponsiveUtils.getIconSize(context, 16),
+                    color: color.withValues(alpha: 0.4),
+                    size: ResponsiveUtils.getIconSize(context, 18),
                   ),
                 ],
               ),
@@ -444,7 +509,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return [
       {
         "title": "Servicios",
-        "color": AppColors.universityBlue,
+        "color": AppColors.universityLightBlue,
         "icon": Icons.bookmark,
         "page": const MainScaffold(initialIndex: 0, isStudent: false),
       },

@@ -44,11 +44,15 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
 
     try {
       final userProvider = context.read<UserSessionProvider>();
-      final facilitadorId = userProvider.session?.id;
-      if (facilitadorId == null) {
-        throw Exception("No hay ID del facilitador en la sesión");
+      final facilitadorEmail = userProvider.email;
+      
+      if (facilitadorEmail.isEmpty) {
+        throw Exception("No hay email del facilitador en la sesión");
       }
-      final data = await sesionService.getSesionesPorFacilitador(facilitadorId);
+      
+      debugPrint('🔑 Cargando sesiones para: $facilitadorEmail');
+      final data = await sesionService.getSesionesPorFacilitador(facilitadorEmail);
+      
       setState(() {
         sesiones = data;
         isLoading = false;
@@ -78,8 +82,6 @@ class _TeacherSesionesPageState extends State<TeacherSesionesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserSessionProvider>();
-    final facilitadorId = userProvider.session?.id;
     final hPadding = context.horizontalPadding;
     final cardSpacing = ResponsiveUtils.getSpacing(context, 12);
     

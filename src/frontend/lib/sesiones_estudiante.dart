@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/custom_header.dart';
-import '../api/core/user_session_provider.dart';
+import 'api/core/user_session_provider.dart';
 import 'package:provider/provider.dart';
 import 'utils/responsive_utils.dart';
+import 'api/routes/asistencia_service.dart';
+import 'api/routes/sesion_service.dart';
+import 'api/notificacion_service.dart';
+import 'notificaciones.dart';
+import 'test_notificaciones.dart';
+import 'qr_scanner_screen.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -12,30 +18,6 @@ class AppColors {
   static const universityLightBlue = Color.fromARGB(255, 72, 136, 165);
   static const backgroundLight = Color(0xFFF3F4F6);
 }
-
-// Datos de ejemplo para sesiones
-final List<Map<String, dynamic>> sesiones = [
-  {
-    "centro": "Centro de Innovación",
-    "servicio": "Hackathon",
-    "nombreSesion": "Sesiones P2 #1",
-    "fechaInicio": "04/AGO/2025",
-    "horaInicio": "10:00AM",
-    "horaFin": "10:20AM",
-    "modalidad": "Presencial",
-    "lugar": "AULA A2-204",
-  },
-  {
-    "centro": "Centro de Apoyo Académico",
-    "servicio": "Tutorías",
-    "nombreSesion": "Sesión de Tutoría",
-    "fechaInicio": "28/ABR/2025",
-    "horaInicio": "12:00PM",
-    "horaFin": "02:00PM",
-    "modalidad": "Remoto",
-    "lugar": "Online",
-  },
-];
 
 class StudentSesionesPage extends StatefulWidget {
   const StudentSesionesPage({super.key});
@@ -46,11 +28,151 @@ class StudentSesionesPage extends StatefulWidget {
 
 class _StudentSesionesPageState extends State<StudentSesionesPage> {
   final Map<int, String> _attendance = {};
+  List<Map<String, dynamic>> _sesiones = [];
+  List<Map<String, dynamic>> _sesionesPendientes = [];
+  bool _isLoading = true;
+  bool _isLoadingPendientes = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarSesiones();
+    _cargarSesionesPendientes();
+    _loadAttendance();
+    
+    // Cargar notificaciones del usuario
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userEmail = context.read<UserSessionProvider>().email;
+      if (userEmail.isNotEmpty) {
+        context.read<NotificacionService>().cargarNotificaciones(userEmail);
+      }
+    });
+  }
+
+  Future<void> _cargarSesiones() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userSession = context.read<UserSessionProvider>();
+      final email = userSession.email;
+
+      if (email.isEmpty) {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Obtener asistencias del estudiante
+      final asistenciaService = AsistenciaService(
+        'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/asistencia_sesiones/',
+      );
+
+      final asistencias = await asistenciaService.getAsistenciasPorEstudiante(email);
+      
+      // Obtener sesiones activas para mostrar solo las vigentes
+      final sesionService = SesionService(
+        'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/sesiones/',
+      );
+      
+      final todasSesiones = await sesionService.getSesionesActivas();
+      
+      // Filtrar solo las sesiones donde el estudiante tiene asistencia registrada
+      final idsConAsistencia = asistencias.map((a) => a['id_sesion']).toSet();
+      
+      final sesionesVigentesConAsistencia = todasSesiones
+          .where((s) => 
+            idsConAsistencia.contains(s['id']) &&
+            s['gestiona_asis'] == 'S' // Filtrar solo sesiones activas (no canceladas)
+          )
+          .map((sesion) {
+            // Encontrar la asistencia correspondiente
+            final asistencia = asistencias.firstWhere(
+              (a) => a['id_sesion'] == sesion['id'],
+              orElse: () => {},
+            );
+            
+            return {
+              'id': sesion['id'],
+              'nombre_sesion': sesion['nombre_sesion'],
+              'fecha_sesion': sesion['fecha'],
+              'hora_inicio_sesion': sesion['hora_inicio_sesion'],
+              'hora_fin': sesion['hora_fin'],
+              'lugar_sesion': sesion['lugar_sesion'],
+              'id_servicio': sesion['id_servicio'],
+              'fecha_hora_asistencia': asistencia['fecha_hora_asistencia'] ?? '',
+              'estado_asistencia': asistencia['estado'] ?? 'Presente',
+            };
+          }).toList();
+
+      setState(() {
+        _sesiones = sesionesVigentesConAsistencia;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error cargando sesiones: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   Future<void> _refrescarDatos() async {
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.wait([
+      _cargarSesiones(),
+      _cargarSesionesPendientes(),
+    ]);
+    await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  Future<void> _cargarSesionesPendientes() async {
+    setState(() {
+      _isLoadingPendientes = true;
+    });
+
+    try {
+      final userSession = context.read<UserSessionProvider>();
+      final email = userSession.email;
+
+      if (email.isEmpty) {
+        setState(() {
+          _isLoadingPendientes = false;
+        });
+        return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final String key = 'sesiones_pendientes_$email';
+      final String? sesionesJson = prefs.getString(key);
+
+      if (sesionesJson != null && sesionesJson.isNotEmpty) {
+        final List<dynamic> decoded = jsonDecode(sesionesJson);
+        // Filtrar sesiones canceladas (gestiona_asis != 'S')
+        final sesionesFiltradas = decoded
+            .cast<Map<String, dynamic>>()
+            .where((s) => s['gestiona_asis'] == 'S')
+            .toList();
+        setState(() {
+          _sesionesPendientes = sesionesFiltradas;
+          _isLoadingPendientes = false;
+        });
+      } else {
+        setState(() {
+          _sesionesPendientes = [];
+          _isLoadingPendientes = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error cargando sesiones pendientes: $e');
+      setState(() {
+        _sesionesPendientes = [];
+        _isLoadingPendientes = false;
+      });
     }
   }
 
@@ -102,15 +224,16 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
               TextField(
                 controller: codigoController,
                 textAlign: TextAlign.center,
+                textCapitalization: TextCapitalization.characters,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 8,
                 ),
                 maxLength: 6,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.text,
                 decoration: InputDecoration(
-                  hintText: '000000',
+                  hintText: 'ABC123',
                   counterText: '',
                   filled: true,
                   fillColor: AppColors.backgroundLight,
@@ -147,22 +270,118 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        final codigo = codigoController.text.trim();
-                        if (codigo.length == 6) {
-                          // Aquí validarías el código con el backend
-                          // Por ahora, simulamos que es correcto
+                      onPressed: () async {
+                        final codigo = codigoController.text.trim().toUpperCase();
+                        if (codigo.length != 6) {
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            SnackBar(
+                              content: const Text('El código debe tener 6 caracteres'),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Mostrar indicador de carga
+                        Navigator.pop(dialogContext);
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(
+                            child: Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CircularProgressIndicator(),
+                                    SizedBox(height: 16),
+                                    Text('Validando código...'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+
+                        try {
+                          // Obtener email del estudiante
+                          final userSession = context.read<UserSessionProvider>();
+                          final emailEstudiante = userSession.email;
+
+                          if (emailEstudiante.isEmpty) {
+                            if (!mounted) return;
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('No se pudo obtener la información del estudiante'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Validar código
+                          final sesionService = SesionService('https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/sesiones/');
+                          final sesionData = await sesionService.validarCodigoAcceso(codigo);
+
+                          if (!mounted) return;
+                          Navigator.pop(context); // Cerrar indicador de carga
+
+                          if (sesionData == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Row(
+                                  children: [
+                                    Icon(Icons.error_outline, color: Colors.white),
+                                    SizedBox(width: 12),
+                                    Expanded(child: Text('Código inválido o sesión no encontrada')),
+                                  ],
+                                ),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // Registrar asistencia
+                          final asistencia = {
+                            'id_sesiones': sesionData['id'], // El backend devuelve 'id', no 'id_sesiones'
+                            'email_persona': emailEstudiante,
+                            'fecha_hora_asistencia': DateTime.now().toIso8601String(),
+                          };
+
+                          final asistenciaService = AsistenciaService('https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/asistencia_sesiones/');
+                          await asistenciaService.createAsistencia(asistencia);
+
+                          if (!mounted) return;
+
+                          // Éxito
                           setState(() {
                             _attendance[index] = 'Presente';
                           });
-                          Navigator.pop(dialogContext);
+                          
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Row(
+                              content: Row(
                                 children: [
-                                  Icon(Icons.check_circle, color: Colors.white),
-                                  SizedBox(width: 12),
-                                  Text('Asistencia registrada correctamente'),
+                                  const Icon(Icons.check_circle, color: Colors.white),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text('Asistencia registrada en: ${sesionData['nombre_sesion'] ?? 'sesión'}'),
+                                  ),
                                 ],
                               ),
                               backgroundColor: Colors.green,
@@ -172,10 +391,16 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                               ),
                             ),
                           );
-                        } else {
-                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        } catch (e) {
+                          if (!mounted) return;
+                          // Cerrar indicador de carga si sigue abierto
+                          try {
+                            Navigator.pop(context);
+                          } catch (_) {}
+                          
+                          ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('El código debe tener 6 dígitos'),
+                              content: Text('Error al procesar: $e'),
                               backgroundColor: Colors.red,
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
@@ -203,12 +428,6 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
         ),
       ),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAttendance();
   }
 
   Future<void> _loadAttendance() async {
@@ -476,8 +695,23 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header discreto para estudiantes
-            const StudentHeader(title: "Sesiones"),
+            // Header con campanita de notificaciones
+            Consumer<NotificacionService>(
+              builder: (context, notifService, _) {
+                return StudentHeader(
+                  title: "Sesiones",
+                  notificationCount: notifService.noLeidas,
+                  onNotificationTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificacionesPage(),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
             
             Expanded(
               child: Container(
@@ -485,47 +719,103 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                 child: RefreshIndicator(
                   onRefresh: _refrescarDatos,
                   color: AppColors.universityBlue,
-                  child: ListView.separated(
-                    padding: EdgeInsets.only(
-                      left: hPadding,
-                      right: hPadding,
-                      top: ResponsiveUtils.getSpacing(context, 16),
-                      bottom: MediaQuery.of(context).padding.bottom + 20,
-                    ),
-                    itemCount: sesiones.length,
-                    separatorBuilder: (context, index) => SizedBox(height: spacing),
-                    itemBuilder: (context, index) {
-                      final s = sesiones[index];
-                      final hasAttendance = _attendance.containsKey(index);
-                      final attendanceStatus = _attendance[index];
-                      
-                      // Determinar color según estado
-                      Color statusColor = Colors.grey;
-                      IconData statusIcon = Icons.help_outline;
-                      
-                      if (attendanceStatus == 'Presente') {
-                        statusColor = Colors.green;
-                        statusIcon = Icons.check_circle;
-                      } else if (attendanceStatus == 'Ausente') {
-                        statusColor = Colors.red;
-                        statusIcon = Icons.cancel;
-                      } else if (attendanceStatus == 'Inasistencia Justificada') {
-                        statusColor = Colors.orange;
-                        statusIcon = Icons.assignment_turned_in;
-                      } else if (attendanceStatus == 'Inasistencia No Justificada') {
-                        statusColor = Colors.deepOrange;
-                        statusIcon = Icons.assignment_late;
-                      }
-                      
-                      return _buildSessionCard(
-                        context, 
-                        s, 
-                        index, 
-                        hasAttendance, 
-                        statusColor, 
-                        statusIcon
-                      );
-                    },
+                  child: (_isLoading || _isLoadingPendientes)
+                      ? const Center(child: CircularProgressIndicator())
+                      : (_sesiones.isEmpty && _sesionesPendientes.isEmpty)
+                          ? Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: ResponsiveUtils.getSpacing(context, 32)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.event_busy,
+                                      size: 64,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
+                                    Text(
+                                      'No has escaneado ningún código QR aún',
+                                      style: TextStyle(
+                                        fontSize: ResponsiveUtils.getFontSize(context, 16),
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: ResponsiveUtils.getSpacing(context, 8)),
+                                    Text(
+                                      'Escanea el QR de una sesión para verla aquí',
+                                      style: TextStyle(
+                                        fontSize: ResponsiveUtils.getFontSize(context, 13),
+                                        color: Colors.grey.shade500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : ListView(
+                              padding: EdgeInsets.only(
+                                left: hPadding,
+                                right: hPadding,
+                                top: ResponsiveUtils.getSpacing(context, 16),
+                                bottom: MediaQuery.of(context).padding.bottom + 20,
+                              ),
+                              children: [
+                                // Sección de sesiones pendientes
+                                if (_sesionesPendientes.isNotEmpty) ...[
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: ResponsiveUtils.getSpacing(context, 12)),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.pending_actions, color: Colors.orange.shade700, size: 20),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Sesiones Pendientes',
+                                          style: TextStyle(
+                                            fontSize: ResponsiveUtils.getFontSize(context, 16),
+                                            fontWeight: FontWeight.bold,
+                                            color: const Color(0xFF1A1A1A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  ..._sesionesPendientes.map((sesion) => Padding(
+                                        padding: EdgeInsets.only(bottom: spacing),
+                                        child: _buildSesionPendienteCard(context, sesion),
+                                      )),
+                                  SizedBox(height: ResponsiveUtils.getSpacing(context, 24)),
+                                  Divider(color: Colors.grey.shade300, thickness: 1),
+                                  SizedBox(height: ResponsiveUtils.getSpacing(context, 16)),
+                                ],
+                                
+                                // Título de sesiones confirmadas
+                                if (_sesiones.isNotEmpty) ...[
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: ResponsiveUtils.getSpacing(context, 12)),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Sesiones Confirmadas',
+                                          style: TextStyle(
+                                            fontSize: ResponsiveUtils.getFontSize(context, 16),
+                                            fontWeight: FontWeight.bold,
+                                            color: const Color(0xFF1A1A1A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  ..._sesiones.map((s) => Padding(
+                                        padding: EdgeInsets.only(bottom: spacing),
+                                        child: _buildSessionCard(context, s, _sesiones.indexOf(s)),
+                                      )),
+                                ],
+                              ],
                   ),
                 ),
               ),
@@ -533,76 +823,19 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildUpdateButton(BuildContext context) {
-    final iconSize = ResponsiveUtils.getIconSize(context, 16);
-    final fontSize = ResponsiveUtils.getFontSize(context, 13);
-    final isLandscape = context.isLandscape;
-    final hPadding = isLandscape ? 12.0 : 14.0;
-    final vPadding = isLandscape ? 6.0 : 8.0;
-    
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        context.horizontalPadding, 
-        ResponsiveUtils.getSpacing(context, 12), 
-        context.horizontalPadding, 
-        ResponsiveUtils.getSpacing(context, 8)
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 20)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          final email = context.read<UserSessionProvider>().email;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TestNotificacionesPage(emailEstudiante: email),
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  setState(() {});
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Sesiones actualizadas'),
-                      backgroundColor: AppColors.universityBlue,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 20)),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.refresh, size: iconSize, color: AppColors.universityBlue),
-                      SizedBox(width: ResponsiveUtils.getSpacing(context, 6)),
-                      Text(
-                        'Actualizar',
-                        style: TextStyle(
-                          fontSize: fontSize,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.universityBlue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+          );
+        },
+        backgroundColor: Colors.orange,
+        icon: const Icon(Icons.bug_report),
+        label: const Text('Test'),
       ),
     );
   }
@@ -611,24 +844,18 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
     BuildContext context,
     Map<String, dynamic> s,
     int index,
-    bool hasAttendance,
-    Color statusColor,
-    IconData statusIcon,
   ) {
     final cardPadding = ResponsiveUtils.getCardPadding(context);
     final borderRadius = ResponsiveUtils.getBorderRadius(context, 14);
     final titleFontSize = ResponsiveUtils.getFontSize(context, 15);
     final subtitleFontSize = ResponsiveUtils.getFontSize(context, 12);
     final iconSize = ResponsiveUtils.getIconSize(context, 20);
-    final badgeIconSize = ResponsiveUtils.getIconSize(context, 16);
     final buttonIconSize = ResponsiveUtils.getIconSize(context, 16);
     final buttonFontSize = ResponsiveUtils.getFontSize(context, 13);
     final isLandscape = context.isLandscape;
     final iconBg = isLandscape ? 6.0 : 8.0;
     final iconBorderRadius = ResponsiveUtils.getBorderRadius(context, 10);
     final spacing = ResponsiveUtils.getSpacing(context, 10);
-    final badgePadding = isLandscape ? 6.0 : 8.0;
-    final badgeIconPadding = isLandscape ? 3.0 : 4.0;
     final buttonVPadding = isLandscape ? 8.0 : 10.0;
     
     return Container(
@@ -665,7 +892,7 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      s['nombreSesion'] ?? '',
+                      s['nombre_sesion'] ?? 'Sesión',
                       style: TextStyle(
                         fontSize: titleFontSize,
                         fontWeight: FontWeight.w700,
@@ -677,7 +904,7 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      s['servicio'] ?? '',
+                      'Servicio ${s['id_servicio'] ?? ''}',
                       style: TextStyle(
                         fontSize: subtitleFontSize,
                         color: Colors.grey.shade600,
@@ -689,17 +916,6 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                   ],
                 ),
               ),
-              // Estado de asistencia inline
-              if (hasAttendance)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: badgePadding, vertical: badgeIconPadding),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context, 8)),
-                    border: Border.all(color: statusColor, width: 1),
-                  ),
-                  child: Icon(statusIcon, color: statusColor, size: badgeIconSize),
-                ),
             ],
           ),
           
@@ -709,45 +925,46 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
           Row(
             children: [
               Expanded(
-                child: _buildCompactInfo(context, Icons.calendar_today, s['fechaInicio'] ?? ''),
+                child: _buildCompactInfo(context, Icons.calendar_today, s['fecha_sesion'] ?? ''),
               ),
               SizedBox(width: ResponsiveUtils.getSpacing(context, 8)),
               Expanded(
-                child: _buildCompactInfo(context, Icons.access_time, '${s['horaInicio']} - ${s['horaFin']}'),
+                child: _buildCompactInfo(context, Icons.access_time, '${s['hora_inicio_sesion'] ?? ''} - ${s['hora_fin'] ?? ''}'),
               ),
             ],
           ),
           SizedBox(height: ResponsiveUtils.getSpacing(context, 6)),
           _buildCompactInfo(
             context,
-            s['modalidad'] == 'Presencial' ? Icons.meeting_room : Icons.videocam,
-            '${s['modalidad']} - ${s['lugar']}',
+            Icons.location_on,
+            s['lugar_sesion'] ?? 'Sin ubicación',
           ),
           
           SizedBox(height: spacing),
           
-          // Botón de acción compacto
-          SizedBox(
+          // Badge de estado - Siempre "Registrada" porque solo mostramos sesiones con asistencia
+          Container(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: hasAttendance ? null : () => _mostrarDialogoAsistencia(context, index),
-              icon: Icon(
-                hasAttendance ? Icons.check_circle : Icons.how_to_reg,
-                size: buttonIconSize,
-              ),
-              label: Text(
-                hasAttendance ? 'Ya registrada' : 'Registrar Asistencia',
-                style: TextStyle(fontSize: buttonFontSize, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: hasAttendance ? Colors.green : AppColors.universityBlue,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: buttonVPadding),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(iconBorderRadius)),
-                elevation: hasAttendance ? 0 : 2,
-                disabledBackgroundColor: Colors.green.withValues(alpha: 0.5),
-                disabledForegroundColor: Colors.white,
-              ),
+            padding: EdgeInsets.symmetric(vertical: buttonVPadding, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(iconBorderRadius),
+              border: Border.all(color: Colors.green, width: 1.5),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle, color: Colors.green, size: buttonIconSize),
+                SizedBox(width: 8),
+                Text(
+                  'Asistencia Registrada',
+                  style: TextStyle(
+                    fontSize: buttonFontSize,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -777,6 +994,368 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSesionPendienteCard(BuildContext context, Map<String, dynamic> sesion) {
+    final cardPadding = ResponsiveUtils.getCardPadding(context);
+    final borderRadius = ResponsiveUtils.getBorderRadius(context, 12);
+    final iconBorderRadius = ResponsiveUtils.getBorderRadius(context, 10);
+    final iconSize = ResponsiveUtils.getIconSize(context, 20);
+    final titleFontSize = ResponsiveUtils.getFontSize(context, 14);
+    final infoFontSize = ResponsiveUtils.getFontSize(context, 12);
+    final infoIconSize = ResponsiveUtils.getIconSize(context, 12);
+    final spacing = ResponsiveUtils.getSpacing(context, 12);
+    final iconBgPadding = context.isLandscape ? 6.0 : 8.0;
+    
+    return Container(
+      padding: cardPadding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: Colors.orange.shade300, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Icono de pendiente
+              Container(
+                padding: EdgeInsets.all(iconBgPadding),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  borderRadius: BorderRadius.circular(iconBorderRadius),
+                ),
+                child: Icon(
+                  Icons.schedule,
+                  color: Colors.orange.shade700,
+                  size: iconSize,
+                ),
+              ),
+              SizedBox(width: spacing),
+              
+              // Información
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      sesion['nombre_sesion'] ?? 'Sesión',
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A1A1A),
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveUtils.getSpacing(context, 4)),
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today, size: infoIconSize, color: Colors.grey.shade600),
+                        SizedBox(width: ResponsiveUtils.getSpacing(context, 4)),
+                        Text(
+                          sesion['fecha_sesion'] ?? '',
+                          style: TextStyle(
+                            fontSize: infoFontSize,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Botón de verificar
+              ElevatedButton.icon(
+                onPressed: () => _mostrarDialogoVerificacion(sesion),
+                icon: const Icon(Icons.verified, size: 16),
+                label: const Text('Verificar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _mostrarDialogoVerificacion(Map<String, dynamic> sesion) {
+    final TextEditingController codigoController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.universityBlue.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.lock, color: AppColors.universityBlue, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Código de Verificación',
+                style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              sesion['nombre_sesion'] ?? 'Sesión',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: codigoController,
+              textCapitalization: TextCapitalization.characters,
+              maxLength: 6,
+              decoration: InputDecoration(
+                labelText: 'Código de 6 caracteres',
+                hintText: 'ABC123',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                prefixIcon: const Icon(Icons.key),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppColors.universityBlue, size: 16),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Ingresa el código proporcionado por el profesor',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF1A1A1A)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancelar', style: TextStyle(color: Colors.grey.shade700)),
+          ),
+          ElevatedButton(
+            onPressed: () => _verificarYRegistrar(sesion, codigoController.text),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.universityBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _verificarYRegistrar(Map<String, dynamic> sesion, String codigoIngresado) async {
+    if (codigoIngresado.trim().isEmpty) {
+      _mostrarMensaje('Error', 'Por favor ingresa el código de verificación', Icons.error, Colors.red);
+      return;
+    }
+
+    // Verificar que el código coincida
+    final String codigoEsperado = (sesion['codigo_acceso'] ?? '').toString().toUpperCase();
+    final String codigoIngresadoUpper = codigoIngresado.trim().toUpperCase();
+
+    if (codigoIngresadoUpper != codigoEsperado) {
+      _mostrarMensaje('Código Incorrecto', 'El código ingresado no coincide', Icons.error, Colors.red);
+      return;
+    }
+
+    // Cerrar diálogo de verificación
+    Navigator.pop(context);
+
+    // Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Registrando asistencia...'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final userSession = context.read<UserSessionProvider>();
+      final email = userSession.email;
+
+      final asistenciaService = AsistenciaService('https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/asistencia_sesiones/');
+      
+      // Verificar si ya existe esta asistencia consultando al backend
+      final asistenciasExistentes = await asistenciaService.getAsistenciasPorEstudiante(email);
+      final yaRegistrada = asistenciasExistentes.any((a) => a['id_sesion'] == sesion['id']);
+      
+      if (yaRegistrada) {
+        if (!mounted) return;
+        Navigator.pop(context); // Cerrar diálogo de carga
+        
+        _mostrarMensaje(
+          'Ya Registrada',
+          'Esta asistencia ya fue registrada anteriormente',
+          Icons.info,
+          Colors.orange,
+        );
+        
+        // Recargar para actualizar la vista
+        await _refrescarDatos();
+        return;
+      }
+
+      // Registrar asistencia
+      final asistencia = {
+        'id_sesiones': sesion['id'],
+        'email_persona': email,
+        'fecha_hora_asistencia': DateTime.now().toIso8601String(),
+      };
+
+      try {
+        await asistenciaService.createAsistencia(asistencia);
+      } catch (registroError) {
+        // Si el error es ORA-00001 (duplicado), manejarlo apropiadamente
+        final errorString = registroError.toString();
+        if (errorString.contains('ORA-00001') || errorString.contains('unique constraint')) {
+          if (!mounted) return;
+          Navigator.pop(context); // Cerrar diálogo de carga
+          
+          _mostrarMensaje(
+            'Ya Registrada',
+            'Esta asistencia ya fue registrada anteriormente',
+            Icons.info,
+            Colors.orange,
+          );
+          
+          // Recargar para actualizar la vista
+          await _refrescarDatos();
+          return;
+        }
+        // Si es otro tipo de error, lanzarlo de nuevo
+        rethrow;
+      }
+
+      // Eliminar de pendientes
+      final prefs = await SharedPreferences.getInstance();
+      final String key = 'sesiones_pendientes_$email';
+      _sesionesPendientes.removeWhere((s) => s['id'] == sesion['id']);
+      await prefs.setString(key, jsonEncode(_sesionesPendientes));
+
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar diálogo de carga
+
+      // Recargar sesiones para mostrar la nueva
+      await _cargarSesiones();
+
+      _mostrarMensaje(
+        '¡Asistencia Registrada!',
+        'Tu asistencia ha sido confirmada exitosamente',
+        Icons.check_circle,
+        Colors.green,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Cerrar diálogo de carga
+      _mostrarMensaje('Error', 'Error al registrar asistencia: $e', Icons.error, Colors.red);
+    }
+  }
+
+  void _mostrarMensaje(String titulo, String mensaje, IconData icono, Color color) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icono, color: color, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                titulo,
+                style: const TextStyle(
+                  color: Color(0xFF1A1A1A),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          mensaje,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 }

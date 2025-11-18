@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AsistenciaService {
   final String baseUrl;
@@ -55,16 +57,115 @@ class AsistenciaService {
     }
   }
 
+  // GET asistencias por email del estudiante
+  Future<List<Map<String, dynamic>>> getAsistenciasPorEstudiante(String email) async {
+    debugPrint('📤 Obteniendo asistencias para estudiante: $email');
+    
+    try {
+      // Obtener todas las asistencias
+      final response = await http.get(Uri.parse(baseUrl), headers: headers);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        List<dynamic> todasAsistencias = [];
+        
+        if (data is Map && data.containsKey('items')) {
+          todasAsistencias = data['items'] as List<dynamic>;
+        } else if (data is List) {
+          todasAsistencias = data;
+        }
+        
+        debugPrint('📥 Total asistencias: ${todasAsistencias.length}');
+        
+        // Filtrar por email del estudiante
+        final asistenciasEstudiante = todasAsistencias
+            .where((a) => a['email_persona'] == email)
+            .toList();
+        
+        debugPrint('✅ Asistencias del estudiante: ${asistenciasEstudiante.length}');
+        
+        // Para cada asistencia, obtener información de la sesión
+        final sesionesUrl = baseUrl.replaceAll('asistencia_sesiones/', 'sesiones/');
+        final List<Map<String, dynamic>> resultado = [];
+        
+        for (var asistencia in asistenciasEstudiante) {
+          final idSesion = asistencia['id_sesiones'];
+          
+          try {
+            // Obtener detalles de la sesión
+            final sesionResponse = await http.get(
+              Uri.parse('$sesionesUrl$idSesion'),
+              headers: headers,
+            );
+            
+            if (sesionResponse.statusCode == 200) {
+              final sesionData = jsonDecode(sesionResponse.body);
+              
+              resultado.add({
+                'id_asistencia': asistencia['id'],
+                'id_sesion': idSesion,
+                'nombre_sesion': sesionData['nombre_sesion'] ?? 'Sesión',
+                'fecha_sesion': sesionData['fecha_sesion'] ?? '',
+                'hora_inicio': sesionData['hora_inicio_sesion'] ?? '',
+                'lugar': sesionData['lugar_sesion'] ?? '',
+                'fecha_hora_asistencia': asistencia['fecha_hora_asistencia'] ?? '',
+                'estado': asistencia['estado_asistencia'] ?? 'Presente', // Obtener estado real del backend
+              });
+            }
+          } catch (e) {
+            debugPrint('⚠️ Error obteniendo sesión $idSesion: $e');
+          }
+        }
+        
+        return resultado;
+      } else if (response.statusCode == 404) {
+        return [];
+      } else {
+        throw Exception('Error al obtener asistencias: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error: $e');
+      return [];
+    }
+  }
+
   // POST /asistencia_sesion/
-  Future<void> createAsistencia(Map<String, dynamic> asistencia) async {
+  Future<Map<String, dynamic>> createAsistencia(Map<String, dynamic> asistencia) async {
+    debugPrint('📤 Registrando asistencia:');
+    debugPrint(jsonEncode(asistencia));
+    
+    // No requerir cookies para registro de asistencia
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {...headers, 'Content-Type': 'application/json'},
       body: jsonEncode(asistencia),
     );
 
-    if (![200, 201, 204].contains(response.statusCode)) {
-      throw Exception('Error al crear asistencia: ${response.statusCode}');
+    debugPrint('📥 Respuesta: ${response.statusCode}');
+    debugPrint('📄 Body: ${response.body}');
+
+    if ([200, 201, 204].contains(response.statusCode)) {
+      // Intentar decodificar la respuesta si hay body
+      if (response.body.isNotEmpty) {
+        try {
+          return jsonDecode(response.body) as Map<String, dynamic>;
+        } catch (e) {
+          return {'success': true, 'message': 'Asistencia registrada'};
+        }
+      }
+      return {'success': true, 'message': 'Asistencia registrada'};
+    } else {
+      // Intentar obtener mensaje de error del servidor
+      String errorMsg = 'Error al crear asistencia: ${response.statusCode}';
+      try {
+        final errorBody = jsonDecode(response.body);
+        if (errorBody is Map && errorBody.containsKey('message')) {
+          errorMsg = errorBody['message'];
+        }
+      } catch (e) {
+        // Usar mensaje genérico
+      }
+      throw Exception(errorMsg);
     }
   }
 
@@ -83,13 +184,88 @@ class AsistenciaService {
 
   // DELETE /asistencia_sesion/{id}
   Future<void> deleteAsistencia(int id) async {
-    final response = await http.delete(
+    debugPrint('🗑️ Eliminando asistencia $id');
+    
+    final deleteHeaders = {
+      ...headers,
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    };
+    
+    // Intentar con POST _method=DELETE primero
+    var response = await http.post(
       Uri.parse('$baseUrl$id'),
-      headers: headers,
+      headers: deleteHeaders,
+      body: jsonEncode({'_method': 'DELETE'}),
     );
+    
+    debugPrint('📥 POST/_method DELETE: ${response.statusCode}');
+    
+    // Si no funciona, intentar DELETE estándar
+    if (response.statusCode >= 400) {
+      response = await http.delete(
+        Uri.parse('$baseUrl$id'),
+        headers: deleteHeaders,
+        body: jsonEncode({}),
+      );
+      debugPrint('📥 DELETE estándar: ${response.statusCode}');
+    }
 
     if (![200, 204].contains(response.statusCode)) {
+      debugPrint('❌ Error body: ${response.body}');
       throw Exception('Error al eliminar asistencia: ${response.statusCode}');
+    }
+    
+    debugPrint('✅ Asistencia $id eliminada correctamente');
+  }
+
+  // DELETE asistencias por sesión (eliminar en cascada)
+  Future<int> deleteAsistenciasPorSesion(int idSesion) async {
+    debugPrint('🗑️ Eliminando asistencias de la sesión $idSesion');
+    
+    try {
+      // Obtener todas las asistencias
+      final response = await http.get(Uri.parse(baseUrl), headers: headers);
+      
+      if (response.statusCode != 200) {
+        debugPrint('⚠️ No se pudieron obtener asistencias: ${response.statusCode}');
+        return 0;
+      }
+
+      final data = jsonDecode(response.body);
+      List<dynamic> todasAsistencias = [];
+      
+      if (data is Map && data.containsKey('items')) {
+        todasAsistencias = data['items'] as List<dynamic>;
+      } else if (data is List) {
+        todasAsistencias = data;
+      }
+
+      // Filtrar por id_sesiones
+      final asistenciasSesion = todasAsistencias
+          .where((a) => a['id_sesiones'] == idSesion)
+          .toList();
+
+      debugPrint('📋 Encontradas ${asistenciasSesion.length} asistencias para eliminar');
+
+      // Eliminar cada asistencia
+      int eliminadas = 0;
+      for (var asistencia in asistenciasSesion) {
+        try {
+          await deleteAsistencia(asistencia['id']);
+          eliminadas++;
+          debugPrint('✅ Asistencia ${asistencia['id']} eliminada');
+        } catch (e) {
+          debugPrint('❌ Error eliminando asistencia ${asistencia['id']}: $e');
+        }
+      }
+
+      debugPrint('✅ Total asistencias eliminadas: $eliminadas/${asistenciasSesion.length}');
+      return eliminadas;
+      
+    } catch (e) {
+      debugPrint('❌ Error en deleteAsistenciasPorSesion: $e');
+      return 0;
     }
   }
 
@@ -138,9 +314,19 @@ class AsistenciaService {
         });
       }
       
+      // SOLUCIÓN TEMPORAL: Recuperar códigos guardados localmente
+      final prefs = await SharedPreferences.getInstance();
+      final codigosGuardados = prefs.getString('codigos_acceso') ?? '{}';
+      final Map<String, dynamic> codigosLocales = jsonDecode(codigosGuardados);
+      
       // Crear lista de sesiones con sus estudiantes
       return sesiones.map<Map<String, dynamic>>((sesion) {
         final idSesion = sesion['id'] as int;
+        // Intentar obtener código del backend, si no existe usar el guardado localmente
+        final codigoBackend = sesion['codigo_acceso'];
+        final codigoLocal = codigosLocales[idSesion.toString()];
+        final codigoFinal = codigoBackend ?? codigoLocal ?? 'N/A';
+        
         return {
           'id': idSesion,
           'nombreSesion': sesion['nombre_sesion'] ?? 'Sesión $idSesion',
@@ -149,6 +335,7 @@ class AsistenciaService {
           'horaInicio': sesion['hora_inicio_sesion'] ?? '',
           'horaFin': sesion['hora_fin']?.toString().substring(11, 16) ?? '',
           'lugar': sesion['lugar_sesion'] ?? '',
+          'codigo_acceso': codigoFinal, // Campo del código QR (backend o local)
           'estudiantes': asistenciasPorSesion[idSesion] ?? [],
         };
       }).toList();

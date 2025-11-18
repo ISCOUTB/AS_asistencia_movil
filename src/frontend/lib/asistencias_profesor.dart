@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
 import 'api/routes/asistencia_service.dart';
+import 'detalle_sesion_profesor.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -144,6 +145,7 @@ class _TeacherAsistenciasPageState extends State<TeacherAsistenciasPage> {
 
   Widget _buildSesionCard(BuildContext context, Map<String, dynamic> sesion) {
     final cardPadding = ResponsiveUtils.getCardPadding(context);
+    final cardSpacing = ResponsiveUtils.getSpacing(context, 12);
     final borderRadius = ResponsiveUtils.getBorderRadius(context, 16);
     final titleFontSize = ResponsiveUtils.getFontSize(context, 16);
     final subtitleFontSize = ResponsiveUtils.getFontSize(context, 14);
@@ -156,94 +158,172 @@ class _TeacherAsistenciasPageState extends State<TeacherAsistenciasPage> {
     final ausentes = estudiantes.where((e) => e['estado'] == 'Ausente').length;
     final tardanzas = estudiantes.where((e) => e['estado'] == 'Tardanza').length;
     
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
-      child: InkWell(
-        onTap: () => _mostrarModalEstudiantes(context, sesion),
+    return Container(
+      margin: EdgeInsets.only(bottom: cardSpacing),
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
-        child: Padding(
-          padding: cardPadding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header de la sesión
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.universityBlue, AppColors.universityBlue],
+        border: Border.all(
+          color: AppColors.universityBlue.withValues(alpha: 0.12),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.universityBlue.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            // Navegar a la pantalla de detalle
+            final resultado = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetalleSesionProfesorPage(sesion: sesion),
+              ),
+            );
+            
+            // Si se eliminó la sesión, recargar lista
+            if (resultado == true) {
+              _cargarSesiones();
+            }
+          },
+          borderRadius: BorderRadius.circular(borderRadius),
+          splashColor: AppColors.universityBlue.withValues(alpha: 0.05),
+          child: Padding(
+            padding: cardPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header de la sesión
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.universityBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      child: Icon(
+                        Icons.school_rounded,
+                        color: AppColors.universityBlue,
+                        size: iconSize,
+                      ),
                     ),
-                    child: Icon(Icons.school, color: Colors.white, size: iconSize),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sesion['nombreSesion'],
-                          style: TextStyle(
-                            fontSize: titleFontSize,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF2D3748),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            sesion['nombreSesion'],
+                            style: TextStyle(
+                              fontSize: titleFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1A202C),
+                              letterSpacing: -0.3,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          sesion['servicio'],
-                          style: TextStyle(
-                            fontSize: subtitleFontSize,
-                            color: const Color(0xFF718096),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.universityBlue.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  sesion['servicio'],
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.universityBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                  ],
+                ),
+                
+                const SizedBox(height: 14),
+                
+                // Info de fecha y hora con diseño mejorado
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7FAFC),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey.shade400),
-                ],
-              ),
-              
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              
-              // Info de fecha y hora
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 6),
-                  Text(
-                    sesion['fecha'],
-                    style: TextStyle(fontSize: subtitleFontSize, color: Colors.grey.shade700),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 16,
+                        color: const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        sesion['fecha'],
+                        style: TextStyle(
+                          fontSize: subtitleFontSize,
+                          color: const Color(0xFF475569),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 16,
+                        color: const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${sesion['horaInicio']} - ${sesion['horaFin']}',
+                        style: TextStyle(
+                          fontSize: subtitleFontSize,
+                          color: const Color(0xFF475569),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.access_time, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${sesion['horaInicio']} - ${sesion['horaFin']}',
-                    style: TextStyle(fontSize: subtitleFontSize, color: Colors.grey.shade700),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Estadísticas de asistencia
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatChip('Total', totalEstudiantes, Colors.blue.shade400, Icons.people),
-                  _buildStatChip('Presentes', presentes, Colors.green.shade400, Icons.check_circle),
-                  _buildStatChip('Ausentes', ausentes, Colors.red.shade400, Icons.cancel),
-                  _buildStatChip('Tardanzas', tardanzas, Colors.orange.shade400, Icons.schedule),
-                ],
-              ),
-            ],
+                ),
+                
+                const SizedBox(height: 14),
+                
+                // Estadísticas de asistencia con diseño mejorado
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatChip('Total', totalEstudiantes, const Color(0xFF3B82F6), Icons.people_rounded),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildStatChip('Presentes', presentes, const Color(0xFF10B981), Icons.check_circle_rounded),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildStatChip('Ausentes', ausentes, const Color(0xFFEF4444), Icons.cancel_rounded),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildStatChip('Tardanzas', tardanzas, const Color(0xFFF59E0B), Icons.schedule_rounded),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -252,30 +332,34 @@ class _TeacherAsistenciasPageState extends State<TeacherAsistenciasPage> {
 
   Widget _buildStatChip(String label, int value, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(height: 2),
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 6),
           Text(
             value.toString(),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: color,
+              letterSpacing: -0.5,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey.shade700,
+            style: const TextStyle(
+              fontSize: 9,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w600,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
