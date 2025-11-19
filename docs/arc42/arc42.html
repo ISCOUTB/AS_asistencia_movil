@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>arc42.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<p><img src="./images/arc42-logo.png" alt="Logo arc42"></p>
+<p><strong>Acerca de arc42</strong></p>
+<p>arc42, La plantilla de documentación para arquitectura de sistemas y de
+software.</p>
+<p>Por Dr. Gernot Starke, Dr. Peter Hruschka y otros contribuyentes.</p>
+<p>Revisión de la plantilla: 7.0 ES (basada en asciidoc), Enero 2017</p>
+<p>© Reconocemos que este documento utiliza material de la plantilla de
+arquitectura arc42, <a href="https://www.arc42.org">https://www.arc42.org</a>. Creada por Dr. Peter
+Hruschka y Dr. Gernot Starke.</p>
+<p>Autores:</p>
+<p>-<strong>Jorge Mario Benavides Angulo</strong>
+-<strong>William David Lozano Julio</strong>
+-<strong>Andres Felipe Rubiano Marrugo</strong></p>
+<h1 id="1-introducci%C3%B3n-y-metas">1. Introducción y Metas</h1>
+<p>Este apartado describe los requisitos relevantes y las fuerzas impulsoras que los arquitectos de software y el equipo de desarrollo deben considerar. Incluye los <strong>objetivos de negocio</strong>, las <strong>funcionalidades esenciales y requisitos funcionales del sistema</strong>, los <strong>objetivos de calidad de la arquitectura</strong> y los <strong>stakeholders con sus expectativas</strong>. Estos serán los objetivos establecidos para este sistema:</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Validar la funcionalidad básica de registro de asistencias desde una aplicación móvil con simplicidad y seguridad.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Resolver los problemas de procesos manuales que generan errores, retrasos y falta de información centralizada.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Prevenir la suplantación o marcas falsas mediante validación de escaneo QR.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Permitir autenticación básica de usuarios, gestión mínima de usuarios y horarios.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Habilitar consultas de asistencia y generación de reportes simples en el backend.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Incluir notificaciones básicas de recordatorio y alertas por ausencias o retrasos.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Servir como base para recopilar retroalimentación de usuarios antes de escalar hacia una solución más robusta.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="12-vista-de-requerimientos">1.2 Vista de Requerimientos</h2>
+<h3 id="121-actores-principales">1.2.1 Actores principales</h3>
+<p>-<strong>Estudiantes / Empleados</strong> → Registran su asistencia.
+-<strong>Docentes / Jefes / Supervisores</strong> → Validan, consultan reportes y gestionan asistencia.<br>
+-<strong>Administradores</strong> → Configuran horarios, grupos, usuarios y reglas.<br>
+-<strong>Sistema (API / Backend)</strong> → Valida, procesa y guarda los datos.</p>
+<h3 id="122-requerimientos-funcionales">1.2.2 Requerimientos Funcionales</h3>
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Requirement</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF1</td>
+<td>Registro de asistencia</td>
+<td>Permitir a los usuarios marcar entrada y salida desde la aplicación móvil. Validación por escaneo QR en el aula/empresa.</td>
+</tr>
+<tr>
+<td>RF2</td>
+<td>Autenticación y autorización</td>
+<td>Acceso seguro mediante usuario/contraseña o SSO (Microsoft). Manejo de roles: estudiante/empleado, docente/supervisor, administrador.</td>
+</tr>
+<tr>
+<td>RF3</td>
+<td>Reportes y consultas</td>
+<td>Generar historial de asistencia individual y reportes por curso, grupo, departamento o periodo. Posibilidad de exportación a Excel/PDF.</td>
+</tr>
+<tr>
+<td>RF4</td>
+<td>Notificaciones</td>
+<td>Enviar alertas push para recordar marcar asistencia y notificaciones de inasistencias o retrasos.</td>
+</tr>
+<tr>
+<td>RF5</td>
+<td>Integraciones</td>
+<td>Proveer API REST para conexión con sistemas académicos y panel web de administración centralizada.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="123-requerimientos-no-funcionales">1.2.3 Requerimientos No Funcionales</h3>
+<table>
+<thead>
+<tr>
+<th>Id</th>
+<th>Requirement</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RNF1</td>
+<td>Disponibilidad</td>
+<td>El sistema debe estar disponible 24/7. Backend con redundancia en servidores críticos.</td>
+</tr>
+<tr>
+<td>RNF2</td>
+<td>Escalabilidad</td>
+<td>Soporte para miles de usuarios concurrentes (ejemplo: universidades grandes).</td>
+</tr>
+<tr>
+<td>RNF3</td>
+<td>Seguridad</td>
+<td>Comunicación cifrada (HTTPS + TLS). Tokens JWT / OAuth2. Cumplimiento de GDPR/Habeas Data.</td>
+</tr>
+<tr>
+<td>RNF4</td>
+<td>Rendimiento</td>
+<td>Tiempo de respuesta &lt; 2 segundos en operaciones comunes. Manejo eficiente de reportes masivos.</td>
+</tr>
+<tr>
+<td>RNF5</td>
+<td>Portabilidad</td>
+<td>App disponible en Android e iOS. Versión web compatible con navegadores modernos.</td>
+</tr>
+<tr>
+<td>RNF6</td>
+<td>Usabilidad</td>
+<td>Interfaz intuitiva, multilenguaje y accesible según normas WCAG.</td>
+</tr>
+<tr>
+<td>RNF7</td>
+<td>Mantenibilidad</td>
+<td>Código modular (Clean Architecture, microservicios). Documentación clara para integraciones.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="124-componentes-de-arquitectura-alto-nivel">1.2.4 Componentes de Arquitectura (Alto Nivel)</h3>
+<ul>
+<li>
+<p><strong>App móvil (Flutter)</strong>
+→ UI, autenticación,  escaneo QR, notificaciones.</p>
+</li>
+<li>
+<p><strong>API Gateway / Backend (ORACLE Apex)</strong><br>
+→ Autenticación, lógica de negocio, validación de asistencia, conexión con DB.</p>
+</li>
+<li>
+<p><strong>Base de datos (Oracle Database)</strong><br>
+→ Usuarios, horarios, registros de asistencia.</p>
+</li>
+<li>
+<p><strong>Módulo de analítica y reportes</strong><br>
+→ Generación de reportes, estadísticas</p>
+</li>
+</ul>
+<h2 id="13-metas-de-calidad">1.3 Metas de Calidad</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Meta de Calidad</th>
+<th>Descripción</th>
+<th>Prioridad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.3.1</td>
+<td>Disponibilidad</td>
+<td>Garantizar <strong>99.5% de disponibilidad</strong> del sistema (24/7).</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>1.3.2</td>
+<td>Escalabilidad</td>
+<td>Soportar al menos <strong>5.000 usuarios concurrentes</strong> en la fase inicial.</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>1.3.3</td>
+<td>Seguridad</td>
+<td>Comunicación cifrada con <strong>HTTPS + TLS 1.3</strong>. Autenticación con <strong>JWT / OAuth2</strong>. Cumplimiento de <strong>GDPR / Habeas Data</strong>.</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>1.3.4</td>
+<td>Rendimiento</td>
+<td>Tiempo de respuesta promedio <strong>&lt; 2 segundos</strong> en registros y consultas. Reportes masivos en <strong>&lt; 30 segundos</strong>.</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>1.3.5</td>
+<td>Portabilidad</td>
+<td>Aplicación disponible en <strong>Android</strong> y <strong>iOS</strong>.</td>
+<td>Media</td>
+</tr>
+<tr>
+<td>1.3.6</td>
+<td>Usabilidad</td>
+<td>Interfaz intuitiva, curva de aprendizaje <strong>&lt; 10 min</strong>. Soporte <strong>multilenguaje (ES/EN)</strong>. Cumplimiento de <strong>WCAG 2.1</strong>.</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>1.3.7</td>
+<td>Mantenibilidad</td>
+<td>Arquitectura modular (<strong>Clean Architecture / Microservicios</strong>). Documentación técnica actualizada.</td>
+<td>Media</td>
+</tr>
+<tr>
+<td>1.3.8</td>
+<td>Confiabilidad</td>
+<td>Garantizar que el <strong>99% de registros de asistencia</strong> se procesen sin pérdida de datos. Respaldo automático de la base de datos cada <strong>24h</strong>.</td>
+<td>Alta</td>
+</tr>
+</tbody>
+</table>
+<h2 id="14-partes-interesadas-stakeholders">1.4 Partes interesadas (Stakeholders)</h2>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Nombre completo</th>
+<th>Contacto</th>
+<th>Expectativas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Profesor Titular</td>
+<td>Jairo Enrique Serrano Castañeda</td>
+<td><a href="mailto:jserrano@utb.edu.co">jserrano@utb.edu.co</a></td>
+<td>Que la arquitectura de la API se integre eficientemente con la aplicación móvil, asegurando escalabilidad, seguridad y un rendimiento óptimo en dispositivos nativos.</td>
+</tr>
+<tr>
+<td>Ingeniero de Desarrollo TIC</td>
+<td>Elian Andres Vega Hernandez</td>
+<td><a href="mailto:vegae@utb.edu.co">vegae@utb.edu.co</a></td>
+<td>Que la aplicación móvil facilite el acceso a los registros de asistencia de manera confiable y en tiempo real</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="2-restricciones-de-la-arquitectura">2. Restricciones de la Arquitectura</h1>
+<h2 id="21-restricciones-tecnol%C3%B3gicas">2.1 Restricciones Tecnológicas</h2>
+<ul>
+<li>La app debe desarrollarse en <strong>Flutter</strong> para asegurar compatibilidad en Android e iOS.</li>
+<li>El backend debe implementarse en <strong>ORACLE Apex</strong>, priorizando escalabilidad y modularidad.</li>
+<li>La base de datos debe ser <strong>Oracle</strong>, con <strong>Redis</strong> como caché para optimizar el rendimiento.</li>
+<li>Toda comunicación debe realizarse mediante <strong>HTTPS/TLS</strong>.</li>
+</ul>
+<h2 id="22-restricciones-operativas">2.2 Restricciones Operativas</h2>
+<ul>
+<li>El sistema debe estar disponible <strong>24/7</strong>, con un máximo de <strong>3 horas de inactividad mensual</strong>.</li>
+<li>Los registros de asistencia deben conservarse por un período mínimo de <strong>2 años</strong>.</li>
+<li>Solo se permiten integraciones con <strong>APIs públicas y seguras</strong>.</li>
+<li>La aplicación debe funcionar en redes <strong>Wi-Fi</strong>.</li>
+</ul>
+<h2 id="23-restricciones-organizacionales">2.3 Restricciones Organizacionales</h2>
+<ul>
+<li>Cumplimiento estricto de normativas de protección de datos (<strong>GDPR / Habeas Data</strong>).</li>
+<li>Acceso a funcionalidades restringido por <strong>roles definidos</strong> (estudiante/empleado, docente/supervisor, administrador).</li>
+<li>Los reportes solo pueden ser consultados por <strong>docentes, supervisores o administradores</strong>.</li>
+<li>La arquitectura de software debe seguir principios de <strong>Clean Architecture</strong> y <strong>microservicios</strong>.</li>
+</ul>
+<h2 id="24-restricciones-de-integraci%C3%B3n">2.4 Restricciones de Integración</h2>
+<ul>
+<li>El backend debe exponer un <strong>API REST documentado con Swagger/OpenAPI</strong>.</li>
+<li>El consumo de la API debe limitarse a <strong>1000 requests por minuto por usuario autenticado</strong>.</li>
+<li>Toda integración externa debe pasar por <strong>módulos autorizados y controlados</strong>.</li>
+</ul>
+<h2 id="25-restricciones-de-seguridad">2.5 Restricciones de Seguridad</h2>
+<ul>
+<li>La autenticación debe implementarse con <strong>JWT u OAuth2</strong>.</li>
+<li>Los datos sensibles (contraseñas, tokens) deben almacenarse de forma <strong>cifrada o hasheada (bcrypt, AES)</strong>.</li>
+<li>Todos los accesos deben estar controlados por <strong>roles y permisos definidos</strong>.</li>
+</ul>
+<hr>
+<h1 id="3-alcance-y-contexto-del-sistema">3. Alcance y Contexto del Sistema</h1>
+<h2 id="31-alcance-del-sistema">3.1 Alcance del Sistema</h2>
+<p>El sistema de <strong>Control de Asistencia</strong> tiene como objetivo principal <strong>digitalizar y automatizar el control de asistencia</strong> en instituciones educativas y organizaciones empresariales, reduciendo procesos manuales y mejorando la precisión en los registros.</p>
+<h3 id="311-funcionalidades-dentro-del-alcance">3.1.1 Funcionalidades dentro del alcance</h3>
+<ul>
+<li>Registro de asistencia mediante <strong>app móvil</strong> (entrada y salida).</li>
+<li>Validación de asistencia mediante <strong>QR</strong>.</li>
+<li><strong>Autenticación segura</strong> con usuario/contraseña o SSO (Google/Microsoft).</li>
+<li>Gestión de <strong>horarios, grupos, cursos, jornadas</strong>.</li>
+<li>Consulta y generación de <strong>reportes individuales y grupales</strong> en distintos formatos (Excel/PDF).</li>
+<li><strong>Notificaciones push</strong> para recordatorios, retrasos e inasistencias.</li>
+<li><strong>Panel web administrativo</strong> para gestión centralizada.</li>
+</ul>
+<h3 id="312-funcionalidades-fuera-del-alcance-mvp-inicial">3.1.2 Funcionalidades fuera del alcance (MVP inicial)</h3>
+<ul>
+<li>Reconocimiento facial o biometría avanzada</li>
+<li>Inteligencia artificial para predicción de ausentismo.</li>
+<li>Funcionalidades offline completas (solo cache limitado).</li>
+</ul>
+<h2 id="32-contexto-del-sistema">3.2 Contexto del Sistema</h2>
+<h3 id="321-actores-principales">3.2.1 Actores principales</h3>
+<ul>
+<li><strong>Estudiantes / Empleados</strong> → Registran su asistencia desde la app móvil.</li>
+<li><strong>Docentes / Supervisores / Jefes</strong> → Validan, consultan y gestionan asistencia.</li>
+<li><strong>Administradores</strong> → Configuran horarios, grupos y usuarios.</li>
+<li><strong>Sistema (Backend + API)</strong> → Procesa, valida y almacena la información de asistencia.</li>
+</ul>
+<h3 id="322-interacciones-con-el-entorno">3.2.2 Interacciones con el entorno</h3>
+<ul>
+<li><strong>App móvil</strong> (Android/iOS) → Punto de interacción principal para usuarios finales.</li>
+<li><strong>Panel Web</strong> → Para administradores y supervisores que gestionan y consultan datos.</li>
+<li><strong>Base de datos centralizada</strong> (Oracle) → Almacena usuarios, horarios y registros.</li>
+</ul>
+<h2 id="33-contexto-de-negocio">3.3 Contexto de Negocio</h2>
+<p>El sistema de <strong>Toma de Asistencia</strong> busca digitalizar y automatizar el proceso de registro y control de asistencia en instituciones educativas y organizaciones.<br>
+El modelo de negocio contempla tres tipos de actores principales:</p>
+<ul>
+<li><strong>Estudiantes / Empleados</strong>: registran su asistencia mediante la aplicación móvil, usando mecanismos como GPS, QR, NFC o Wi-Fi institucional.</li>
+<li><strong>Docentes / Supervisores</strong>: consultan y validan la asistencia en tiempo real desde la app móvil o un panel web.</li>
+<li><strong>Administradores</strong>: gestionan usuarios, horarios, grupos y reglas de asistencia a través de un panel web.</li>
+</ul>
+<p>Además, el sistema debe integrarse con <strong>sistemas académicos y de recursos humanos</strong>, permitiendo exportar registros y sincronizar información con otras plataformas.</p>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TD
+    A[👤 Estudiantes / Empleados] -->|Registrar asistencia| B[📱 App Móvil]
+    D[👨‍🏫 Docentes / Supervisores] -->|Validar / Consultar| B
+    E[⚙️ Administradores] -->|Configurar horarios / usuarios| B
+
+    B -->|Procesa y valida| C[🖥️ Backend / API]
+    C -->|📊 Reportes / Datos| F[📂 Sistemas Académicos / RRHH]
+</div></code></pre>
+<h2 id="34-contexto-t%C3%A9cnico">3.4 Contexto Técnico</h2>
+<p>El sistema se compone de los siguientes elementos:</p>
+<ul>
+<li><strong>App Móvil (Android/iOS)</strong>: punto de interacción principal para estudiantes y empleados, que permite el registro de asistencia y la consulta de historial.</li>
+<li><strong>Panel Web</strong>: herramienta administrativa para la gestión de usuarios, horarios y generación de reportes.</li>
+<li><strong>Backend / API Gateway</strong>: núcleo de la lógica de negocio, encargado de procesar registros, validar condiciones y exponer APIs REST seguras.</li>
+<li><strong>Base de Datos SQL (Oracle)</strong>: almacenamiento principal de usuarios, horarios y registros de asistencia.</li>
+<li><strong>Redis</strong>: soporte para cache y consultas rápidas.</li>
+</ul>
+<h3 id="341-mapeo-de-entradasalida-a-canales">3.4.1 Mapeo de Entrada/Salida a Canales</h3>
+<h4 id="entradas">Entradas</h4>
+<ul>
+<li>Desde <strong>App Móvil</strong>: registro de asistencia (QR), login seguro.</li>
+<li>Desde <strong>Panel Web</strong>: gestión de usuarios, horarios, grupos y reportes.</li>
+</ul>
+<h4 id="procesamiento">Procesamiento</h4>
+<ul>
+<li>Validación de identidad y autenticación.</li>
+<li>Aplicación de reglas de negocio (asistencia válida, tardanza, ausencia).</li>
+<li>Almacenamiento en base de datos.</li>
+<li>Uso de cache con Redis para optimizar consultas.</li>
+</ul>
+<h4 id="salidas">Salidas</h4>
+<ul>
+<li>Hacia <strong>App Móvil</strong>: confirmación de asistencia registrada, historial individual y notificaciones push.</li>
+<li>Hacia <strong>Panel Web</strong>: reportes en PDF/Excel, estadísticas y gestión de datos.</li>
+</ul>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TD
+  M[📱 App Móvil] -->|API REST| N[🌐 Backend / API Gateway]
+  W[💻 Panel Web Admin] -->|Gestión de usuarios/horarios| N
+  N -->|📂 CRUD Asistencia| O[(🗄️ Base de Datos)]
+  N -->|🔔 Notificaciones| P[(Firebase/Push Service)]
+</div></code></pre>
+<h1 id="4-estrategia-de-soluci%C3%B3n">4. Estrategia de solución</h1>
+<h2 id="41-objetivos">4.1 Objetivos</h2>
+<p>Definir cómo se estructurará la arquitectura del sistema de Toma de Asistencias desde App Móvil para garantizar:</p>
+<ul>
+<li>Disponibilidad</li>
+<li>Seguridad</li>
+<li>Escalabilidad</li>
+<li>Rendimiento</li>
+</ul>
+<h2 id="42-lineamientos-estrat%C3%A9gicos">4.2 Lineamientos Estratégicos</h2>
+<h3 id="421-arquitectura-basada-en-servicios">4.2.1. Arquitectura Basada en Servicios</h3>
+<ul>
+<li>Modularización del sistema:
+<ul>
+<li>Captura de Asistencia (App móvil)</li>
+<li>Gestión de Usuarios y Roles</li>
+<li>Gestión de Horarios y Sesiones</li>
+<li>API Backend de Validación y Procesamiento</li>
+<li>Reportes y Analítica</li>
+</ul>
+</li>
+<li>Beneficios: escalabilidad, mantenibilidad y separación de responsabilidades.</li>
+</ul>
+<hr>
+<h3 id="422-interfaz-de-usuario-app-m%C3%B3vil">4.2.2 Interfaz de Usuario (App Móvil)</h3>
+<ul>
+<li>Aplicación híbrida (Flutter).</li>
+<li>Funcionalidad offline con sincronización en línea.</li>
+<li>Autenticación segura mediante JWT u OAuth 2.0.</li>
+</ul>
+<hr>
+<h3 id="423-comunicaci%C3%B3n-y-backend">4.2.3 Comunicación y Backend</h3>
+<ul>
+<li>API RESTful para validación y procesamiento de datos.</li>
+<li>Backend ligero (Oracle Apex).</li>
+<li>Control de accesos basado en roles (RBAC).</li>
+<li>Validaciones de integridad en tiempo real.</li>
+</ul>
+<hr>
+<h3 id="424-gesti%C3%B3n-de-datos">4.2.4 Gestión de Datos</h3>
+<ul>
+<li>Base de datos relacional (Oracle).</li>
+<li>Cacheo con Redis para mejorar rendimiento.</li>
+<li>Almacenamiento histórico de asistencia con trazabilidad.</li>
+</ul>
+<hr>
+<h3 id="425-seguridad">4.2.5 Seguridad</h3>
+<ul>
+<li>Encriptación en tránsito (HTTPS + TLS).</li>
+<li>Autenticación con tokens JWT.</li>
+<li>Cumplimiento con normativas de protección de datos.</li>
+</ul>
+<hr>
+<h3 id="426-integraci%C3%B3n-con-sistemas-externos">4.2.6 Integración con Sistemas Externos</h3>
+<ul>
+<li>Reportes automáticos en PDF / Excel.</li>
+</ul>
+<hr>
+<h3 id="427-infraestructura">4.2.7 Infraestructura</h3>
+<ul>
+<li>Despliegue con contenedores Docker.</li>
+<li>Despliegue en la nube (AWS, Azure, GCP) o en servidores locales.</li>
+<li>Balanceadores de carga para asegurar disponibilidad.</li>
+</ul>
+<hr>
+<h3 id="428-monitoreo-y-observabilidad">4.2.8 Monitoreo y Observabilidad</h3>
+<ul>
+<li>Métricas con Prometheus + Grafana.</li>
+</ul>
+<hr>
+<h2 id="43-decisiones-arquitect%C3%B3nicas">4.3 Decisiones Arquitectónicas</h2>
+<ul>
+<li>Arquitectura modular con servicios desacoplados.</li>
+<li>Uso de tecnologías ligeras y escalables (Oracle Apex, Flutter).</li>
+<li>Base de datos relacional con soporte a integridad y relaciones complejas.</li>
+<li>Seguridad como prioridad en autenticación, cifrado y auditoría.</li>
+</ul>
+<hr>
+<h2 id="44-trade-offs">4.4 Trade-offs</h2>
+<ul>
+<li><strong>Microservicios vs Monolito:</strong> Se inicia con servicios modulares (menor complejidad) con visión futura hacia microservicios completos.</li>
+<li><strong>Infraestructura en la nube vs on-premise:</strong> Dependerá del presupuesto y políticas de la institución.</li>
+<li><strong>Funcionalidad offline:</strong> Aumenta complejidad técnica pero garantiza continuidad del servicio.</li>
+</ul>
+<hr>
+<h2 id="45-riesgos-potenciales">4.5 Riesgos Potenciales</h2>
+<ul>
+<li>Gestión de seguridad y privacidad de datos sensibles.</li>
+<li>Complejidad en el mantenimiento de sincronización offline/online.</li>
+<li>Escalabilidad limitada si no se implementa orquestación adecuada en fases iniciales.</li>
+</ul>
+<h1 id="5-vista-de-bloques">5. Vista de Bloques</h1>
+<h2 id="51-visi%C3%B3n-general">5.1 Visión general</h2>
+<p>El sistema se compone de seis bloques principales:</p>
+<ol>
+<li>
+<p><strong>Aplicación móvil (UI/UX)</strong></p>
+</li>
+<li>
+<p><strong>Módulo de autenticación y gestión de sesión</strong></p>
+</li>
+<li>
+<p><strong>Módulo de registro de asistencia</strong></p>
+</li>
+<li>
+<p><strong>Módulo de sincronización y comunicación con backend</strong></p>
+</li>
+<li>
+<p><strong>Módulo de almacenamiento local</strong></p>
+</li>
+<li>
+<p><strong>Servicios de utilidades (validaciones, logging)</strong></p>
+</li>
+</ol>
+<p>Estos bloques se comunican de forma jerárquica: la interfaz de usuario orquesta interacciones que fluyen hacia autenticación, registro y sincronización, mientras almacenamiento y utilitarios son usados transversalmente.</p>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    UI["Aplicación móvil (UI/UX)"]
+    Auth["Autenticación"]
+    Asistencia["Registro de asistencia"]
+    Sync["Sincronización"]
+    DB["Almacenamiento (Oracle APEX)"]
+    Utils["Utilitarios"]
+
+    %% Relaciones principales
+    UI --> Auth
+    UI --> Asistencia
+
+    Auth --> DB
+    Asistencia --> Auth
+    Asistencia --> DB
+    Asistencia --> Sync
+
+    Sync --> DB
+
+    Utils --> UI
+    Utils --> Auth
+    Utils --> Asistencia
+    Utils --> Sync
+    Utils --> DB
+</div></code></pre>
+<hr>
+<h2 id="52-jerarqu%C3%ADa-de-bloques">5.2 Jerarquía de bloques</h2>
+<ul>
+<li>
+<p><strong>Nivel 1 (Subsistemas):</strong></p>
+<ul>
+<li>UI</li>
+<li>Autenticación</li>
+<li>Asistencia</li>
+<li>Sincronización</li>
+<li>Almacenamiento</li>
+<li>Utilitarios</li>
+</ul>
+</li>
+<li>
+<p><strong>Nivel 2 (Componentes internos):</strong></p>
+<ul>
+<li>Autenticación → login manager, token handler.</li>
+<li>Asistencia → validador de horarios, gestor local de eventos, sincronizador de asistencias.</li>
+<li>Sincronización → cliente HTTP, manejador de colas, adaptador de datos.</li>
+<li>Almacenamiento → base de datos SQLite local, repositorios DAO.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="53-tabla-de-bloques-principales">5.3 Tabla de bloques principales</h2>
+<table>
+<thead>
+<tr>
+<th>Bloque</th>
+<th>Responsabilidades</th>
+<th>Interfaces</th>
+<th>Dependencias</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UI móvil</strong></td>
+<td>Interacción con el usuario, captura de datos</td>
+<td>Pantallas y formularios</td>
+<td>Autenticación, Asistencia</td>
+</tr>
+<tr>
+<td><strong>Autenticación</strong></td>
+<td>Validar credenciales, emitir tokens, controlar sesión</td>
+<td><code>login()</code>, <code>logout()</code>, <code>refresh()</code></td>
+<td>UI, Almacenamiento local</td>
+</tr>
+<tr>
+<td><strong>Registro de asistencia</strong></td>
+<td>Captura de entradas/salidas, validación de ubicación</td>
+<td><code>registrarAsistencia()</code>, <code>historial()</code></td>
+<td>Autenticación, Geolocalización, Almacenamiento</td>
+</tr>
+<tr>
+<td><strong>Sincronización</strong></td>
+<td>Comunicación con backend, reintentos, resolución de conflictos</td>
+<td><code>sync()</code>, <code>push()</code>, <code>pull()</code></td>
+<td>Registro de asistencia, Red</td>
+</tr>
+<tr>
+<td><strong>Almacenamiento local</strong></td>
+<td>Persistencia offline (SQLite)</td>
+<td><code>save()</code>, <code>read()</code>, <code>delete()</code></td>
+<td>Todos los módulos</td>
+</tr>
+<tr>
+<td><strong>Utilitarios</strong></td>
+<td>Geolocalización, validación de datos, logging</td>
+<td><code>getLocation()</code>, <code>logEvent()</code></td>
+<td>Todos los módulos</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="54-diagramas">5.4 Diagramas</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    subgraph UI["Aplicación móvil (UI/UX)"]
+        UI1[Pantallas de usuario]
+    end
+
+    subgraph Auth["Autenticación"]
+        A1[Login Manager]
+        A2[Token Handler]
+    end
+
+    subgraph Asistencia["Registro de asistencia"]
+        R1[Asistencia Validator]
+        R2[Asistencia Local Store]
+        R3[Asistencia Sync Manager]
+    end
+
+    subgraph Sync["Sincronización"]
+        S1[Cliente HTTP]
+        S2[Manejador de colas]
+        S3[Adaptador de datos]
+    end
+
+    subgraph DB["Almacenamiento (Oracle APEX)"]
+        D1[DAO]
+        D2[Repositorios]
+    end
+
+    subgraph Utils["Utilitarios"]
+        U2[Validaciones]
+        U3[Logging]
+    end
+
+    %% Relaciones
+    UI1 --> A1
+    UI1 --> R1
+
+    A1 --> A2
+    A1 --> D1
+
+    R1 --> R2
+    R1 --> R3
+    R3 --> S1
+
+    S1 --> S2
+    S1 --> S3
+
+    R2 --> D1
+
+    U2 --> R1
+    U3 --> UI1
+    U3 --> A1
+    U3 --> R1
+    U3 --> S1
+    U3 --> D1
+</div></code></pre>
+<hr>
+<h2 id="55-consideraciones-de-modularidad">5.5 Consideraciones de modularidad</h2>
+<ul>
+<li>Los bloques están diseñados para minimizar dependencias circulares.</li>
+<li>El almacenamiento local y utilitarios son reutilizables por múltiples módulos.</li>
+<li>La separación entre registro de asistencia y sincronización permite un uso offline robusto.</li>
+</ul>
+<hr>
+<h2 id="56-relaci%C3%B3n-con-otras-vistas">5.6 Relación con otras vistas</h2>
+<ul>
+<li>En la <strong>vista runtime</strong>, los bloques se coordinan para casos de uso como <em>“registro de asistencia con validación en línea”</em>.</li>
+<li>En la <strong>vista de despliegue</strong>, la app móvil (bloques UI, lógica y almacenamiento) corre en el dispositivo, mientras la sincronización se conecta al backend desplegado en la nube.</li>
+</ul>
+<h1 id="6-vista-de-ejecuci%C3%B3n">6. Vista de Ejecución</h1>
+<p>La vista runtime describe cómo los distintos componentes del sistema colaboran en escenarios de ejecución concretos. A continuación se presentan los principales casos de uso.</p>
+<hr>
+<h2 id="61-escenario-inicio-de-sesi%C3%B3n">6.1 Escenario: Inicio de sesión</h2>
+<p><strong>Objetivo:</strong> Validar credenciales y establecer sesión segura.</p>
+<p><strong>Secuencia:</strong></p>
+<ol>
+<li>El usuario ingresa credenciales en la <strong>Aplicación móvil (UI/UX)</strong>.</li>
+<li>El módulo de <strong>Autenticación</strong> envía las credenciales al <strong>Almacenamiento (Oracle APEX)</strong>.</li>
+<li>Oracle APEX valida el usuario y devuelve un token.</li>
+<li>El <strong>Token Handler</strong> guarda el token para futuras peticiones.</li>
+<li>Se notifica a la UI que el inicio de sesión fue exitoso.</li>
+</ol>
+<hr>
+<h2 id="62-escenario-registro-de-asistencia-sin-conexi%C3%B3n">6.2 Escenario: Registro de asistencia sin conexión</h2>
+<p><strong>Objetivo:</strong> Permitir al usuario registrar asistencia aun sin conexión a internet.</p>
+<p><strong>Secuencia:</strong></p>
+<ol>
+<li>El usuario marca asistencia desde la <strong>Aplicación móvil (UI/UX)</strong>.</li>
+<li>El <strong>Validador de asistencia</strong> revisa la información.</li>
+<li>Si no hay conexión, los datos se guardan en el <strong>Almacenamiento local temporal</strong> dentro del dispositivo.</li>
+<li>El <strong>Sync Manager</strong> marca la asistencia como pendiente.</li>
+<li>Se notifica a la UI que la asistencia fue registrada localmente.</li>
+</ol>
+<hr>
+<h2 id="63-escenario-sincronizaci%C3%B3n-de-asistencias">6.3 Escenario: Sincronización de asistencias</h2>
+<p><strong>Objetivo:</strong> Subir registros locales pendientes a Oracle APEX.</p>
+<p><strong>Secuencia:</strong></p>
+<ol>
+<li>El <strong>Sync Manager</strong> detecta conexión disponible.</li>
+<li>El <strong>Cliente HTTP</strong> empaqueta los registros pendientes.</li>
+<li>El <strong>Manejador de colas</strong> organiza los envíos.</li>
+<li>Oracle APEX recibe los registros y responde confirmando almacenamiento.</li>
+<li>El <strong>Sync Manager</strong> actualiza el estado local y notifica a la UI.</li>
+</ol>
+<hr>
+<h2 id="64-escenario-consulta-de-historial-de-asistencias">6.4 Escenario: Consulta de historial de asistencias</h2>
+<p><strong>Objetivo:</strong> Mostrar al usuario las asistencias registradas.</p>
+<p><strong>Secuencia:</strong></p>
+<ol>
+<li>El usuario solicita el historial en la <strong>Aplicación móvil (UI/UX)</strong>.</li>
+<li>La UI llama al módulo de <strong>Registro de asistencia</strong>.</li>
+<li>El módulo consulta primero en la caché local.</li>
+<li>Si no existe la información completa, el <strong>Cliente HTTP</strong> consulta en <strong>Oracle APEX</strong>.</li>
+<li>El <strong>Adaptador de datos</strong> transforma la respuesta en un formato amigable.</li>
+<li>La UI despliega la información al usuario.</li>
+</ol>
+<pre><code class="language-mermaid"><div class="mermaid">sequenceDiagram
+    actor U as Usuario
+    participant UI as Aplicación móvil
+    participant Auth as Autenticación
+    participant Sync as Sincronización
+    participant DB as Oracle APEX
+
+    %% Escenario: Inicio de sesión
+    U ->> UI: Ingresa credenciales
+    UI ->> Auth: Enviar credenciales
+    Auth ->> DB: Validar usuario
+    DB -->> Auth: Token válido
+    Auth -->> UI: Sesión iniciada
+
+    %% Escenario: Registro offline
+    U ->> UI: Marca asistencia
+    UI ->> Sync: Guardar localmente
+    Note right of Sync: Marca como pendiente
+
+    %% Escenario: Sincronización
+    Sync ->> DB: Enviar registros pendientes
+    DB -->> Sync: Confirmación
+    Sync -->> UI: Actualización exitosa
+
+    %% Escenario: Consulta de historial
+    U ->> UI: Solicita historial
+    UI ->> DB: Consultar historial
+    DB -->> UI: Datos de asistencias
+    UI -->> U: Mostrar historial
+</div></code></pre>
+<hr>
+<h1 id="7-vista-de-despliegue">7. Vista de Despliegue</h1>
+<p>La vista de despliegue describe la infraestructura técnica donde se ejecuta el sistema, así como la asignación de los componentes principales a dicha infraestructura.</p>
+<hr>
+<h2 id="71-nodos-principales">7.1 Nodos principales</h2>
+<ul>
+<li>
+<p><strong>Dispositivo móvil (Android/iOS):</strong><br>
+Ejecuta la aplicación móvil que incluye la interfaz de usuario, validaciones básicas, almacenamiento temporal de asistencias y el cliente de sincronización.</p>
+</li>
+<li>
+<p><strong>Servidor Oracle APEX (Cloud / On-Premise):</strong><br>
+Plataforma de base de datos y backend que gestiona usuarios, asistencias, autenticación y reportes.</p>
+</li>
+<li>
+<p><strong>Servidor de Autenticación (opcional):</strong><br>
+Puede estar integrado en Oracle APEX o desplegado como un servicio separado para validar credenciales y emitir tokens.</p>
+</li>
+<li>
+<p><strong>Servicios de Sincronización / API REST:</strong><br>
+Interfaz expuesta en Oracle APEX (o como microservicio externo) para recibir los datos de asistencia y proveer consultas de historial.</p>
+</li>
+</ul>
+<hr>
+<h2 id="72-relaciones">7.2 Relaciones</h2>
+<ul>
+<li>La <strong>Aplicación móvil</strong> se conecta mediante internet (HTTPS) al <strong>servidor Oracle APEX</strong>.</li>
+<li>El <strong>Servidor APEX</strong> puede apoyarse en:
+<ul>
+<li><strong>Módulo de Autenticación</strong> (si está separado).</li>
+<li><strong>Servicios de sincronización</strong> para recibir registros desde los móviles.</li>
+</ul>
+</li>
+<li>El <strong>Dispositivo móvil</strong> almacena datos localmente cuando no hay conexión, y sincroniza con Oracle APEX cuando la conexión se restablece.</li>
+</ul>
+<hr>
+<h2 id="73-consideraciones-t%C3%A9cnicas">7.3 Consideraciones técnicas</h2>
+<ul>
+<li><strong>Protocolos de comunicación:</strong> HTTPS con JSON.</li>
+<li><strong>Seguridad:</strong> Uso de tokens de autenticación (JWT u OAUTH2).</li>
+<li><strong>Disponibilidad:</strong> El servidor Oracle APEX debe estar altamente disponible para garantizar la sincronización de múltiples dispositivos.</li>
+<li><strong>Escalabilidad:</strong> Posibilidad de balanceo de carga sobre el servidor APEX o servicios asociados si la demanda crece.</li>
+</ul>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TB
+    subgraph Mobile["📱 Dispositivo móvil (Android/iOS)"]
+        UI["Aplicación móvil (UI/UX + Registro + Sync)"]
+    end
+
+    subgraph Cloud["☁️ Oracle APEX Server"]
+        DB["Gestión de asistencia y usuarios"]
+        API["Servicios REST / Sincronización"]
+        AUTH["Módulo de Autenticación"]
+    end
+
+    %% Relaciones
+    UI -->|HTTPS/JSON| API
+    UI -->|Login| AUTH
+    API --> DB
+    AUTH --> DB
+</div></code></pre>
+<h1 id="8-conceptos-transversales-cross-cutting">8. Conceptos Transversales (Cross-cutting)</h1>
+<h2 id="81-seguridad">8.1 Seguridad</h2>
+<h3 id="objetivo">Objetivo</h3>
+<p>Asegurar la integridad, confidencialidad y disponibilidad de la información manejada por el sistema.</p>
+<h3 id="estrategias">Estrategias</h3>
+<p>-<strong>Autenticación:</strong> basada en tokens (JWT) emitidos por Oracle APEX.
+-<strong>Autorización:</strong> control de acceso por rol (administrador, empleado, visitante).
+-<strong>Transporte seguro:</strong> todas las comunicaciones se realizan mediante <strong>HTTPS (TLS 1.2 o superior)</strong>.
+-<strong>Cifrado en reposo:</strong> Oracle APEX usa mecanismos nativos de cifrado de datos sensibles.
+-<strong>Gestión de sesiones:</strong> los tokens expiran automáticamente para prevenir uso indebido.</p>
+<hr>
+<h2 id="82-gesti%C3%B3n-de-datos">8.2 Gestión de datos</h2>
+<h3 id="principios">Principios</h3>
+<p>-<strong>Fuente única de verdad:</strong> Oracle APEX actúa como el repositorio maestro de la información.
+-<strong>Almacenamiento temporal:</strong> la app móvil guarda registros pendientes de sincronizar en almacenamiento local.
+-<strong>Sincronización confiable:</strong> el componente de sincronización garantiza consistencia entre registros locales y remotos.
+-<strong>Control de versiones de datos:</strong> cada registro posee marca de tiempo y estado (pendiente, sincronizado, error).</p>
+<hr>
+<h2 id="83-manejo-de-errores-y-logging">8.3 Manejo de errores y logging</h2>
+<h3 id="en-la-aplicaci%C3%B3n-m%C3%B3vil">En la aplicación móvil</h3>
+<p>-Registro de eventos críticos (errores, sincronizaciones fallidas).
+-Mensajes claros para el usuario final sin lenguaje técnico.
+-Envío opcional de logs al backend en la próxima conexión.</p>
+<h3 id="en-el-servidor-oracle-apex">En el servidor (Oracle APEX)</h3>
+<p>-Auditoría automática de operaciones.
+-Registro de intentos de autenticación fallidos.
+-Seguimiento de solicitudes REST y respuestas.</p>
+<hr>
+<h2 id="84-usabilidad">8.4 Usabilidad</h2>
+<h3 id="principios-de-dise%C3%B1o">Principios de diseño</h3>
+<p>-<strong>Diseño adaptable:</strong> interfaz optimizada para diferentes tamaños de pantalla.
+-<strong>Feedback inmediato:</strong> confirmación visual al registrar o sincronizar asistencia.
+-<strong>Accesibilidad:</strong> contraste adecuado y mensajes simples.
+-<strong>Prevención de errores:</strong> validación previa de entradas antes de enviarlas.</p>
+<hr>
+<h2 id="85-escalabilidad-y-rendimiento">8.5 Escalabilidad y rendimiento</h2>
+<h3 id="estrategias">Estrategias</h3>
+<p>-Oracle APEX puede desplegarse en entornos escalables en la nube.
+-Balanceo de carga horizontal si aumenta la demanda.
+-Caching de datos frecuentemente consultados (por ejemplo, historial reciente).
+-Operaciones asíncronas en la app móvil para evitar bloqueos del usuario.</p>
+<hr>
+<h2 id="86-mantenibilidad">8.6 Mantenibilidad</h2>
+<h3 id="pr%C3%A1cticas-aplicadas">Prácticas aplicadas</h3>
+<p>-<strong>Arquitectura modular:</strong> facilita agregar o reemplazar componentes.
+-<strong>Versionamiento:</strong> control de versiones mediante GitHub.
+-<strong>CI/CD:</strong> flujos de integración y despliegue continuo para la app y el backend.
+-<strong>Documentación:</strong> uso del modelo arc42 para estandarizar el conocimiento técnico.</p>
+<hr>
+<h2 id="87-portabilidad-e-interoperabilidad">8.7 Portabilidad e interoperabilidad</h2>
+<ul>
+<li><strong>Comunicación estándar:</strong> API REST sobre HTTPS con formato JSON.</li>
+<li><strong>Compatibilidad multiplataforma:</strong> app desarrollada para Android e iOS.</li>
+<li><strong>Independencia de proveedor:</strong> uso de Oracle APEX pero con posibilidad de migrar a otro backend compatible con REST.</li>
+</ul>
+<h1 id="9-decisiones-de-dise%C3%B1o">9. Decisiones de Diseño</h1>
+<h2 id="adr-001-elecci%C3%B3n-de-oracle-apex-como-backend">ADR-001: Elección de Oracle APEX como backend</h2>
+<p><strong>Fecha:</strong> 2025-09-01<br>
+<strong>Estado:</strong> Aprobada ✅</p>
+<h3 id="contexto">Contexto</h3>
+<p>El sistema requiere un backend que permita gestionar usuarios, asistencias y autenticación, con facilidad de despliegue y mantenimiento.</p>
+<h3 id="decisi%C3%B3n">Decisión</h3>
+<p>Usar <strong>Oracle APEX</strong> como plataforma backend y base de datos principal.</p>
+<h3 id="justificaci%C3%B3n">Justificación</h3>
+<ul>
+<li>Permite desarrollo rápido con bajo costo de mantenimiento.</li>
+<li>Integración nativa con base de datos Oracle.</li>
+<li>Incluye herramientas integradas de autenticación, API REST y reportes.</li>
+<li>Hosting disponible en la nube de Oracle o infraestructura institucional.</li>
+</ul>
+<h3 id="alternativas-consideradas">Alternativas consideradas</h3>
+<ul>
+<li><strong>Node.js + PostgreSQL:</strong> mayor flexibilidad, pero requería mayor experiencia técnica y configuración.</li>
+<li><strong>Firebase:</strong> fácil de usar, pero con limitaciones de portabilidad y dependencia del proveedor.</li>
+</ul>
+<h3 id="consecuencias">Consecuencias</h3>
+<ul>
+<li>Reducción de complejidad en la capa backend.</li>
+<li>Dependencia directa del ecosistema Oracle.</li>
+</ul>
+<hr>
+<h2 id="adr-002-arquitectura-modular-en-bloques-funcionales">ADR-002: Arquitectura modular en bloques funcionales</h2>
+<p><strong>Fecha:</strong> 2025-09-03<br>
+<strong>Estado:</strong> Aprobada ✅</p>
+<h3 id="contexto">Contexto</h3>
+<p>Se busca mantener el código organizado, fácil de mantener y con responsabilidad clara por módulo.</p>
+<h3 id="decisi%C3%B3n">Decisión</h3>
+<p>Adoptar una <strong>arquitectura modular</strong> basada en bloques:<br>
+UI/UX, Autenticación, Registro de Asistencia, Sincronización, Almacenamiento, y Utilitarios.</p>
+<h3 id="justificaci%C3%B3n">Justificación</h3>
+<ul>
+<li>Favorece mantenibilidad y escalabilidad.</li>
+<li>Permite equipos de trabajo paralelos por módulo.</li>
+<li>Facilita pruebas unitarias y despliegues independientes.</li>
+</ul>
+<h3 id="alternativas-consideradas">Alternativas consideradas</h3>
+<ul>
+<li><strong>Arquitectura monolítica:</strong> más simple al inicio, pero difícil de escalar.</li>
+<li><strong>Microservicios completos:</strong> excesiva complejidad para el tamaño actual del proyecto.</li>
+</ul>
+<h3 id="consecuencias">Consecuencias</h3>
+<ul>
+<li>Código más claro y desacoplado.</li>
+<li>Aumento leve del esfuerzo de integración.</li>
+</ul>
+<hr>
+<h2 id="adr-003-manejo-offline-y-sincronizaci%C3%B3n-diferida">ADR-003: Manejo offline y sincronización diferida</h2>
+<p><strong>Fecha:</strong> 2025-09-05<br>
+<strong>Estado:</strong> Aprobada ✅</p>
+<h3 id="contexto">Contexto</h3>
+<p>Los usuarios pueden registrar asistencia en lugares con conectividad limitada o nula.</p>
+<h3 id="decisi%C3%B3n">Decisión</h3>
+<p>Permitir el <strong>registro offline</strong> con almacenamiento local y sincronización automática al recuperar la conexión.</p>
+<h3 id="justificaci%C3%B3n">Justificación</h3>
+<ul>
+<li>Garantiza operatividad en campo.</li>
+<li>Mejora la experiencia del usuario.</li>
+<li>Evita pérdida de información.</li>
+</ul>
+<h3 id="alternativas-consideradas">Alternativas consideradas</h3>
+<ul>
+<li><strong>Requiere conexión permanente:</strong> más simple, pero inviable en escenarios reales.</li>
+</ul>
+<h3 id="consecuencias">Consecuencias</h3>
+<ul>
+<li>Necesidad de un componente de sincronización robusto.</li>
+<li>Complejidad adicional en el manejo de estados (pendiente, sincronizado, error).</li>
+</ul>
+<hr>
+<h2 id="adr-004-comunicaci%C3%B3n-v%C3%ADa-api-rest-https--json">ADR-004: Comunicación vía API REST (HTTPS + JSON)</h2>
+<p><strong>Fecha:</strong> 2025-09-10<br>
+<strong>Estado:</strong> Aprobada ✅</p>
+<h3 id="contexto">Contexto</h3>
+<p>Se necesita un canal de comunicación entre la aplicación móvil y Oracle APEX.</p>
+<h3 id="decisi%C3%B3n">Decisión</h3>
+<p>Usar <strong>API REST</strong> sobre <strong>HTTPS</strong>, con intercambio de datos en formato <strong>JSON</strong>.</p>
+<h3 id="justificaci%C3%B3n">Justificación</h3>
+<ul>
+<li>Estándar ampliamente adoptado y compatible con Flutter, Android y APEX.</li>
+<li>Facilidad de depuración y pruebas con herramientas comunes (Postman, cURL).</li>
+<li>Seguridad garantizada por TLS.</li>
+</ul>
+<h3 id="alternativas-consideradas">Alternativas consideradas</h3>
+<ul>
+<li><strong>SOAP:</strong> más robusto pero innecesariamente complejo.</li>
+<li><strong>gRPC:</strong> eficiente, pero requiere librerías adicionales y configuración avanzada.</li>
+</ul>
+<h3 id="consecuencias">Consecuencias</h3>
+<ul>
+<li>Mayor interoperabilidad.</li>
+<li>Sencillez en la integración móvil–backend.</li>
+</ul>
+<hr>
+<h2 id="adr-005-autenticaci%C3%B3n-basada-en-tokens">ADR-005: Autenticación basada en tokens</h2>
+<p><strong>Fecha:</strong> 2025-09-12<br>
+<strong>Estado:</strong> Aprobada ✅</p>
+<h3 id="contexto">Contexto</h3>
+<p>Es necesario un método seguro y escalable para autenticar usuarios desde la aplicación móvil.</p>
+<h3 id="decisi%C3%B3n">Decisión</h3>
+<p>Implementar autenticación basada en <strong>tokens (JWT)</strong> gestionados por Oracle APEX.</p>
+<h3 id="justificaci%C3%B3n">Justificación</h3>
+<ul>
+<li>Evita manejo de sesiones persistentes.</li>
+<li>Compatible con servicios REST.</li>
+<li>Escalable a múltiples clientes.</li>
+<li></li>
+</ul>
+<h3 id="consecuencias">Consecuencias</h3>
+<ul>
+<li>Se requiere un proceso claro de emisión, expiración y renovación de tokens.</li>
+<li>Simplifica las llamadas autenticadas al backend.</li>
+</ul>
+<hr>
+<h2 id="adr-005-autenticaci%C3%B3n-basada-en-microsoft-365">ADR-005: Autenticación basada en Microsoft 365</h2>
+<p><strong>Fecha:</strong> 2025-10-01<br>
+<strong>Estado:</strong> Aprobada ✅</p>
+<h3 id="contexto">Contexto</h3>
+<p>Es necesario un método seguro y escalable para autenticar usuarios desde la aplicación móvil.</p>
+<h3 id="decisi%C3%B3n">Decisión</h3>
+<p>Implementar autenticación basada en <strong>Microsoft 365</strong> gestionados por un dominio otorgado por la universidad.</p>
+<h3 id="justificaci%C3%B3n">Justificación</h3>
+<ul>
+<li>Evita manejo de sesiones persistentes.</li>
+<li>Escalable a múltiples clientes.</li>
+</ul>
+<h3 id="alternativas-consideradas">Alternativas consideradas</h3>
+<ul>
+<li><strong>Sesiones tradicionales:</strong> difíciles de manejar en dispositivos móviles.</li>
+</ul>
+<h3 id="consecuencias">Consecuencias</h3>
+<ul>
+<li>Se requiere un proceso claro de emisión, expiración y renovación de token.</li>
+<li>Simplifica las llamadas autenticadas al backend.</li>
+</ul>
+<h1 id="10-requerimientos-de-calidad">10. Requerimientos de Calidad</h1>
+<h2 id="101-quality-goals">10.1 Quality Goals</h2>
+<table>
+<thead>
+<tr>
+<th>Meta de Calidad</th>
+<th>Descripción</th>
+<th>Prioridad</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Seguridad</td>
+<td>Garantizar que los datos de asistencia estén protegidos mediante cifrado y autenticación segura.</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>Rendimiento</td>
+<td>El sistema debe responder rápidamente a los registros y consultas (&lt;2s promedio).</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>Usabilidad</td>
+<td>La aplicación móvil debe ser intuitiva y sencilla para estudiantes y docentes.</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>Mantenibilidad</td>
+<td>El sistema debe ser fácil de extender (ej. agregar biometría o nuevos reportes).</td>
+<td>Media</td>
+</tr>
+<tr>
+<td>Disponibilidad</td>
+<td>El sistema debe estar disponible al menos el 99% del tiempo lectivo.</td>
+<td>Alta</td>
+</tr>
+<tr>
+<td>Portabilidad</td>
+<td>El sistema debe funcionar en dispositivos Android, iOS y navegadores modernos.</td>
+<td>Media</td>
+</tr>
+</tbody>
+</table>
+<h2 id="102-quality-scenarios">10.2 (Quality Scenarios)</h2>
+<h3 id="1021-disponibilidad--uptime-del-servicio">10.2.1 Disponibilidad — Uptime del Servicio</h3>
+<p><strong>Estímulo:</strong> Durante el horario lectivo, múltiples usuarios acceden simultáneamente al sistema.<br>
+<strong>Contexto:</strong> El servicio está desplegado en la nube con balanceador de carga y base de datos replicada.<br>
+<strong>Respuesta:</strong> La plataforma mantiene su operación sin interrupciones y gestiona fallas mediante failover automático.<br>
+<strong>Medida:</strong> 99.5% de disponibilidad mensual comprobable por monitoreo.</p>
+<h3 id="1022-rendimiento--usuarios-concurrentes">10.2.2 Rendimiento — Usuarios Concurrentes</h3>
+<p><strong>Estímulo:</strong> En el inicio de clases, 5.000 usuarios intentan registrar asistencia y consultar horarios.<br>
+<strong>Contexto:</strong> El sistema opera en autoscaling horizontal en backend y base de datos optimizada.<br>
+<strong>Respuesta:</strong> El sistema procesa las solicitudes sin degradación visible.<br>
+<strong>Medida:</strong> Tiempo de respuesta &lt; 2s con 5.000 usuarios concurrentes.</p>
+<h3 id="1023-seguridad--cifrado-de-comunicaciones">10.2.3 Seguridad — Cifrado de Comunicaciones</h3>
+<p><strong>Estímulo:</strong> Un usuario envía información sensible desde la app móvil.<br>
+<strong>Contexto:</strong> Comunicación cliente-servidor.<br>
+<strong>Respuesta:</strong> Todo el tráfico se cifra mediante HTTPS/TLS y se verifica la integridad.<br>
+<strong>Medida:</strong> TLS 1.3 habilitado y pruebas OWASP sin fallas críticas.</p>
+<h3 id="1024-seguridad--autenticaci%C3%B3n">10.2.4 Seguridad — Autenticación</h3>
+<p><strong>Estímulo:</strong> Un usuario intenta acceder a recursos protegidos.<br>
+<strong>Contexto:</strong> API Gateway con autenticación basada en JWT u OAuth2.<br>
+<strong>Respuesta:</strong> El backend valida el token, verifica roles y perfiles.<br>
+<strong>Medida:</strong> 100% de solicitudes protegidas requieren token válido.</p>
+<h3 id="1025-legal--compliance--protecci%C3%B3n-de-datos">10.2.5 Legal / Compliance — Protección de Datos</h3>
+<p><strong>Estímulo:</strong> El sistema almacena datos personales.<br>
+<strong>Contexto:</strong> Operación bajo regulaciones GDPR/Habeas Data.<br>
+<strong>Respuesta:</strong> Se aplican políticas de consentimiento, acceso y derecho al olvido.<br>
+<strong>Medida:</strong> Auditoría anual sin hallazgos mayores.</p>
+<h3 id="1026-rendimiento--tiempo-de-respuesta">10.2.6 Rendimiento — Tiempo de Respuesta</h3>
+<p><strong>Estímulo:</strong> Un usuario registra asistencia o consulta su historial.<br>
+<strong>Contexto:</strong> Operación normal del sistema.<br>
+<strong>Respuesta:</strong> El backend responde rápidamente.<br>
+<strong>Medida:</strong> Tiempo de respuesta &lt; 2 segundos.</p>
+<h3 id="1027-rendimiento--procesos-batch">10.2.7 Rendimiento — Procesos Batch</h3>
+<p><strong>Estímulo:</strong> Un docente genera un reporte masivo.<br>
+<strong>Contexto:</strong> Alta concurrencia en la base de datos.<br>
+<strong>Respuesta:</strong> El sistema procesa sin bloquear otras operaciones.<br>
+<strong>Medida:</strong> Generación en &lt; 30 segundos.</p>
+<h3 id="1028-portabilidad--multiplataforma">10.2.8 Portabilidad — Multiplataforma</h3>
+<p><strong>Estímulo:</strong> El usuario instala la app en Android o iOS.<br>
+<strong>Contexto:</strong> App desarrollada con tecnología multiplataforma.<br>
+<strong>Respuesta:</strong> Funcionalidad equivalente en ambas plataformas.<br>
+<strong>Medida:</strong> 100% de funcionalidades críticas disponibles.</p>
+<h3 id="1029-usabilidad--aprendizaje">10.2.9 Usabilidad — Aprendizaje</h3>
+<p><strong>Estímulo:</strong> Un nuevo usuario accede por primera vez.<br>
+<strong>Contexto:</strong> UI intuitiva.<br>
+<strong>Respuesta:</strong> El usuario aprende rápidamente a navegar.<br>
+<strong>Medida:</strong> Tiempo de aprendizaje &lt; 10 minutos.</p>
+<h3 id="10210-usabilidad--multilenguaje">10.2.10 Usabilidad — Multilenguaje</h3>
+<p><strong>Estímulo:</strong> El usuario cambia de idioma.<br>
+<strong>Contexto:</strong> Interfaz con soporte ES/EN.<br>
+<strong>Respuesta:</strong> La UI se actualiza dinámicamente.<br>
+<strong>Medida:</strong> Cambio aplicado en &lt; 1 segundo.</p>
+<h3 id="10211-accesibilidad--wcag-21">10.2.11 Accesibilidad — WCAG 2.1</h3>
+<p><strong>Estímulo:</strong> Un usuario con limitaciones visuales usa la app.<br>
+<strong>Contexto:</strong> UI accesible.<br>
+<strong>Respuesta:</strong> Compatibilidad con lectores de pantalla y alto contraste.<br>
+<strong>Medida:</strong> Cumplimiento AA de WCAG 2.1.</p>
+<h3 id="10212-mantenibilidad--arquitectura-modular">10.2.12 Mantenibilidad — Arquitectura Modular</h3>
+<p><strong>Estímulo:</strong> Se requiere añadir un nuevo módulo (ej. biometría).<br>
+<strong>Contexto:</strong> Arquitectura basada en módulos.<br>
+<strong>Respuesta:</strong> Integración sin afectar módulos existentes.<br>
+<strong>Medida:</strong> Impacto &lt; 20% en componentes previos.</p>
+<h3 id="10213-mantenibilidad--documentaci%C3%B3n">10.2.13 Mantenibilidad — Documentación</h3>
+<p><strong>Estímulo:</strong> Se actualiza un componente backend.<br>
+<strong>Contexto:</strong> Repositorio con documentación centralizada.<br>
+<strong>Respuesta:</strong> El equipo actualiza los documentos.<br>
+<strong>Medida:</strong> Documentación actualizada &lt; 24h después del cambio.</p>
+<h3 id="10214-operatividad--manejo-de-incidencias">10.2.14 Operatividad — Manejo de Incidencias</h3>
+<p><strong>Estímulo:</strong> Se produce un error crítico en producción.<br>
+<strong>Contexto:</strong> Sistema monitoreado con alertas.<br>
+<strong>Respuesta:</strong> El equipo atiende y resuelve la falla.<br>
+<strong>Medida:</strong> Resolución &lt; 48 horas.</p>
+<h3 id="10215-correctitud--procesamiento-de-registros">10.2.15 Correctitud — Procesamiento de Registros</h3>
+<p><strong>Estímulo:</strong> Se reciben miles de registros de asistencia simultáneos.<br>
+<strong>Contexto:</strong> Sistema con colas de procesamiento.<br>
+<strong>Respuesta:</strong> Se procesan sin pérdida.<br>
+<strong>Medida:</strong> 99% de registros procesados correctamente.</p>
+<h3 id="10216-fiabilidad--backups-autom%C3%A1ticos">10.2.16 Fiabilidad — Backups Automáticos</h3>
+<p><strong>Estímulo:</strong> Se ejecuta un respaldo diario.<br>
+<strong>Contexto:</strong> Base de datos con snapshots programados.<br>
+<strong>Respuesta:</strong> Backup sin afectar la operación.<br>
+<strong>Medida:</strong> Respaldo cada 24h sin downtime.</p>
+<h2 id="103-quality-tree">10.3 Quality Tree</h2>
+<pre class="hljs"><code><div>Utility
+ ├── Seguridad
+ │    ├── Comunicación segura
+ │    │     ├── Escenario 10.2.3: Todo tráfico debe usar HTTPS + TLS 1.3.
+ │    │     └── Escenario 10.2.5: Cumplimiento GDPR / Habeas Data.
+ │    ├── Autenticación y Autorización
+ │    │     └── Escenario 10.2.4: Validación con JWT/OAuth2 en cada solicitud.
+ │    └── Integridad de datos
+ │          └── Escenario 10.2.15: 99% de registros procesados sin pérdida.
+ │
+ ├── Rendimiento
+ │    ├── Tiempo de respuesta
+ │    │     └── Escenario 10.2.6: Registros y consultas &lt; 2 segundos.
+ │    ├── Procesamiento masivo
+ │    │     └── Escenario 10.2.7: Reportes masivos &lt; 30 segundos.
+ │    └── Escalabilidad
+ │          └── Escenario 10.2.2: Soporte a 5000 usuarios concurrentes.
+ │
+ ├── Disponibilidad
+ │    ├── Disponibilidad del servicio
+ │    │     └── Escenario 10.2.1: Disponibilidad del 99.5% mensual.
+ │    └── Tolerancia a fallas
+ │          └── Escenario 10.2.16: Backups automáticos cada 24h sin afectar operación.
+ │
+ ├── Usabilidad
+ │    ├── Facilidad de aprendizaje
+ │    │     └── Escenario 10.2.9: Usuario aprende en &lt; 10 minutos.
+ │    ├── Accesibilidad
+ │    │     └── Escenario 10.2.11: Cumplimiento WCAG 2.1.
+ │    └── Internacionalización
+ │          └── Escenario 10.2.10: Soporte mínimo ES/EN.
+ │
+ ├── Portabilidad
+ │    ├── Multiplataforma
+ │    │     └── Escenario 10.2.8: Aplicación disponible en Android/iOS desde el MVP.
+ │    └── Compatibilidad web
+ │          └── (implícito) Navegadores modernos como requisito funcional.
+ │
+ └── Mantenibilidad / Evolutividad
+      ├── Arquitectura modular
+      │     └── Escenario 10.2.12: Uso de Clean Architecture / Microservicios.
+      ├── Documentación viva
+      │     └── Escenario 10.2.13: Documentación técnica actualizada.
+      └── Gestión de incidencias
+            └── Escenario 10.2.14: Incidencias críticas resueltas &lt; 48h.
+</div></code></pre>
+<h1 id="11-riesgos-y-deuda-t%C3%A9cnica">11. Riesgos y deuda técnica</h1>
+<h2 id="111-riesgos-principales">11.1 Riesgos principales</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Tipo</th>
+<th>Descripción</th>
+<th>Impacto</th>
+<th>Probabilidad</th>
+<th>Mitigación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>Técnico</td>
+<td>Dependencia del ecosistema Oracle APEX</td>
+<td>Alto</td>
+<td>Medio</td>
+<td>Diseñar el backend con interfaces REST desacopladas, permitiendo migrar en el futuro a otra base de datos.</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Conectividad</td>
+<td>Usuarios operan sin conexión constante</td>
+<td>Alto</td>
+<td>Alto</td>
+<td>Implementar almacenamiento local y sincronización automática.</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>Rendimiento</td>
+<td>Sobrecarga en Oracle APEX con múltiples usuarios concurrentes</td>
+<td>Alto</td>
+<td>Medio</td>
+<td>Monitoreo y escalado horizontal del servidor APEX.</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>Seguridad</td>
+<td>Exposición de credenciales o tokens JWT</td>
+<td>Alto</td>
+<td>Bajo</td>
+<td>Cifrado HTTPS, expiración de tokens y validación de origen.</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Mantenimiento</td>
+<td>Falta de experiencia del equipo con APEX</td>
+<td>Medio</td>
+<td>Medio</td>
+<td>Capacitación técnica y documentación interna continua.</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>UX/Usabilidad</td>
+<td>Complejidad en la interfaz móvil para usuarios nuevos</td>
+<td>Medio</td>
+<td>Alto</td>
+<td>Pruebas de usabilidad y diseño centrado en el usuario.</td>
+</tr>
+<tr>
+<td>R7</td>
+<td>Integración</td>
+<td>Fallos en la sincronización de datos entre móvil y backend</td>
+<td>Alto</td>
+<td>Medio</td>
+<td>Manejo de colas y reintentos automáticos.</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>Operativo</td>
+<td>Pérdida temporal de disponibilidad del servidor APEX</td>
+<td>Alto</td>
+<td>Bajo</td>
+<td>Configurar backups automáticos y redundancia en la nube.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="112-trade-offs-compromisos-arquitect%C3%B3nicos">11.2 Trade-offs (compromisos arquitectónicos)</h2>
+<table>
+<thead>
+<tr>
+<th>Decisión</th>
+<th>Beneficio</th>
+<th>Costo o riesgo asociado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uso de <strong>Oracle APEX</strong></td>
+<td>Simplifica desarrollo y despliegue</td>
+<td>Dependencia del proveedor y menor control sobre la infraestructura</td>
+</tr>
+<tr>
+<td><strong>Arquitectura modular</strong></td>
+<td>Mantenibilidad y escalabilidad</td>
+<td>Mayor complejidad inicial y necesidad de coordinación entre módulos</td>
+</tr>
+<tr>
+<td><strong>Registro offline con sincronización diferida</strong></td>
+<td>Mejora la experiencia del usuario en campo</td>
+<td>Aumenta la lógica de control y los posibles conflictos de sincronización</td>
+</tr>
+<tr>
+<td><strong>Comunicación REST/JSON</strong></td>
+<td>Simplicidad e interoperabilidad</td>
+<td>Menor eficiencia comparado con binarios (p. ej., gRPC)</td>
+</tr>
+<tr>
+<td><strong>Autenticación JWT</strong></td>
+<td>Escalable y moderna</td>
+<td>Requiere gestión de expiración y renovación de tokens</td>
+</tr>
+<tr>
+<td><strong>UI híbrida (Flutter)</strong></td>
+<td>Multiplataforma y rápida de desarrollar</td>
+<td>Posibles limitaciones de rendimiento frente a apps nativas</td>
+</tr>
+<tr>
+<td><strong>Uso de HTTPS obligatorio</strong></td>
+<td>Seguridad y cumplimiento normativo</td>
+<td>Sobrecarga mínima en la latencia de red</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="113-evaluaci%C3%B3n-de-impacto-residual">11.3 Evaluación de impacto residual</h2>
+<p>Tras aplicar las estrategias de mitigación, los riesgos más relevantes que permanecen son:</p>
+<ul>
+<li><strong>R2 (Conectividad intermitente):</strong> inherente al entorno operativo de los usuarios.</li>
+<li><strong>R3 (Escalabilidad de APEX):</strong> dependerá de la infraestructura disponible.</li>
+<li><strong>R7 (Sincronización):</strong> requiere pruebas exhaustivas antes del despliegue final.</li>
+</ul>
+<p>El equipo debe priorizar el monitoreo de estos tres riesgos durante la fase de pruebas y operación inicial.</p>
+<h1 id="12-glosario">12. Glosario</h1>
+<table>
+<thead>
+<tr>
+<th>Término / Acrónimo</th>
+<th>Definición</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Asistencia</strong></td>
+<td>Registro que indica la presencia o ausencia de un empleado en su jornada laboral o actividad asignada. Incluye hora de entrada, salida y estado.</td>
+</tr>
+<tr>
+<td><strong>Empleado</strong></td>
+<td>Usuario final de la aplicación móvil encargado de registrar su asistencia.</td>
+</tr>
+<tr>
+<td><strong>Supervisor / Administrador</strong></td>
+<td>Usuario con permisos especiales para revisar reportes, validar asistencias y gestionar incidencias.</td>
+</tr>
+<tr>
+<td><strong>Registro de Asistencia</strong></td>
+<td>Entrada generada cuando un empleado marca su llegada o salida desde la app móvil.</td>
+</tr>
+<tr>
+<td><strong>Aplicación Móvil</strong></td>
+<td>Interfaz utilizada por los empleados para registrar asistencia y consultar su historial. Desarrollada con Flutter.</td>
+</tr>
+<tr>
+<td><strong>Portal Administrativo (Oracle APEX)</strong></td>
+<td>Plataforma web donde se gestionan los usuarios, horarios, servicios y reportes.</td>
+</tr>
+<tr>
+<td><strong>Sincronización</strong></td>
+<td>Proceso automático que actualiza los registros locales del dispositivo con la base de datos central en Oracle APEX cuando hay conexión.</td>
+</tr>
+<tr>
+<td><strong>Modo Offline</strong></td>
+<td>Funcionalidad que permite continuar registrando asistencias sin conexión a internet, almacenando temporalmente los datos.</td>
+</tr>
+<tr>
+<td><strong>Sesión</strong></td>
+<td>Periodo en el que un usuario se encuentra autenticado dentro del sistema. Permite realizar acciones seguras sin necesidad de volver a iniciar sesión.</td>
+</tr>
+<tr>
+<td><strong>Validación de Identidad</strong></td>
+<td>Proceso que garantiza que el usuario que registra asistencia corresponde al empleado autenticado.</td>
+</tr>
+<tr>
+<td><strong>Control de Horario</strong></td>
+<td>Definición de franjas horarias válidas para los registros de asistencia según políticas internas.</td>
+</tr>
+<tr>
+<td><strong>Evento de Asistencia</strong></td>
+<td>Acción específica dentro del sistema (entrada, salida, permiso o ausencia).</td>
+</tr>
+<tr>
+<td><strong>Incidencia</strong></td>
+<td>Irregularidad detectada, como registros fuera de horario o fallos en sincronización.</td>
+</tr>
+<tr>
+<td><strong>Servicio</strong></td>
+<td>Unidad funcional o módulo del sistema que agrupa procesos o tareas específicas, como gestión de usuarios, reportes o control de asistencia.</td>
+</tr>
+<tr>
+<td><strong>Base de Datos Central (Oracle APEX)</strong></td>
+<td>Repositorio donde se almacena toda la información del sistema (usuarios, servicios, asistencias e incidencias).</td>
+</tr>
+<tr>
+<td><strong>API REST</strong></td>
+<td>Interfaz de comunicación entre la aplicación móvil y Oracle APEX, que permite el intercambio de datos en formato JSON.</td>
+</tr>
+<tr>
+<td><strong>Token de Sesión</strong></td>
+<td>Identificador seguro que mantiene activa la autenticación del usuario durante su sesión.</td>
+</tr>
+<tr>
+<td><strong>Reporte de Asistencia</strong></td>
+<td>Vista o documento que consolida la información de los registros de asistencia por empleado o por fecha.</td>
+</tr>
+<tr>
+<td><strong>Notificación Push</strong></td>
+<td>Mensaje enviado al dispositivo móvil para recordar registros pendientes o comunicar novedades.</td>
+</tr>
+<tr>
+<td><strong>Usuario Activo</strong></td>
+<td>Empleado con credenciales válidas y estado habilitado en el sistema.</td>
+</tr>
+<tr>
+<td><strong>Integridad de Datos</strong></td>
+<td>Garantía de que la información almacenada y sincronizada no ha sido alterada ni duplicada.</td>
+</tr>
+<tr>
+<td><strong>Auditoría de Asistencia</strong></td>
+<td>Proceso de revisión de los registros históricos para validar su consistencia y detectar errores o fraudes.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h1 id="13-evaluaci%C3%B3n-de-la-arquitectura-metodo-atam">13. Evaluación de la Arquitectura: Metodo ATAM</h1>
+<h2 id="131-prop%C3%B3sito-del-an%C3%A1lisis">13.1 Propósito del Análisis</h2>
+<p>El propósito de este análisis ATAM (Architecture Tradeoff Analysis Method) es evaluar si la arquitectura del sistema de registro de asistencia soporta adecuadamente los atributos de calidad definidos, priorizando seguridad, disponibilidad, rendimiento, usabilidad, mantenibilidad y fiabilidad.</p>
+<hr>
+<h2 id="132-stakeholders-principales">13.2 Stakeholders Principales</h2>
+<ul>
+<li>Estudiantes</li>
+<li>Docentes</li>
+<li>Administradores académicos</li>
+<li>Equipo de desarrollo</li>
+<li>Dependencia del Ecosistema Universitario de la Universidad Tecnológica de Bolivar (ECO UTB)</li>
+</ul>
+<hr>
+<h2 id="133-atributos-de-calidad-evaluados">13.3 Atributos de Calidad Evaluados</h2>
+<ul>
+<li>Seguridad</li>
+<li>Rendimiento</li>
+<li>Disponibilidad</li>
+<li>Usabilidad</li>
+<li>Mantenibilidad</li>
+<li>Fiabilidad</li>
+<li>Portabilidad</li>
+</ul>
+<hr>
+<h2 id="134-escenarios-de-atributos-de-calidad">13.4 Escenarios de Atributos de Calidad</h2>
+<h3 id="tipos-de-escenarios">Tipos de Escenarios</h3>
+<ul>
+<li>Escenarios de uso normal</li>
+<li>Escenarios de carga / estrés</li>
+<li>Escenarios de fallo</li>
+<li>Escenarios de seguridad</li>
+<li>Escenarios de mantenimiento</li>
+</ul>
+<hr>
+<h2 id="135-priorizaci%C3%B3n-de-escenarios">13.5 Priorización de Escenarios</h2>
+<table>
+<thead>
+<tr>
+<th>Escenario</th>
+<th>Prioridad</th>
+<th>Justificación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5.000 usuarios concurrentes</td>
+<td>Alta</td>
+<td>Picos al inicio de clases</td>
+</tr>
+<tr>
+<td>Cifrado TLS + autenticación Microsoft Entra ID</td>
+<td>Alta</td>
+<td>Información personal sensible</td>
+</tr>
+<tr>
+<td>Tiempo de respuesta &lt; 2s</td>
+<td>Alta</td>
+<td>UX y continuidad académica</td>
+</tr>
+<tr>
+<td>Disponibilidad 99.5%</td>
+<td>Alta</td>
+<td>Servicio crítico institucional</td>
+</tr>
+<tr>
+<td>Correctitud del 99% en registros</td>
+<td>Alta</td>
+<td>Impacta control académico</td>
+</tr>
+<tr>
+<td>Portabilidad Android/iOS</td>
+<td>Media</td>
+<td>Impacto en adopción estudiantil</td>
+</tr>
+<tr>
+<td>Accesibilidad WCAG 2.1</td>
+<td>Media</td>
+<td>Requisitos institucionales</td>
+</tr>
+<tr>
+<td>Backups automáticos</td>
+<td>Media</td>
+<td>Fiabilidad operativa</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="136-an%C3%A1lisis-de-la-arquitectura-atam">13.6 Análisis de la Arquitectura (ATAM)</h2>
+<h3 id="1361-%C3%A1rbol-de-utilidad--sensibilidades">13.6.1 Árbol de Utilidad — Sensibilidades</h3>
+<h4 id="seguridad">Seguridad</h4>
+<ul>
+<li><strong>Sensible:</strong> API Gateway, autenticación</li>
+<li><strong>Impacto:</strong> Control de acceso e integridad del sistema</li>
+</ul>
+<h4 id="rendimiento">Rendimiento</h4>
+<ul>
+<li><strong>Sensible:</strong> Base de datos, índices, cache, colas</li>
+<li><strong>Impacto:</strong> Capacidad para manejar picos de carga</li>
+</ul>
+<h4 id="disponibilidad">Disponibilidad</h4>
+<ul>
+<li><strong>Sensible:</strong> Balanceador, replicas DB, health checks</li>
+<li><strong>Impacto:</strong> Continuidad del servicio</li>
+</ul>
+<h4 id="mantenibilidad">Mantenibilidad</h4>
+<ul>
+<li><strong>Sensible:</strong> Modularidad / Microservicios</li>
+<li><strong>Impacto:</strong> Costo del cambio</li>
+</ul>
+<h4 id="fiabilidad">Fiabilidad</h4>
+<ul>
+<li><strong>Sensible:</strong> Backups, restauración, mensajería</li>
+<li><strong>Impacto:</strong> Recuperación ante fallos</li>
+</ul>
+<hr>
+<h2 id="137-identificaci%C3%B3n-de-riesgos-no-riesgos-sensibilidades-y-tradeoffs">13.7 Identificación de Riesgos, No-riesgos, Sensibilidades y Tradeoffs</h2>
+<h3 id="1371-riesgos-identificados">13.7.1 Riesgos Identificados</h3>
+<table>
+<thead>
+<tr>
+<th>Riesgo</th>
+<th>Descripción</th>
+<th>Impacto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>Base de datos monolítica no escala a 5.000 usuarios concurrentes</td>
+<td>Alto</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Falta de API Gateway → autenticación inconsistente</td>
+<td>Alto</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>Reportes batch pueden bloquear operaciones en horas pico</td>
+<td>Medio</td>
+</tr>
+<tr>
+<td>R4</td>
+<td>App multiplataforma puede reducir rendimiento nativo</td>
+<td>Medio</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>Ausencia de monitoreo efectivo</td>
+<td>Alto</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="1372-no-riesgos">13.7.2 No-Riesgos</h3>
+<table>
+<thead>
+<tr>
+<th>No-Riesgo</th>
+<th>Justificación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NR1</td>
+<td>TLS 1.3 garantiza cifrado robusto</td>
+</tr>
+<tr>
+<td>NR2</td>
+<td>Microsoft Entra ID es un estándar moderno y seguro</td>
+</tr>
+<tr>
+<td>NR3</td>
+<td>Arquitectura modular facilita nueva funcionalidad</td>
+</tr>
+<tr>
+<td>NR4</td>
+<td>Uso de colas evita pérdida de registros</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="1373-sensibilidades">13.7.3 Sensibilidades</h3>
+<table>
+<thead>
+<tr>
+<th>Sensibilidad</th>
+<th>Implicación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1: Motor de base de datos</td>
+<td>Afecta rendimiento y disponibilidad</td>
+</tr>
+<tr>
+<td>S2: Gateway de autenticación</td>
+<td>Afecta seguridad y control de acceso</td>
+</tr>
+<tr>
+<td>S3: Escalado horizontal</td>
+<td>Controla simultaneidad y carga</td>
+</tr>
+<tr>
+<td>S4: Modularidad</td>
+<td>Impacta mantenibilidad</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="1374-tradeoffs">13.7.4 Tradeoffs</h3>
+<table>
+<thead>
+<tr>
+<th>Tradeoff</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1: Rendimiento vs Seguridad</td>
+<td>Validaciones agregan latencia</td>
+</tr>
+<tr>
+<td>T2: Portabilidad vs Rendimiento</td>
+<td>Multiplataforma reduce optimización</td>
+</tr>
+<tr>
+<td>T3: Mantenibilidad vs Complejidad</td>
+<td>Microservicios aumentan complejidad</td>
+</tr>
+<tr>
+<td>T4: Disponibilidad vs Costos</td>
+<td>Redundancia y SLA altos aumentan costos</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="138-resultados-finales-atam">13.8 Resultados Finales ATAM</h2>
+<h3 id="1381-conclusiones">13.8.1 Conclusiones</h3>
+<ul>
+<li>La arquitectura cumple con los atributos de calidad críticos.</li>
+<li>El mayor riesgo identificado es el <strong>escalamiento de la base de datos</strong>.</li>
+<li>Seguridad está bien encaminada con JWT/TLS pero requiere API Gateway.</li>
+<li>La modularidad apoya la mantenibilidad futura del sistema.</li>
+<li>Se necesitan mecanismos de monitoreo y autoscaling para cumplir escenarios de carga.</li>
+</ul>
+<hr>
+<h3 id="1382-recomendaciones-finales">13.8.2 Recomendaciones Finales</h3>
+<ol>
+<li>Implementar API Gateway (Oracle API Gateway).</li>
+<li>Optimizar la base de datos o dividirla en particiones/módulos.</li>
+<li>Agregar caching distribuido (Redis).</li>
+<li>Incorporar colas de mensajería (RabbitMQ, Kafka).</li>
+<li>Implementar monitoreo (Prometheus, Grafana).</li>
+<li>Automatizar backups y pruebas de recuperación.</li>
+<li>Realizar pruebas de estrés para validar concurrencia real.</li>
+<li>Mantener registros de decisiones arquitectónicas (ADRs).</li>
+</ol>
+<hr>
+
+</body>
+</html>

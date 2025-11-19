@@ -14,6 +14,12 @@ Revisión de la plantilla: 7.0 ES (basada en asciidoc), Enero 2017
 arquitectura arc42, <https://www.arc42.org>. Creada por Dr. Peter
 Hruschka y Dr. Gernot Starke.
 
+Autores:
+
+-**Jorge Mario Benavides Angulo**
+-**William David Lozano Julio**
+-**Andres Felipe Rubiano Marrugo**
+
 # 1. Introducción y Metas
 
 Este apartado describe los requisitos relevantes y las fuerzas impulsoras que los arquitectos de software y el equipo de desarrollo deben considerar. Incluye los **objetivos de negocio**, las **funcionalidades esenciales y requisitos funcionales del sistema**, los **objetivos de calidad de la arquitectura** y los **stakeholders con sus expectativas**. Estos serán los objetivos establecidos para este sistema:
@@ -32,10 +38,10 @@ Este apartado describe los requisitos relevantes y las fuerzas impulsoras que lo
 
 ### 1.2.1 Actores principales
 
-- **Estudiantes / Empleados** → Registran su asistencia.
-- **Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
-- **Administradores** → Configuran horarios, grupos, usuarios y reglas.  
-- **Sistema (API / Backend)** → Valida, procesa y guarda los datos.
+-**Estudiantes / Empleados** → Registran su asistencia.
+-**Docentes / Jefes / Supervisores** → Validan, consultan reportes y gestionan asistencia.  
+-**Administradores** → Configuran horarios, grupos, usuarios y reglas.  
+-**Sistema (API / Backend)** → Valida, procesa y guarda los datos.
 
 ### 1.2.2 Requerimientos Funcionales
 
@@ -638,68 +644,76 @@ flowchart TB
 ## 8.1 Seguridad
 
 ### Objetivo
+
 Asegurar la integridad, confidencialidad y disponibilidad de la información manejada por el sistema.
 
 ### Estrategias
-- **Autenticación:** basada en tokens (JWT) emitidos por Oracle APEX.
-- **Autorización:** control de acceso por rol (administrador, empleado, visitante).
-- **Transporte seguro:** todas las comunicaciones se realizan mediante **HTTPS (TLS 1.2 o superior)**.
-- **Cifrado en reposo:** Oracle APEX usa mecanismos nativos de cifrado de datos sensibles.
-- **Gestión de sesiones:** los tokens expiran automáticamente para prevenir uso indebido.
+
+-**Autenticación:** basada en tokens (JWT) emitidos por Oracle APEX.
+-**Autorización:** control de acceso por rol (administrador, empleado, visitante).
+-**Transporte seguro:** todas las comunicaciones se realizan mediante **HTTPS (TLS 1.2 o superior)**.
+-**Cifrado en reposo:** Oracle APEX usa mecanismos nativos de cifrado de datos sensibles.
+-**Gestión de sesiones:** los tokens expiran automáticamente para prevenir uso indebido.
 
 ---
 
 ## 8.2 Gestión de datos
 
 ### Principios
-- **Fuente única de verdad:** Oracle APEX actúa como el repositorio maestro de la información.
-- **Almacenamiento temporal:** la app móvil guarda registros pendientes de sincronizar en almacenamiento local.
-- **Sincronización confiable:** el componente de sincronización garantiza consistencia entre registros locales y remotos.
-- **Control de versiones de datos:** cada registro posee marca de tiempo y estado (pendiente, sincronizado, error).
+
+-**Fuente única de verdad:** Oracle APEX actúa como el repositorio maestro de la información.
+-**Almacenamiento temporal:** la app móvil guarda registros pendientes de sincronizar en almacenamiento local.
+-**Sincronización confiable:** el componente de sincronización garantiza consistencia entre registros locales y remotos.
+-**Control de versiones de datos:** cada registro posee marca de tiempo y estado (pendiente, sincronizado, error).
 
 ---
 
 ## 8.3 Manejo de errores y logging
 
 ### En la aplicación móvil
-- Registro de eventos críticos (errores, sincronizaciones fallidas).
-- Mensajes claros para el usuario final sin lenguaje técnico.
-- Envío opcional de logs al backend en la próxima conexión.
+
+-Registro de eventos críticos (errores, sincronizaciones fallidas).
+-Mensajes claros para el usuario final sin lenguaje técnico.
+-Envío opcional de logs al backend en la próxima conexión.
 
 ### En el servidor (Oracle APEX)
-- Auditoría automática de operaciones.
-- Registro de intentos de autenticación fallidos.
-- Seguimiento de solicitudes REST y respuestas.
+
+-Auditoría automática de operaciones.
+-Registro de intentos de autenticación fallidos.
+-Seguimiento de solicitudes REST y respuestas.
 
 ---
 
 ## 8.4 Usabilidad
 
 ### Principios de diseño
-- **Diseño adaptable:** interfaz optimizada para diferentes tamaños de pantalla.
-- **Feedback inmediato:** confirmación visual al registrar o sincronizar asistencia.
-- **Accesibilidad:** contraste adecuado y mensajes simples.
-- **Prevención de errores:** validación previa de entradas antes de enviarlas.
+
+-**Diseño adaptable:** interfaz optimizada para diferentes tamaños de pantalla.
+-**Feedback inmediato:** confirmación visual al registrar o sincronizar asistencia.
+-**Accesibilidad:** contraste adecuado y mensajes simples.
+-**Prevención de errores:** validación previa de entradas antes de enviarlas.
 
 ---
 
 ## 8.5 Escalabilidad y rendimiento
 
 ### Estrategias
-- Oracle APEX puede desplegarse en entornos escalables en la nube.
-- Balanceo de carga horizontal si aumenta la demanda.
-- Caching de datos frecuentemente consultados (por ejemplo, historial reciente).
-- Operaciones asíncronas en la app móvil para evitar bloqueos del usuario.
+
+-Oracle APEX puede desplegarse en entornos escalables en la nube.
+-Balanceo de carga horizontal si aumenta la demanda.
+-Caching de datos frecuentemente consultados (por ejemplo, historial reciente).
+-Operaciones asíncronas en la app móvil para evitar bloqueos del usuario.
 
 ---
 
 ## 8.6 Mantenibilidad
 
 ### Prácticas aplicadas
-- **Arquitectura modular:** facilita agregar o reemplazar componentes.
-- **Versionamiento:** control de versiones mediante GitHub.
-- **CI/CD:** flujos de integración y despliegue continuo para la app y el backend.
-- **Documentación:** uso del modelo arc42 para estandarizar el conocimiento técnico.
+
+-**Arquitectura modular:** facilita agregar o reemplazar componentes.
+-**Versionamiento:** control de versiones mediante GitHub.
+-**CI/CD:** flujos de integración y despliegue continuo para la app y el backend.
+-**Documentación:** uso del modelo arc42 para estandarizar el conocimiento técnico.
 
 ---
 
@@ -717,22 +731,27 @@ Asegurar la integridad, confidencialidad y disponibilidad de la información man
 **Estado:** Aprobada ✅  
 
 ### Contexto
+
 El sistema requiere un backend que permita gestionar usuarios, asistencias y autenticación, con facilidad de despliegue y mantenimiento.
 
 ### Decisión
+
 Usar **Oracle APEX** como plataforma backend y base de datos principal.
 
 ### Justificación
+
 - Permite desarrollo rápido con bajo costo de mantenimiento.  
 - Integración nativa con base de datos Oracle.  
 - Incluye herramientas integradas de autenticación, API REST y reportes.  
 - Hosting disponible en la nube de Oracle o infraestructura institucional.  
 
 ### Alternativas consideradas
+
 - **Node.js + PostgreSQL:** mayor flexibilidad, pero requería mayor experiencia técnica y configuración.  
 - **Firebase:** fácil de usar, pero con limitaciones de portabilidad y dependencia del proveedor.  
 
 ### Consecuencias
+
 - Reducción de complejidad en la capa backend.  
 - Dependencia directa del ecosistema Oracle.  
 
@@ -744,22 +763,27 @@ Usar **Oracle APEX** como plataforma backend y base de datos principal.
 **Estado:** Aprobada ✅  
 
 ### Contexto
+
 Se busca mantener el código organizado, fácil de mantener y con responsabilidad clara por módulo.
 
 ### Decisión
+
 Adoptar una **arquitectura modular** basada en bloques:  
 UI/UX, Autenticación, Registro de Asistencia, Sincronización, Almacenamiento, y Utilitarios.
 
 ### Justificación
+
 - Favorece mantenibilidad y escalabilidad.  
 - Permite equipos de trabajo paralelos por módulo.  
 - Facilita pruebas unitarias y despliegues independientes.
 
 ### Alternativas consideradas
+
 - **Arquitectura monolítica:** más simple al inicio, pero difícil de escalar.  
 - **Microservicios completos:** excesiva complejidad para el tamaño actual del proyecto.  
 
 ### Consecuencias
+
 - Código más claro y desacoplado.  
 - Aumento leve del esfuerzo de integración.  
 
@@ -771,20 +795,25 @@ UI/UX, Autenticación, Registro de Asistencia, Sincronización, Almacenamiento, 
 **Estado:** Aprobada ✅  
 
 ### Contexto
+
 Los usuarios pueden registrar asistencia en lugares con conectividad limitada o nula.
 
 ### Decisión
+
 Permitir el **registro offline** con almacenamiento local y sincronización automática al recuperar la conexión.
 
 ### Justificación
+
 - Garantiza operatividad en campo.  
 - Mejora la experiencia del usuario.  
 - Evita pérdida de información.
 
 ### Alternativas consideradas
+
 - **Requiere conexión permanente:** más simple, pero inviable en escenarios reales.  
 
 ### Consecuencias
+
 - Necesidad de un componente de sincronización robusto.  
 - Complejidad adicional en el manejo de estados (pendiente, sincronizado, error).  
 
@@ -796,21 +825,26 @@ Permitir el **registro offline** con almacenamiento local y sincronización auto
 **Estado:** Aprobada ✅  
 
 ### Contexto
+
 Se necesita un canal de comunicación entre la aplicación móvil y Oracle APEX.
 
 ### Decisión
+
 Usar **API REST** sobre **HTTPS**, con intercambio de datos en formato **JSON**.
 
 ### Justificación
+
 - Estándar ampliamente adoptado y compatible con Flutter, Android y APEX.  
 - Facilidad de depuración y pruebas con herramientas comunes (Postman, cURL).  
 - Seguridad garantizada por TLS.
 
 ### Alternativas consideradas
+
 - **SOAP:** más robusto pero innecesariamente complejo.  
 - **gRPC:** eficiente, pero requiere librerías adicionales y configuración avanzada.  
 
 ### Consecuencias
+
 - Mayor interoperabilidad.  
 - Sencillez en la integración móvil–backend.
   
@@ -822,17 +856,21 @@ Usar **API REST** sobre **HTTPS**, con intercambio de datos en formato **JSON**.
 **Estado:** Aprobada ✅  
 
 ### Contexto
+
 Es necesario un método seguro y escalable para autenticar usuarios desde la aplicación móvil.
 
 ### Decisión
+
 Implementar autenticación basada en **tokens (JWT)** gestionados por Oracle APEX.
 
 ### Justificación
+
 - Evita manejo de sesiones persistentes.  
 - Compatible con servicios REST.  
 - Escalable a múltiples clientes.
 - 
 ### Consecuencias
+
 - Se requiere un proceso claro de emisión, expiración y renovación de tokens.  
 - Simplifica las llamadas autenticadas al backend.  
 
@@ -844,19 +882,24 @@ Implementar autenticación basada en **tokens (JWT)** gestionados por Oracle APE
 **Estado:** Aprobada ✅  
 
 ### Contexto
+
 Es necesario un método seguro y escalable para autenticar usuarios desde la aplicación móvil.
 
 ### Decisión
+
 Implementar autenticación basada en **Microsoft 365** gestionados por un dominio otorgado por la universidad.
 
 ### Justificación
+
 - Evita manejo de sesiones persistentes.  
 - Escalable a múltiples clientes.  
 
 ### Alternativas consideradas
+
 - **Sesiones tradicionales:** difíciles de manejar en dispositivos móviles.  
 
 ### Consecuencias
+
 - Se requiere un proceso claro de emisión, expiración y renovación de token.  
 - Simplifica las llamadas autenticadas al backend.  
 
@@ -874,26 +917,160 @@ Implementar autenticación basada en **Microsoft 365** gestionados por un domini
 | Disponibilidad    | El sistema debe estar disponible al menos el 99% del tiempo lectivo.        | Alta |
 | Portabilidad      | El sistema debe funcionar en dispositivos Android, iOS y navegadores modernos. | Media |
 
-## 10.2 Escenarios de Calidad
+## 10.2 (Quality Scenarios)
 
-| ID     | Descripción                                                                                          |
-|--------|------------------------------------------------------------------------------------------------------|
-| 10.2.1 | El sistema deberá garantizar **99.5% de disponibilidad** midiendo el uptime mensual del servicio.     |
-| 10.2.2 | La plataforma debe escalar horizontalmente para soportar **5.000 usuarios concurrentes** sin degradar el rendimiento. |
-| 10.2.3 | Toda comunicación entre cliente y servidor deberá estar cifrada bajo **HTTPS + TLS 1.3**.             |
-| 10.2.4 | El backend deberá validar autenticación mediante **JWT / OAuth2** en cada solicitud de usuario.       |
-| 10.2.5 | El sistema deberá cumplir con regulaciones de protección de datos (**GDPR / Habeas Data**).           |
-| 10.2.6 | El tiempo promedio de respuesta para operaciones de registro y consulta será **< 2 segundos**.        |
-| 10.2.7 | La generación de reportes masivos deberá completarse en menos de **30 segundos**.                     |
-| 10.2.8 | La aplicación móvil deberá estar disponible en **Android** y **iOS** desde el MVP.                    |
-| 10.2.9 | La interfaz deberá permitir que un nuevo usuario aprenda a usarla en máximo **10 minutos**.           |
-| 10.2.10| El sistema deberá ofrecer **soporte multilenguaje (mínimo ES/EN)** desde la interfaz principal.       |
-| 10.2.11| La aplicación deberá cumplir con los lineamientos de accesibilidad **WCAG 2.1**.                      |
-| 10.2.12| El sistema deberá estar diseñado en **arquitectura modular (Clean / Microservicios)** para facilitar mantenibilidad. |
-| 10.2.13| La documentación técnica deberá mantenerse actualizada en el repositorio oficial.                     |
-| 10.2.14| El equipo deberá resolver incidencias críticas en un tiempo menor a **48 horas**.                     |
-| 10.2.15| El sistema deberá garantizar que el **99% de los registros de asistencia** se procesen sin pérdida de datos. |
-| 10.2.16| Se deberán realizar **respaldos automáticos de la base de datos cada 24h** sin interrumpir la operación. |
+### 10.2.1 Disponibilidad — Uptime del Servicio
+
+**Estímulo:** Durante el horario lectivo, múltiples usuarios acceden simultáneamente al sistema.  
+**Contexto:** El servicio está desplegado en la nube con balanceador de carga y base de datos replicada.  
+**Respuesta:** La plataforma mantiene su operación sin interrupciones y gestiona fallas mediante failover automático.  
+**Medida:** 99.5% de disponibilidad mensual comprobable por monitoreo.
+
+### 10.2.2 Rendimiento — Usuarios Concurrentes
+
+**Estímulo:** En el inicio de clases, 5.000 usuarios intentan registrar asistencia y consultar horarios.  
+**Contexto:** El sistema opera en autoscaling horizontal en backend y base de datos optimizada.  
+**Respuesta:** El sistema procesa las solicitudes sin degradación visible.  
+**Medida:** Tiempo de respuesta < 2s con 5.000 usuarios concurrentes.
+
+### 10.2.3 Seguridad — Cifrado de Comunicaciones
+
+**Estímulo:** Un usuario envía información sensible desde la app móvil.  
+**Contexto:** Comunicación cliente-servidor.  
+**Respuesta:** Todo el tráfico se cifra mediante HTTPS/TLS y se verifica la integridad.  
+**Medida:** TLS 1.3 habilitado y pruebas OWASP sin fallas críticas.
+
+### 10.2.4 Seguridad — Autenticación
+
+**Estímulo:** Un usuario intenta acceder a recursos protegidos.  
+**Contexto:** API Gateway con autenticación basada en JWT u OAuth2.  
+**Respuesta:** El backend valida el token, verifica roles y perfiles.  
+**Medida:** 100% de solicitudes protegidas requieren token válido.
+
+### 10.2.5 Legal / Compliance — Protección de Datos
+
+**Estímulo:** El sistema almacena datos personales.  
+**Contexto:** Operación bajo regulaciones GDPR/Habeas Data.  
+**Respuesta:** Se aplican políticas de consentimiento, acceso y derecho al olvido.  
+**Medida:** Auditoría anual sin hallazgos mayores.
+
+### 10.2.6 Rendimiento — Tiempo de Respuesta
+
+**Estímulo:** Un usuario registra asistencia o consulta su historial.  
+**Contexto:** Operación normal del sistema.  
+**Respuesta:** El backend responde rápidamente.  
+**Medida:** Tiempo de respuesta < 2 segundos.
+
+### 10.2.7 Rendimiento — Procesos Batch
+
+**Estímulo:** Un docente genera un reporte masivo.  
+**Contexto:** Alta concurrencia en la base de datos.  
+**Respuesta:** El sistema procesa sin bloquear otras operaciones.  
+**Medida:** Generación en < 30 segundos.
+
+### 10.2.8 Portabilidad — Multiplataforma
+**Estímulo:** El usuario instala la app en Android o iOS.  
+**Contexto:** App desarrollada con tecnología multiplataforma.  
+**Respuesta:** Funcionalidad equivalente en ambas plataformas.  
+**Medida:** 100% de funcionalidades críticas disponibles.
+
+### 10.2.9 Usabilidad — Aprendizaje
+**Estímulo:** Un nuevo usuario accede por primera vez.  
+**Contexto:** UI intuitiva.  
+**Respuesta:** El usuario aprende rápidamente a navegar.  
+**Medida:** Tiempo de aprendizaje < 10 minutos.
+
+### 10.2.10 Usabilidad — Multilenguaje
+**Estímulo:** El usuario cambia de idioma.  
+**Contexto:** Interfaz con soporte ES/EN.  
+**Respuesta:** La UI se actualiza dinámicamente.  
+**Medida:** Cambio aplicado en < 1 segundo.
+
+### 10.2.11 Accesibilidad — WCAG 2.1
+**Estímulo:** Un usuario con limitaciones visuales usa la app.  
+**Contexto:** UI accesible.  
+**Respuesta:** Compatibilidad con lectores de pantalla y alto contraste.  
+**Medida:** Cumplimiento AA de WCAG 2.1.
+
+### 10.2.12 Mantenibilidad — Arquitectura Modular
+**Estímulo:** Se requiere añadir un nuevo módulo (ej. biometría).  
+**Contexto:** Arquitectura basada en módulos.  
+**Respuesta:** Integración sin afectar módulos existentes.  
+**Medida:** Impacto < 20% en componentes previos.
+
+### 10.2.13 Mantenibilidad — Documentación
+**Estímulo:** Se actualiza un componente backend.  
+**Contexto:** Repositorio con documentación centralizada.  
+**Respuesta:** El equipo actualiza los documentos.  
+**Medida:** Documentación actualizada < 24h después del cambio.
+
+### 10.2.14 Operatividad — Manejo de Incidencias
+**Estímulo:** Se produce un error crítico en producción.  
+**Contexto:** Sistema monitoreado con alertas.  
+**Respuesta:** El equipo atiende y resuelve la falla.  
+**Medida:** Resolución < 48 horas.
+
+### 10.2.15 Correctitud — Procesamiento de Registros
+**Estímulo:** Se reciben miles de registros de asistencia simultáneos.  
+**Contexto:** Sistema con colas de procesamiento.  
+**Respuesta:** Se procesan sin pérdida.  
+**Medida:** 99% de registros procesados correctamente.
+
+### 10.2.16 Fiabilidad — Backups Automáticos
+**Estímulo:** Se ejecuta un respaldo diario.  
+**Contexto:** Base de datos con snapshots programados.  
+**Respuesta:** Backup sin afectar la operación.  
+**Medida:** Respaldo cada 24h sin downtime.
+
+## 10.3 Quality Tree
+
+```
+Utility
+ ├── Seguridad
+ │    ├── Comunicación segura
+ │    │     ├── Escenario 10.2.3: Todo tráfico debe usar HTTPS + TLS 1.3.
+ │    │     └── Escenario 10.2.5: Cumplimiento GDPR / Habeas Data.
+ │    ├── Autenticación y Autorización
+ │    │     └── Escenario 10.2.4: Validación con JWT/OAuth2 en cada solicitud.
+ │    └── Integridad de datos
+ │          └── Escenario 10.2.15: 99% de registros procesados sin pérdida.
+ │
+ ├── Rendimiento
+ │    ├── Tiempo de respuesta
+ │    │     └── Escenario 10.2.6: Registros y consultas < 2 segundos.
+ │    ├── Procesamiento masivo
+ │    │     └── Escenario 10.2.7: Reportes masivos < 30 segundos.
+ │    └── Escalabilidad
+ │          └── Escenario 10.2.2: Soporte a 5000 usuarios concurrentes.
+ │
+ ├── Disponibilidad
+ │    ├── Disponibilidad del servicio
+ │    │     └── Escenario 10.2.1: Disponibilidad del 99.5% mensual.
+ │    └── Tolerancia a fallas
+ │          └── Escenario 10.2.16: Backups automáticos cada 24h sin afectar operación.
+ │
+ ├── Usabilidad
+ │    ├── Facilidad de aprendizaje
+ │    │     └── Escenario 10.2.9: Usuario aprende en < 10 minutos.
+ │    ├── Accesibilidad
+ │    │     └── Escenario 10.2.11: Cumplimiento WCAG 2.1.
+ │    └── Internacionalización
+ │          └── Escenario 10.2.10: Soporte mínimo ES/EN.
+ │
+ ├── Portabilidad
+ │    ├── Multiplataforma
+ │    │     └── Escenario 10.2.8: Aplicación disponible en Android/iOS desde el MVP.
+ │    └── Compatibilidad web
+ │          └── (implícito) Navegadores modernos como requisito funcional.
+ │
+ └── Mantenibilidad / Evolutividad
+      ├── Arquitectura modular
+      │     └── Escenario 10.2.12: Uso de Clean Architecture / Microservicios.
+      ├── Documentación viva
+      │     └── Escenario 10.2.13: Documentación técnica actualizada.
+      └── Gestión de incidencias
+            └── Escenario 10.2.14: Incidencias críticas resueltas < 48h.
+```
 
 # 11. Riesgos y deuda técnica
 
@@ -937,6 +1114,7 @@ Tras aplicar las estrategias de mitigación, los riesgos más relevantes que per
 El equipo debe priorizar el monitoreo de estos tres riesgos durante la fase de pruebas y operación inicial.
 
 # 12. Glosario
+
 | Término / Acrónimo | Definición |
 |--------------------|------------|
 | **Asistencia** | Registro que indica la presencia o ausencia de un empleado en su jornada laboral o actividad asignada. Incluye hora de entrada, salida y estado. |
@@ -961,5 +1139,165 @@ El equipo debe priorizar el monitoreo de estos tres riesgos durante la fase de p
 | **Usuario Activo** | Empleado con credenciales válidas y estado habilitado en el sistema. |
 | **Integridad de Datos** | Garantía de que la información almacenada y sincronizada no ha sido alterada ni duplicada. |
 | **Auditoría de Asistencia** | Proceso de revisión de los registros históricos para validar su consistencia y detectar errores o fraudes. |
+
+---
+
+# 13. Evaluación de la Arquitectura: Metodo ATAM
+
+## 13.1 Propósito del Análisis
+
+El propósito de este análisis ATAM (Architecture Tradeoff Analysis Method) es evaluar si la arquitectura del sistema de registro de asistencia soporta adecuadamente los atributos de calidad definidos, priorizando seguridad, disponibilidad, rendimiento, usabilidad, mantenibilidad y fiabilidad.
+
+---
+
+## 13.2 Stakeholders Principales
+
+- Estudiantes  
+- Docentes  
+- Administradores académicos  
+- Equipo de desarrollo  
+- Dependencia del Ecosistema Universitario de la Universidad Tecnológica de Bolivar (ECO UTB)
+
+---
+
+## 13.3 Atributos de Calidad Evaluados
+
+- Seguridad  
+- Rendimiento  
+- Disponibilidad  
+- Usabilidad  
+- Mantenibilidad  
+- Fiabilidad  
+- Portabilidad  
+
+---
+
+## 13.4 Escenarios de Atributos de Calidad
+
+### Tipos de Escenarios
+
+- Escenarios de uso normal  
+- Escenarios de carga / estrés  
+- Escenarios de fallo  
+- Escenarios de seguridad  
+- Escenarios de mantenimiento  
+
+---
+
+## 13.5 Priorización de Escenarios
+
+| Escenario | Prioridad | Justificación |
+|----------|-----------|---------------|
+| 5.000 usuarios concurrentes | Alta | Picos al inicio de clases |
+| Cifrado TLS + autenticación Microsoft Entra ID| Alta | Información personal sensible |
+| Tiempo de respuesta < 2s | Alta | UX y continuidad académica |
+| Disponibilidad 99.5% | Alta | Servicio crítico institucional |
+| Correctitud del 99% en registros | Alta | Impacta control académico |
+| Portabilidad Android/iOS | Media | Impacto en adopción estudiantil |
+| Accesibilidad WCAG 2.1 | Media | Requisitos institucionales |
+| Backups automáticos | Media | Fiabilidad operativa |
+
+---
+
+## 13.6 Análisis de la Arquitectura (ATAM)
+
+### 13.6.1 Árbol de Utilidad — Sensibilidades
+
+#### Seguridad
+
+- **Sensible:** API Gateway, autenticación  
+- **Impacto:** Control de acceso e integridad del sistema  
+
+#### Rendimiento
+
+- **Sensible:** Base de datos, índices, cache, colas  
+- **Impacto:** Capacidad para manejar picos de carga  
+
+#### Disponibilidad
+
+- **Sensible:** Balanceador, replicas DB, health checks  
+- **Impacto:** Continuidad del servicio  
+
+#### Mantenibilidad
+
+- **Sensible:** Modularidad / Microservicios  
+- **Impacto:** Costo del cambio  
+
+#### Fiabilidad
+
+- **Sensible:** Backups, restauración, mensajería  
+- **Impacto:** Recuperación ante fallos  
+
+---
+
+## 13.7 Identificación de Riesgos, No-riesgos, Sensibilidades y Tradeoffs
+
+### 13.7.1 Riesgos Identificados
+
+| Riesgo | Descripción | Impacto |
+|--------|-------------|---------|
+| R1 | Base de datos monolítica no escala a 5.000 usuarios concurrentes | Alto |
+| R2 | Falta de API Gateway → autenticación inconsistente | Alto |
+| R3 | Reportes batch pueden bloquear operaciones en horas pico | Medio |
+| R4 | App multiplataforma puede reducir rendimiento nativo | Medio |
+| R5 | Ausencia de monitoreo efectivo | Alto |
+
+---
+
+### 13.7.2 No-Riesgos
+
+| No-Riesgo | Justificación |
+|-----------|---------------|
+| NR1 | TLS 1.3 garantiza cifrado robusto |
+| NR2 | Microsoft Entra ID es un estándar moderno y seguro |
+| NR3 | Arquitectura modular facilita nueva funcionalidad |
+| NR4 | Uso de colas evita pérdida de registros |
+
+---
+
+### 13.7.3 Sensibilidades
+
+| Sensibilidad | Implicación |
+|--------------|-------------|
+| S1: Motor de base de datos | Afecta rendimiento y disponibilidad |
+| S2: Gateway de autenticación | Afecta seguridad y control de acceso |
+| S3: Escalado horizontal | Controla simultaneidad y carga |
+| S4: Modularidad | Impacta mantenibilidad |
+
+---
+
+### 13.7.4 Tradeoffs
+
+| Tradeoff | Descripción |
+|----------|-------------|
+| T1: Rendimiento vs Seguridad | Validaciones agregan latencia |
+| T2: Portabilidad vs Rendimiento | Multiplataforma reduce optimización |
+| T3: Mantenibilidad vs Complejidad | Microservicios aumentan complejidad |
+| T4: Disponibilidad vs Costos | Redundancia y SLA altos aumentan costos |
+
+---
+
+## 13.8 Resultados Finales ATAM
+
+### 13.8.1 Conclusiones
+
+- La arquitectura cumple con los atributos de calidad críticos.  
+- El mayor riesgo identificado es el **escalamiento de la base de datos**.  
+- Seguridad está bien encaminada con JWT/TLS pero requiere API Gateway.  
+- La modularidad apoya la mantenibilidad futura del sistema.  
+- Se necesitan mecanismos de monitoreo y autoscaling para cumplir escenarios de carga.  
+
+---
+
+### 13.8.2 Recomendaciones Finales
+
+1. Implementar API Gateway (Oracle API Gateway).  
+2. Optimizar la base de datos o dividirla en particiones/módulos.  
+3. Agregar caching distribuido (Redis).  
+4. Incorporar colas de mensajería (RabbitMQ, Kafka).  
+5. Implementar monitoreo (Prometheus, Grafana).  
+6. Automatizar backups y pruebas de recuperación.  
+7. Realizar pruebas de estrés para validar concurrencia real.  
+8. Mantener registros de decisiones arquitectónicas (ADRs).  
 
 ---
