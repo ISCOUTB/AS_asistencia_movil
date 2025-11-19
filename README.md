@@ -1,6 +1,7 @@
 # AS_asistencia_movil: Toma de asistencia desde APP móvil
 
 ## 📑 Tabla de Contenidos
+
 1. [Resumen](#resumen)  
 2. [Características Principales del MVP](#-características-principales-del-mvp)  
    - [Autenticación básica](#-autenticación-básica)  
@@ -10,7 +11,7 @@
    - [Notificaciones básicas](#-notificaciones-básicas)  
 3. [Soporte Docker](#-soporte-docker)  
 4. [Status del Proyecto](#-status-del-proyecto)  
-5. [Estructura del Proyecto](#-estructura-del-proyecto)  
+5. [Estructura del Proyecto](#-estructura-del-proyecto)
 6. [Equipo de Desarrollo](#-equipo-de-desarrollo)  
 
 ## Resumen
@@ -72,38 +73,21 @@ Los ambientes de desarrollo y despliegue se encontrarán contenerizados en un `D
 ## 🗂️ Estructura del Proyecto
 
 ```
-AS_ASISTENCIA_MOVIL
-│── .github/
-│ └── workflows/
-│
-│── docs/
-│ └── arc42/
-│
-│── src/
-│ ├── apex/
-│ │ ├── apex-exports/
-│ │ ├── scripts/
-│ │ ├── templates/
-│ │ └── apex.md
-│ │
-│ ├── business/
-│ │ ├── functions/
-│ │ ├── packages/
-│ │ └── procedures/
-│ │
-│ ├── data/
-│ │ ├── demo/
-│ │ ├── seeds/
-│ │ └── data.md
-│ │
-│ ├── docker/
-│ ├── persistance/
-│ ├── sequences/
-│ ├── tables/
-│ ├── triggers/
-│ └── views/
-│
-│── tests/
+.
+├─ .github/                  # Workflows y plantillas (si existen)
+├─ .gitignore
+├─ .vscode/                  # Configuración de VSCode
+├─ LICENSE
+├─ README.md                 # Este archivo
+├─ docs/                     # Documentación
+├─ requirements.txt          # Dependencias Python (si aplica)
+├─ sonar-project.properties  # Configuración SonarQube
+├─ src/
+│  ├─ README.md              # (vacío actualmente)
+│  ├─ backend/               # Código del backend (revisar)
+│  ├─ frontend/              # Código del frontend / app móvil (revisar)
+│  └─ terraform/             # Infraestructura como código (revisar)
+│── tests/                   # Tests del repo
 │ ├── integration/
 │ └── unit/
 │
@@ -114,10 +98,29 @@ AS_ASISTENCIA_MOVIL
 
 ---
 
+## Instalación y ejecución
+
+1. Clona el repositorio
+
+```bash
+git clone https://github.com/ISCOUTB/AS_asistencia_movil.git
+cd AS_asistencia_movil
+```
+
+---
+
 ## 👥 Equipo de Desarrollo
 
 - **William David Lozano Julio - T00078475** 
 - **Jorge Mario Benavides Angulo - T00077509**
 - **Andrés Felipe Rubiano Marrugo - T00077084**
+
+### Contacto
+
+- Mantenedor / organización: ISCOUTB
+
+- Issues: [URL](https://github.com/ISCOUTB/AS_asistencia_movil/issues)
+
+-Documentación Completa: [URL](https://deepwiki.com/ISCOUTB/AS_asistencia_movil)
 
 ---
