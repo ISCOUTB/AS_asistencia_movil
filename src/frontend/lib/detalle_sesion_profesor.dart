@@ -578,11 +578,55 @@ class _DetalleSesionProfesorPageState extends State<DetalleSesionProfesorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final codigoAcceso = widget.sesion['codigo_acceso'] ?? 'N/A';
+    // Obtener código de acceso de diferentes posibles campos
+    final codigoAcceso = widget.sesion['codigo_acceso']?.toString() ?? 
+                         widget.sesion['codigoAcceso']?.toString() ?? 
+                         widget.sesion['codigo']?.toString() ?? 
+                         widget.sesion['id']?.toString() ?? 'SIN_CODIGO';
+    
     final nombreSesion = widget.sesion['nombre_sesion'] ?? widget.sesion['nombreSesion'] ?? 'Sesión';
-    final fecha = widget.sesion['fecha'] ?? 'Sin fecha';
-    final horaInicio = widget.sesion['hora_inicio'] ?? widget.sesion['horaInicio'] ?? '';
-    final horaFin = widget.sesion['hora_fin'] ?? widget.sesion['horaFin'] ?? '';
+    
+    // Formatear fecha: solo el día (dd/mm/yyyy)
+    String fechaRaw = widget.sesion['fecha']?.toString() ?? '';
+    String fecha = 'Sin fecha';
+    if (fechaRaw.isNotEmpty) {
+      try {
+        // Si viene en formato ISO (2025-11-19T02:38:28Z), extraer solo la fecha
+        if (fechaRaw.contains('T')) {
+          fechaRaw = fechaRaw.split('T')[0];
+        }
+        // Convertir de yyyy-mm-dd a dd/mm/yyyy
+        final partes = fechaRaw.split('-');
+        if (partes.length == 3) {
+          fecha = '${partes[2]}/${partes[1]}/${partes[0]}';
+        } else {
+          fecha = fechaRaw;
+        }
+      } catch (e) {
+        fecha = fechaRaw.substring(0, 10);
+      }
+    }
+    
+    // Formatear horas: solo HH:MM
+    String formatearHora(String? horaRaw) {
+      if (horaRaw == null || horaRaw.isEmpty) return 'N/A';
+      try {
+        // Si viene con formato completo (2025-11-19T02:00:00Z), extraer solo la hora
+        if (horaRaw.contains('T')) {
+          horaRaw = horaRaw.split('T')[1];
+        }
+        // Tomar solo HH:MM
+        if (horaRaw.length >= 5) {
+          return horaRaw.substring(0, 5);
+        }
+        return horaRaw;
+      } catch (e) {
+        return horaRaw ?? 'N/A';
+      }
+    }
+    
+    final horaInicio = formatearHora(widget.sesion['hora_inicio']?.toString() ?? widget.sesion['horaInicio']?.toString() ?? widget.sesion['hora_inicio_sesion']?.toString());
+    final horaFin = formatearHora(widget.sesion['hora_fin']?.toString() ?? widget.sesion['horaFin']?.toString());
     final lugar = widget.sesion['lugar_sesion'] ?? widget.sesion['lugarSesion'] ?? 'Sin especificar';
 
     return Scaffold(
@@ -679,7 +723,7 @@ class _DetalleSesionProfesorPageState extends State<DetalleSesionProfesorPage> {
                   const SizedBox(height: 16),
                   _buildInfoRow(Icons.calendar_today, 'Fecha', fecha),
                   const SizedBox(height: 12),
-                  _buildInfoRow(Icons.access_time, 'Horario', '$horaInicio - $horaFin'),
+                  _buildInfoRow(Icons.access_time, 'Hora', '$horaInicio - $horaFin'),
                 ],
               ),
             ),
@@ -748,7 +792,7 @@ class _DetalleSesionProfesorPageState extends State<DetalleSesionProfesorPage> {
                   const SizedBox(height: 20),
                   // Código alfanumérico (secundario)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     decoration: BoxDecoration(
                       color: AppColors.backgroundLight,
                       borderRadius: BorderRadius.circular(12),
@@ -758,13 +802,17 @@ class _DetalleSesionProfesorPageState extends State<DetalleSesionProfesorPage> {
                       children: [
                         const Icon(Icons.vpn_key, size: 16, color: Color(0xFF64748B)),
                         const SizedBox(width: 8),
-                        Text(
-                          codigoAcceso,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 4,
-                            color: Color(0xFF1A202C),
+                        Flexible(
+                          child: Text(
+                            codigoAcceso,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                              color: Color(0xFF1A202C),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
                         const SizedBox(width: 8),

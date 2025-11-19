@@ -43,7 +43,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
   int? _idServicioSeleccionado;
   int? _idPeriodoSeleccionado;
   int _idModalidad = 1; // 1=Presencial, 2=Virtual, 3=Híbrida
-  int _idTipo = 1; // 1=Tutoría, 2=Taller, 3=Seminario
+  // int _idTipo = 1; // COMENTADO: No hay tipos válidos en BD
   int _idSemana = 1;
   DateTime _fechaSesion = DateTime.now();
   TimeOfDay _horaInicio = const TimeOfDay(hour: 14, minute: 0);
@@ -282,7 +282,7 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
       final nuevaSesion = {
         "id_servicio": _idServicioSeleccionado!,
         "id_periodo": _idPeriodoSeleccionado!,
-        "id_tipo": _idTipo,
+        // "id_tipo": _idTipo, // COMENTADO: No hay tipos válidos en la BD
         "descripcion": _descripcionController.text.isNotEmpty ? _descripcionController.text : null,
         "hora_inicio_sesion": _formatTimeOfDay(_horaInicio),
         "fecha_fin": formatearFechaParaOracle(horaFinCompleta),
@@ -654,9 +654,9 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Tipo y Modalidad
+                    // Modalidad
                     Text(
-                      'TIPO Y MODALIDAD',
+                      'MODALIDAD',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -666,23 +666,23 @@ class _CrearSesionPageState extends State<CrearSesionPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Tipo de sesión
-                    _buildDropdownField(
-                      value: _idTipo,
-                      label: 'Tipo de Sesión *',
-                      icon: Icons.category,
-                      items: const [
-                        DropdownMenuItem(value: 1, child: Text('Tutoría')),
-                        DropdownMenuItem(value: 2, child: Text('Taller')),
-                        DropdownMenuItem(value: 3, child: Text('Seminario')),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _idTipo = value!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                    // Tipo de sesión - COMENTADO: No hay tipos válidos en BD
+                    // _buildDropdownField(
+                    //   value: _idTipo,
+                    //   label: 'Tipo de Sesión *',
+                    //   icon: Icons.category,
+                    //   items: const [
+                    //     DropdownMenuItem(value: 1, child: Text('Tutoría')),
+                    //     DropdownMenuItem(value: 2, child: Text('Taller')),
+                    //     DropdownMenuItem(value: 3, child: Text('Seminario')),
+                    //   ],
+                    //   onChanged: (value) {
+                    //     setState(() {
+                    //       _idTipo = value!;
+                    //     });
+                    //   },
+                    // ),
+                    // const SizedBox(height: 16),
 
                     // Modalidad
                     _buildDropdownField(

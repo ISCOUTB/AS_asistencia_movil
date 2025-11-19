@@ -122,47 +122,51 @@ class SesionService {
   }
 
   // Validar código de acceso y obtener información de la sesión
-  // SOLUCIÓN TEMPORAL: Busca en almacenamiento local ya que el backend no tiene el campo codigo_acceso
   Future<Map<String, dynamic>?> validarCodigoAcceso(String codigo) async {
     debugPrint('🔍 Validando código de acceso: $codigo');
     
-    // 1. Buscar el ID de sesión en el almacenamiento local usando el código
-    final prefs = await SharedPreferences.getInstance();
-    final codigosGuardados = prefs.getString('codigos_acceso') ?? '{}';
-    final Map<String, dynamic> codigosLocales = jsonDecode(codigosGuardados);
-    
-    // Buscar qué ID de sesión tiene este código
-    String? idSesionEncontrado;
-    for (var entry in codigosLocales.entries) {
-      if (entry.value == codigo) {
-        idSesionEncontrado = entry.key;
-        break;
+    try {
+      // 1. Obtener todas las sesiones del backend
+      await _ensureCookies();
+      final response = await http.get(Uri.parse(baseUrl), headers: headers);
+      
+      if (response.statusCode != 200) {
+        debugPrint('❌ Error al obtener sesiones: ${response.statusCode}');
+        return null;
       }
-    }
-    
-    if (idSesionEncontrado == null) {
-      debugPrint('❌ Código no encontrado en almacenamiento local');
+
+      final decoded = jsonDecode(response.body);
+      List<dynamic> sesiones = [];
+      
+      if (decoded is Map && decoded.containsKey('items')) {
+        sesiones = decoded['items'] as List<dynamic>;
+      } else if (decoded is List) {
+        sesiones = decoded;
+      }
+
+      debugPrint('📋 Total sesiones en el backend: ${sesiones.length}');
+
+      // 2. Buscar sesión por código de acceso o por ID
+      for (var sesion in sesiones) {
+        // Comparar código de acceso si existe en el backend
+        if (sesion['codigo_acceso']?.toString() == codigo) {
+          debugPrint('✅ Sesión encontrada por codigo_acceso: ${sesion['nombre_sesion']}');
+          return sesion as Map<String, dynamic>;
+        }
+        
+        // También comparar por ID (el código puede ser el ID de la sesión)
+        if (sesion['id']?.toString() == codigo) {
+          debugPrint('✅ Sesión encontrada por ID: ${sesion['nombre_sesion']}');
+          sesion['codigo_acceso'] = codigo;
+          return sesion as Map<String, dynamic>;
+        }
+      }
+
+      debugPrint('❌ No se encontró ninguna sesión con código: $codigo');
       return null;
-    }
-    
-    debugPrint('✅ Código encontrado localmente para sesión ID: $idSesionEncontrado');
-    
-    // 2. Obtener los datos completos de la sesión desde el backend usando el ID
-    final url = Uri.parse('$baseUrl$idSesionEncontrado');
-    debugPrint('🌐 URL: $url');
-
-    final response = await http.get(url, headers: headers);
-    debugPrint('📥 Respuesta: ${response.statusCode}');
-    debugPrint('📄 Body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final sesion = jsonDecode(response.body) as Map<String, dynamic>;
-      debugPrint('✅ Sesión encontrada: ${sesion['nombre_sesion']}');
-      // Agregar el código de acceso al objeto (ya que el backend no lo devuelve)
-      sesion['codigo_acceso'] = codigo;
-      return sesion;
-    } else {
-      debugPrint('❌ Error al obtener sesión: ${response.statusCode}');
+      
+    } catch (e) {
+      debugPrint('❌ Error al validar código: $e');
       return null;
     }
   }

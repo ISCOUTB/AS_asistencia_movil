@@ -126,4 +126,50 @@ class AsistenciaService {
       throw Exception('Error al eliminar asistencia: ${response.statusCode}');
     }
   }
+
+  // GET /asistencias/ con información completa de sesiones
+  Future<List<Map<String, dynamic>>> getSesionesConAsistencias() async {
+    await _ensureCookies();
+    final response = await http.get(Uri.parse(baseUrl), headers: headers);
+
+    if (response.statusCode == 404) {
+      return []; // No hay asistencias registradas aún
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception('Error al obtener asistencias: ${response.statusCode}');
+    }
+
+    final List<dynamic> asistencias = jsonDecode(response.body);
+    
+    // Agrupar asistencias por sesión
+    final Map<int, Map<String, dynamic>> sesionesPorId = {};
+    
+    for (var asistencia in asistencias) {
+      final idSesion = asistencia['id_sesiones'];
+      
+      if (!sesionesPorId.containsKey(idSesion)) {
+        sesionesPorId[idSesion] = {
+          'id': idSesion,
+          'nombreSesion': asistencia['nombre_sesion'] ?? 'Sesión $idSesion',
+          'servicio': asistencia['nombre_servicio'] ?? 'Sin servicio',
+          'fecha': asistencia['fecha_sesion'] ?? 'N/A',
+          'horaInicio': asistencia['hora_inicio'] ?? 'N/A',
+          'horaFin': asistencia['hora_fin'] ?? 'N/A',
+          'estudiantes': [],
+        };
+      }
+      
+      // Agregar estudiante a la sesión
+      sesionesPorId[idSesion]!['estudiantes'].add({
+        'id': asistencia['id_persona'],
+        'nombre': asistencia['nombre_persona'] ?? 'Sin nombre',
+        'email': asistencia['email_persona'] ?? 'Sin email',
+        'estado': asistencia['estado'] ?? 'Ausente',
+        'fechaRegistro': asistencia['fecha_registro'],
+      });
+    }
+    
+    return sesionesPorId.values.toList();
+  }
 }

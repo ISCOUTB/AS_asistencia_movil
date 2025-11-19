@@ -8,6 +8,7 @@ class ModernBottomNav extends StatefulWidget {
   final Color primaryColor;
   final Color accentColor;
   final bool isStudent;
+  final VoidCallback? onRefresh;
 
   const ModernBottomNav({
     super.key,
@@ -16,6 +17,7 @@ class ModernBottomNav extends StatefulWidget {
     required this.primaryColor,
     required this.accentColor,
     this.isStudent = false,
+    this.onRefresh,
   });
 
   @override
@@ -291,14 +293,20 @@ class _ModernBottomNavState extends State<ModernBottomNav> with TickerProviderSt
     final innerCircleSize = context.isLandscape ? 32.0 : 36.0;
     
     return GestureDetector(
-      onTap: () {
-        // Abrir escáner QR
-        Navigator.push(
+      onTap: () async {
+        // Abrir escáner QR y esperar a que regrese
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const QRScannerScreen(),
           ),
         );
+        
+        // Cuando regrese del scanner, notificar al padre para recargar
+        if (widget.onRefresh != null) {
+          widget.onRefresh!();
+        }
+        
         // Animación del botón
         setState(() {
           _lastTappedIndex = 999;

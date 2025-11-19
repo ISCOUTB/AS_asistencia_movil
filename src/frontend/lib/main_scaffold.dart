@@ -33,6 +33,8 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
   late AnimationController _animationController;
   late AnimationController _homeAnimationController;
   final List<int> _navigationHistory = []; // Historial de navegación
+  Key _studentSesionesKey = UniqueKey(); // Clave para forzar reconstrucción
+  Key _studentAsistenciasKey = UniqueKey(); // Clave para forzar reconstrucción de asistencias
 
   // Páginas para PROFESORES: Servicios, Sesiones, Asistencias, Dashboard
   final List<Widget> _teacherPages = [
@@ -43,9 +45,9 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
   ];
 
   // Páginas para ESTUDIANTES: Sesiones, Asistencias
-  final List<Widget> _studentPages = [
-    const StudentSesionesPage(),
-    const StudentAsistenciasPage(),
+  List<Widget> get _studentPages => [
+    StudentSesionesPage(key: _studentSesionesKey),
+    StudentAsistenciasPage(key: _studentAsistenciasKey),
   ];
 
   @override
@@ -126,6 +128,13 @@ class _MainScaffoldState extends State<MainScaffold> with TickerProviderStateMix
           primaryColor: const Color(0xFF667EEA),
           accentColor: const Color(0xFF764BA2),
           isStudent: widget.isStudent,
+          onRefresh: () {
+            // Recargar AMBAS páginas: Sesiones y Asistencias
+            setState(() {
+              _studentSesionesKey = UniqueKey();
+              _studentAsistenciasKey = UniqueKey();
+            });
+          },
           onTap: (index) {
             if (index == 999) {
               _navigateToHome();

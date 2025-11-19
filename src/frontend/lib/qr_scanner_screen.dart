@@ -161,20 +161,23 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
       sesionesPendientes.add({
         'id': sesionData['id'],
         'nombre_sesion': sesionData['nombre_sesion'],
-        'fecha_sesion': sesionData['fecha_sesion'],
+        'fecha_sesion': sesionData['fecha'],
+        'hora_inicio_sesion': sesionData['hora_inicio_sesion'],
         'codigo_acceso': qrCode,
         'email_estudiante': emailEstudiante,
         'fecha_escaneo': DateTime.now().toIso8601String(),
+        'gestiona_asis': sesionData['gestiona_asis'] ?? 'S', // Incluir estado de la sesión
       });
 
       await prefs.setString(key, jsonEncode(sesionesPendientes));
 
       if (!mounted) return;
 
-      // Mostrar mensaje de éxito
+      // Mostrar mensaje de éxito con el código
       _mostrarSesionAgregada(
         sesionData['nombre_sesion'] ?? 'Sesión',
-        sesionData['fecha_sesion'] ?? '',
+        sesionData['fecha'] ?? '',
+        qrCode, // Pasar el código para mostrarlo
       );
     } catch (e) {
       if (!mounted) return;
@@ -187,7 +190,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
     }
   }
 
-  void _mostrarSesionAgregada(String nombreSesion, String fechaSesion) {
+  void _mostrarSesionAgregada(String nombreSesion, String fechaSesion, String codigo) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -205,9 +208,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
               child: const Icon(Icons.add_task, color: AppColors.universityBlue, size: 24),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Sesión Agregada',
-              style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold, fontSize: 18),
+            const Expanded(
+              child: Text(
+                'Sesión Agregada',
+                style: TextStyle(color: Color(0xFF1A1A1A), fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ),
           ],
         ),
@@ -244,6 +249,60 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
               ),
             ),
             const SizedBox(height: 12),
+            // Mostrar código de acceso
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.green.shade200, width: 1.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.vpn_key, color: Colors.green.shade700, size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Código de acceso:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            codigo,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                              color: Color(0xFF1A1A1A),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -256,7 +315,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with WidgetsBindingOb
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Ve a "Asistencias" e ingresa el código de verificación para confirmar tu registro',
+                      'Guarda este código. Lo necesitarás para confirmar tu asistencia',
                       style: TextStyle(
                         fontSize: 12,
                         color: Color(0xFF1A1A1A),

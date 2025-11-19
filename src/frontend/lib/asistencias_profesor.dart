@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'widgets/custom_header.dart';
 import 'utils/responsive_utils.dart';
-import 'api/routes/asistencia_service.dart';
-import 'detalle_sesion_profesor.dart';
+import 'api/routes/asistencia_sesion_service.dart';
 
 class AppColors {
   static const universityBlue = Color.fromARGB(255, 36, 118, 212);
@@ -179,18 +178,8 @@ class _TeacherAsistenciasPageState extends State<TeacherAsistenciasPage> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            // Navegar a la pantalla de detalle
-            final resultado = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DetalleSesionProfesorPage(sesion: sesion),
-              ),
-            );
-            
-            // Si se eliminó la sesión, recargar lista
-            if (resultado == true) {
-              _cargarSesiones();
-            }
+            // Mostrar modal con estudiantes de la sesión
+            _mostrarEstudiantesSesion(context, sesion);
           },
           borderRadius: BorderRadius.circular(borderRadius),
           splashColor: AppColors.universityBlue.withValues(alpha: 0.05),
@@ -366,7 +355,7 @@ class _TeacherAsistenciasPageState extends State<TeacherAsistenciasPage> {
     );
   }
 
-  void _mostrarModalEstudiantes(BuildContext context, Map<String, dynamic> sesion) {
+  void _mostrarEstudiantesSesion(BuildContext context, Map<String, dynamic> sesion) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

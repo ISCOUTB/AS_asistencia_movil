@@ -58,6 +58,8 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
       final userSession = context.read<UserSessionProvider>();
       final email = userSession.email;
 
+      debugPrint('🔍 Cargando sesiones confirmadas para: $email');
+
       if (email.isEmpty) {
         setState(() {
           _isLoading = false;
@@ -72,6 +74,9 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
 
       final asistencias = await asistenciaService.getAsistenciasPorEstudiante(email);
       
+      debugPrint('📊 Asistencias obtenidas: ${asistencias.length}');
+      debugPrint('📋 Detalles: ${jsonEncode(asistencias)}');
+      
       // Obtener sesiones activas para mostrar solo las vigentes
       final sesionService = SesionService(
         'https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/sesiones/',
@@ -81,6 +86,8 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
       
       // Filtrar solo las sesiones donde el estudiante tiene asistencia registrada
       final idsConAsistencia = asistencias.map((a) => a['id_sesion']).toSet();
+      
+      debugPrint('🎯 IDs con asistencia: $idsConAsistencia');
       
       final sesionesVigentesConAsistencia = todasSesiones
           .where((s) => 
@@ -107,12 +114,14 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
             };
           }).toList();
 
+      debugPrint('✅ Sesiones confirmadas a mostrar: ${sesionesVigentesConAsistencia.length}');
+
       setState(() {
         _sesiones = sesionesVigentesConAsistencia;
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error cargando sesiones: $e');
+      debugPrint('❌ Error cargando sesiones: $e');
       setState(() {
         _isLoading = false;
       });
@@ -150,25 +159,33 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
       final String key = 'sesiones_pendientes_$email';
       final String? sesionesJson = prefs.getString(key);
 
+      debugPrint('📋 Cargando sesiones pendientes para: $email');
+      debugPrint('🔑 Key: $key');
+      debugPrint('📄 JSON guardado: $sesionesJson');
+
       if (sesionesJson != null && sesionesJson.isNotEmpty) {
         final List<dynamic> decoded = jsonDecode(sesionesJson);
-        // Filtrar sesiones canceladas (gestiona_asis != 'S')
-        final sesionesFiltradas = decoded
-            .cast<Map<String, dynamic>>()
-            .where((s) => s['gestiona_asis'] == 'S')
-            .toList();
+        debugPrint('✅ Sesiones decodificadas: ${decoded.length}');
+        
+        // Mostrar TODAS las sesiones pendientes sin filtrar por gestiona_asis
+        // ya que las sesiones pendientes siempre deben mostrarse hasta que se confirmen
+        final sesionesFiltradas = decoded.cast<Map<String, dynamic>>().toList();
+        
+        debugPrint('📊 Sesiones a mostrar: ${sesionesFiltradas.length}');
+        
         setState(() {
           _sesionesPendientes = sesionesFiltradas;
           _isLoadingPendientes = false;
         });
       } else {
+        debugPrint('⚠️ No hay sesiones pendientes guardadas');
         setState(() {
           _sesionesPendientes = [];
           _isLoadingPendientes = false;
         });
       }
     } catch (e) {
-      debugPrint('Error cargando sesiones pendientes: $e');
+      debugPrint('❌ Error cargando sesiones pendientes: $e');
       setState(() {
         _sesionesPendientes = [];
         _isLoadingPendientes = false;
@@ -357,14 +374,32 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
                           }
 
                           // Registrar asistencia
+                          debugPrint('📝 Registrando asistencia para sesión ${sesionData['id']}');
+                          debugPrint('📧 Email estudiante: $emailEstudiante');
+                          
                           final asistencia = {
                             'id_sesiones': sesionData['id'], // El backend devuelve 'id', no 'id_sesiones'
                             'email_persona': emailEstudiante,
                             'fecha_hora_asistencia': DateTime.now().toIso8601String(),
                           };
 
+                          debugPrint('📤 Datos de asistencia a enviar: ${jsonEncode(asistencia)}');
+
                           final asistenciaService = AsistenciaService('https://ga7a0b6c9043600-atpdb.adb.us-phoenix-1.oraclecloudapps.com/ords/ecoutb_workspace/asistencia_sesiones/');
-                          await asistenciaService.createAsistencia(asistencia);
+                          final resultado = await asistenciaService.createAsistencia(asistencia);
+
+                          debugPrint('✅ Resultado de crear asistencia: ${jsonEncode(resultado)}');
+
+                          if (!mounted) return;
+
+                          // Esperar un momento para que el backend procese
+                          debugPrint('⏳ Esperando 1 segundo antes de recargar...');
+                          await Future.delayed(const Duration(seconds: 1));
+
+                          // Recargar las listas de sesiones pendientes y confirmadas
+                          debugPrint('🔄 Recargando listas...');
+                          await _cargarSesionesPendientes();
+                          await _cargarSesiones();
 
                           if (!mounted) return;
 
@@ -1259,8 +1294,14 @@ class _StudentSesionesPageState extends State<StudentSesionesPage> {
         'fecha_hora_asistencia': DateTime.now().toIso8601String(),
       };
 
+      debugPrint('🎯 Creando asistencia con datos:');
+      debugPrint('  id_sesiones: ${sesion['id']}');
+      debugPrint('  email_persona: $email');
+      debugPrint('  fecha_hora_asistencia: ${asistencia['fecha_hora_asistencia']}');
+
       try {
-        await asistenciaService.createAsistencia(asistencia);
+        final resultado = await asistenciaService.createAsistencia(asistencia);
+        debugPrint('✅ Asistencia creada exitosamente: $resultado');
       } catch (registroError) {
         // Si el error es ORA-00001 (duplicado), manejarlo apropiadamente
         final errorString = registroError.toString();
